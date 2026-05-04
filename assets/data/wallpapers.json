@@ -1,0 +1,1225 @@
+[
+  {
+    "title": "Cyber 1",
+    "category": [
+      "cyber"
+    ],
+    "characters": [
+      "mimi",
+      "hatsue",
+      "luarie"
+    ],
+    "type": "group",
+    "image": "assets/wallpapers/cyber/cyber-01.png"
+  },
+  {
+    "title": "Cute 1",
+    "category": [
+      "cute",
+      "casual"
+    ],
+    "characters": [
+      "hatsue",
+      "mimi"
+    ],
+    "type": "duo",
+    "image": "assets/wallpapers/cute/cute-01.png"
+  },
+  {
+    "title": "Cool 1",
+    "category": [
+      "cool",
+      "comedy"
+    ],
+    "characters": [
+      "luarie",
+      "hatsue",
+      "mimi"
+    ],
+    "type": "group",
+    "image": "assets/wallpapers/cool/cool-01.png"
+  },
+  {
+    "title": "Live 1",
+    "category": [
+      "live"
+    ],
+    "characters": [
+      "mimi"
+    ],
+    "type": "solo",
+    "image": "assets/wallpapers/live/live-01.png"
+  },
+  {
+    "title": "Casual 1",
+    "category": [
+      "casual"
+    ],
+    "characters": [
+      "luarie"
+    ],
+    "type": "solo",
+    "image": "assets/wallpapers/casual/casual-01.png"
+  },
+  {
+    "title": "Comedy 1",
+    "category": [
+      "comedy"
+    ],
+    "characters": [
+      "luarie",
+      "hatsue",
+      "mimi"
+    ],
+    "type": "group",
+    "image": "assets/wallpapers/comedy/comedy-01.png"
+  },
+  {
+    "title": "Luarie 1",
+    "category": [
+      "Luarie",
+      "etc"
+    ],
+    "characters": [
+      "mimi"
+    ],
+    "type": "solo",
+    "image": "assets/wallpapers/Luarie/Luarie-01.jpg"
+  },
+  {
+    "title": "Mimi 1",
+    "category": [
+      "Mimi",
+      "cyber"
+    ],
+    "characters": [
+      "hatsue"
+    ],
+    "type": "solo",
+    "image": "assets/wallpapers/Mimi/Mimi-01.png"
+  },
+  {
+    "title": "Hatue 1",
+    "category": [
+      "Hatue",
+      "cute"
+    ],
+    "characters": [
+      "luarie",
+      "hatsue"
+    ],
+    "type": "duo",
+    "image": "assets/wallpapers/Hatue/Hatue-01.jpg"
+  },
+  {
+    "title": "Etc 1",
+    "category": [
+      "etc",
+      "cool"
+    ],
+    "characters": [
+      "luarie"
+    ],
+    "type": "solo",
+    "image": "assets/wallpapers/etc/etc-01.png"
+  },
+  {
+    "title": "Cyber 2",
+    "category": [
+      "cyber",
+      "live"
+    ],
+    "characters": [
+      "mimi",
+      "hatsue"
+    ],
+    "type": "duo",
+    "image": "assets/wallpapers/cyber/cyber-02.jpg"
+  },
+  {
+    "title": "Cute 2",
+    "category": [
+      "cute",
+      "casual"
+    ],
+    "characters": [
+      "luarie",
+      "hatsue",
+      "mimi"
+    ],
+    "type": "group",
+    "image": "assets/wallpapers/cute/cute-02.png"
+  },
+  {
+    "title": "Cool 2",
+    "category": [
+      "cool",
+      "comedy"
+    ],
+    "characters": [
+      "luarie"
+    ],
+    "type": "solo",
+    "image": "assets/wallpapers/cool/cool-02.jpg"
+  },
+  {
+    "title": "Live 2",
+    "category": [
+      "live",
+      "Luarie"
+    ],
+    "characters": [
+      "mimi"
+    ],
+    "type": "solo",
+    "image": "assets/wallpapers/live/live-02.png"
+  },
+  {
+    "title": "Casual 2",
+    "category": [
+      "casual",
+      "Mimi"
+    ],
+    "characters": [
+      "mimi"
+    ],
+    "type": "solo",
+    "image": "assets/wallpapers/casual/casual-02.png"
+  },
+  {
+    "title": "Comedy 2",
+    "category": [
+      "comedy"
+    ],
+    "characters": [
+      "luarie"
+    ],
+    "type": "solo",
+    "image": "assets/wallpapers/comedy/comedy-02.png"
+  },
+  {
+    "title": "Luarie 2",
+    "category": [
+      "Luarie",
+      "etc"
+    ],
+    "characters": [
+      "hatsue"
+    ],
+    "type": "solo",
+    "image": "assets/wallpapers/Luarie/Luarie-02.png"
+  },
+  {
+    "title": "Mimi 2",
+    "category": [
+      "Mimi"
+    ],
+    "characters": [
+      "mimi",
+      "hatsue",
+      "luarie"
+    ],
+    "type": "group",
+    "image": "assets/wallpapers/Mimi/Mimi-02.png"
+  },
+  {
+    "title": "Hatue 2",
+    "category": [
+      "Hatue",
+      "cute"
+    ],
+    "characters": [
+      "luarie",
+      "hatsue"
+    ],
+    "type": "duo",
+    "image": "assets/wallpapers/Hatue/Hatue-02.png"
+  },
+  {
+    "title": "Etc 2",
+    "category": [
+      "etc"
+    ],
+    "characters": [
+      "hatsue"
+    ],
+    "type": "solo",
+    "image": "assets/wallpapers/etc/etc-02.png"
+  },
+  {
+    "title": "Cyber 3",
+    "category": [
+      "cyber"
+    ],
+    "characters": [
+      "hatsue",
+      "luarie",
+      "mimi"
+    ],
+    "type": "group",
+    "image": "assets/wallpapers/cyber/cyber-03.png"
+  },
+  {
+    "title": "Cute 3",
+    "category": [
+      "cute"
+    ],
+    "characters": [
+      "luarie"
+    ],
+    "type": "solo",
+    "image": "assets/wallpapers/cute/cute-03.png"
+  },
+  {
+    "title": "Cool 3",
+    "category": [
+      "cool"
+    ],
+    "characters": [
+      "luarie",
+      "mimi",
+      "hatsue"
+    ],
+    "type": "group",
+    "image": "assets/wallpapers/cool/cool-03.png"
+  },
+  {
+    "title": "Live 3",
+    "category": [
+      "live"
+    ],
+    "characters": [
+      "luarie",
+      "mimi"
+    ],
+    "type": "duo",
+    "image": "assets/wallpapers/live/live-03.png"
+  },
+  {
+    "title": "Casual 3",
+    "category": [
+      "casual"
+    ],
+    "characters": [
+      "luarie",
+      "hatsue",
+      "mimi"
+    ],
+    "type": "group",
+    "image": "assets/wallpapers/casual/casual-03.png"
+  },
+  {
+    "title": "Comedy 3",
+    "category": [
+      "comedy"
+    ],
+    "characters": [
+      "mimi",
+      "hatsue",
+      "luarie"
+    ],
+    "type": "group",
+    "image": "assets/wallpapers/comedy/comedy-03.png"
+  },
+  {
+    "title": "Luarie 3",
+    "category": [
+      "Luarie",
+      "etc"
+    ],
+    "characters": [
+      "hatsue",
+      "luarie",
+      "mimi"
+    ],
+    "type": "group",
+    "image": "assets/wallpapers/Luarie/Luarie-03.png"
+  },
+  {
+    "title": "Mimi 3",
+    "category": [
+      "Mimi"
+    ],
+    "characters": [
+      "mimi",
+      "luarie"
+    ],
+    "type": "duo",
+    "image": "assets/wallpapers/Mimi/Mimi-03.png"
+  },
+  {
+    "title": "Hatue 3",
+    "category": [
+      "Hatue",
+      "cute"
+    ],
+    "characters": [
+      "hatsue",
+      "luarie"
+    ],
+    "type": "duo",
+    "image": "assets/wallpapers/Hatue/Hatue-03.png"
+  },
+  {
+    "title": "Etc 3",
+    "category": [
+      "etc"
+    ],
+    "characters": [
+      "luarie",
+      "mimi"
+    ],
+    "type": "duo",
+    "image": "assets/wallpapers/etc/etc-03.png"
+  },
+  {
+    "title": "Cyber 4",
+    "category": [
+      "cyber",
+      "live"
+    ],
+    "characters": [
+      "luarie"
+    ],
+    "type": "solo",
+    "image": "assets/wallpapers/cyber/cyber-04.png"
+  },
+  {
+    "title": "Cute 4",
+    "category": [
+      "cute"
+    ],
+    "characters": [
+      "mimi",
+      "hatsue",
+      "luarie"
+    ],
+    "type": "group",
+    "image": "assets/wallpapers/cute/cute-04.png"
+  },
+  {
+    "title": "Cool 4",
+    "category": [
+      "cool",
+      "comedy"
+    ],
+    "characters": [
+      "luarie",
+      "hatsue"
+    ],
+    "type": "duo",
+    "image": "assets/wallpapers/cool/cool-04.png"
+  },
+  {
+    "title": "Live 4",
+    "category": [
+      "live"
+    ],
+    "characters": [
+      "mimi",
+      "luarie"
+    ],
+    "type": "duo",
+    "image": "assets/wallpapers/live/live-04.png"
+  },
+  {
+    "title": "Casual 4",
+    "category": [
+      "casual",
+      "Mimi"
+    ],
+    "characters": [
+      "hatsue"
+    ],
+    "type": "solo",
+    "image": "assets/wallpapers/casual/casual-04.png"
+  },
+  {
+    "title": "Comedy 4",
+    "category": [
+      "comedy",
+      "Hatue"
+    ],
+    "characters": [
+      "hatsue"
+    ],
+    "type": "solo",
+    "image": "assets/wallpapers/comedy/comedy-04.png"
+  },
+  {
+    "title": "Luarie 4",
+    "category": [
+      "Luarie",
+      "etc"
+    ],
+    "characters": [
+      "mimi",
+      "hatsue"
+    ],
+    "type": "duo",
+    "image": "assets/wallpapers/Luarie/Luarie-04.png"
+  },
+  {
+    "title": "Mimi 4",
+    "category": [
+      "Mimi"
+    ],
+    "characters": [
+      "mimi",
+      "hatsue",
+      "luarie"
+    ],
+    "type": "group",
+    "image": "assets/wallpapers/Mimi/Mimi-04.png"
+  },
+  {
+    "title": "Hatue 4",
+    "category": [
+      "Hatue"
+    ],
+    "characters": [
+      "luarie"
+    ],
+    "type": "solo",
+    "image": "assets/wallpapers/Hatue/Hatue-04.png"
+  },
+  {
+    "title": "Etc 4",
+    "category": [
+      "etc",
+      "cool"
+    ],
+    "characters": [
+      "luarie",
+      "hatsue"
+    ],
+    "type": "duo",
+    "image": "assets/wallpapers/etc/etc-04.png"
+  },
+  {
+    "title": "Cyber 5",
+    "category": [
+      "cyber"
+    ],
+    "characters": [
+      "mimi",
+      "hatsue",
+      "luarie"
+    ],
+    "type": "group",
+    "image": "assets/wallpapers/cyber/cyber-05.png"
+  },
+  {
+    "title": "Cute 5",
+    "category": [
+      "cute"
+    ],
+    "characters": [
+      "hatsue"
+    ],
+    "type": "solo",
+    "image": "assets/wallpapers/cute/cute-05.png"
+  },
+  {
+    "title": "Cool 5",
+    "category": [
+      "cool",
+      "comedy"
+    ],
+    "characters": [
+      "hatsue",
+      "luarie"
+    ],
+    "type": "duo",
+    "image": "assets/wallpapers/cool/cool-05.png"
+  },
+  {
+    "title": "Live 5",
+    "category": [
+      "live",
+      "Luarie"
+    ],
+    "characters": [
+      "hatsue",
+      "mimi"
+    ],
+    "type": "duo",
+    "image": "assets/wallpapers/live/live-05.png"
+  },
+  {
+    "title": "Casual 5",
+    "category": [
+      "casual"
+    ],
+    "characters": [
+      "hatsue",
+      "mimi"
+    ],
+    "type": "duo",
+    "image": "assets/wallpapers/casual/casual-05.png"
+  },
+  {
+    "title": "Comedy 5",
+    "category": [
+      "comedy",
+      "Hatue"
+    ],
+    "characters": [
+      "luarie",
+      "hatsue"
+    ],
+    "type": "duo",
+    "image": "assets/wallpapers/comedy/comedy-05.png"
+  },
+  {
+    "title": "Luarie 5",
+    "category": [
+      "Luarie"
+    ],
+    "characters": [
+      "mimi",
+      "luarie",
+      "hatsue"
+    ],
+    "type": "group",
+    "image": "assets/wallpapers/Luarie/Luarie-05.png"
+  },
+  {
+    "title": "Mimi 5",
+    "category": [
+      "Mimi"
+    ],
+    "characters": [
+      "hatsue",
+      "mimi"
+    ],
+    "type": "duo",
+    "image": "assets/wallpapers/Mimi/Mimi-05.png"
+  },
+  {
+    "title": "Hatue 5",
+    "category": [
+      "Hatue"
+    ],
+    "characters": [
+      "luarie",
+      "hatsue"
+    ],
+    "type": "duo",
+    "image": "assets/wallpapers/Hatue/Hatue-05.png"
+  },
+  {
+    "title": "Etc 5",
+    "category": [
+      "etc",
+      "cool"
+    ],
+    "characters": [
+      "mimi",
+      "luarie"
+    ],
+    "type": "duo",
+    "image": "assets/wallpapers/etc/etc-05.png"
+  },
+  {
+    "title": "Cyber 6",
+    "category": [
+      "cyber",
+      "live"
+    ],
+    "characters": [
+      "hatsue",
+      "mimi",
+      "luarie"
+    ],
+    "type": "group",
+    "image": "assets/wallpapers/cyber/cyber-06.png"
+  },
+  {
+    "title": "Cute 6",
+    "category": [
+      "cute",
+      "casual"
+    ],
+    "characters": [
+      "luarie",
+      "hatsue",
+      "mimi"
+    ],
+    "type": "group",
+    "image": "assets/wallpapers/cute/cute-06.png"
+  },
+  {
+    "title": "Cool 6",
+    "category": [
+      "cool",
+      "comedy"
+    ],
+    "characters": [
+      "luarie",
+      "mimi"
+    ],
+    "type": "duo",
+    "image": "assets/wallpapers/cool/cool-06.png"
+  },
+  {
+    "title": "Live 6",
+    "category": [
+      "live"
+    ],
+    "characters": [
+      "hatsue"
+    ],
+    "type": "solo",
+    "image": "assets/wallpapers/live/live-06.png"
+  },
+  {
+    "title": "Casual 6",
+    "category": [
+      "casual",
+      "Mimi"
+    ],
+    "characters": [
+      "mimi"
+    ],
+    "type": "solo",
+    "image": "assets/wallpapers/casual/casual-06.png"
+  },
+  {
+    "title": "Comedy 6",
+    "category": [
+      "comedy",
+      "Hatue"
+    ],
+    "characters": [
+      "mimi",
+      "hatsue",
+      "luarie"
+    ],
+    "type": "group",
+    "image": "assets/wallpapers/comedy/comedy-06.png"
+  },
+  {
+    "title": "Luarie 6",
+    "category": [
+      "Luarie",
+      "etc"
+    ],
+    "characters": [
+      "mimi"
+    ],
+    "type": "solo",
+    "image": "assets/wallpapers/Luarie/Luarie-06.png"
+  },
+  {
+    "title": "Mimi 6",
+    "category": [
+      "Mimi"
+    ],
+    "characters": [
+      "mimi"
+    ],
+    "type": "solo",
+    "image": "assets/wallpapers/Mimi/Mimi-06.png"
+  },
+  {
+    "title": "Hatue 6",
+    "category": [
+      "Hatue",
+      "cute"
+    ],
+    "characters": [
+      "hatsue",
+      "luarie",
+      "mimi"
+    ],
+    "type": "group",
+    "image": "assets/wallpapers/Hatue/Hatue-06.png"
+  },
+  {
+    "title": "Etc 6",
+    "category": [
+      "etc",
+      "cool"
+    ],
+    "characters": [
+      "luarie",
+      "hatsue",
+      "mimi"
+    ],
+    "type": "group",
+    "image": "assets/wallpapers/etc/etc-06.png"
+  },
+  {
+    "title": "Cyber 7",
+    "category": [
+      "cyber",
+      "live"
+    ],
+    "characters": [
+      "hatsue"
+    ],
+    "type": "solo",
+    "image": "assets/wallpapers/cyber/cyber-07.png"
+  },
+  {
+    "title": "Cute 7",
+    "category": [
+      "cute"
+    ],
+    "characters": [
+      "hatsue"
+    ],
+    "type": "solo",
+    "image": "assets/wallpapers/cute/cute-07.png"
+  },
+  {
+    "title": "Cool 7",
+    "category": [
+      "cool",
+      "comedy"
+    ],
+    "characters": [
+      "luarie",
+      "hatsue"
+    ],
+    "type": "duo",
+    "image": "assets/wallpapers/cool/cool-07.png"
+  },
+  {
+    "title": "Live 7",
+    "category": [
+      "live",
+      "Luarie"
+    ],
+    "characters": [
+      "luarie"
+    ],
+    "type": "solo",
+    "image": "assets/wallpapers/live/live-07.png"
+  },
+  {
+    "title": "Casual 7",
+    "category": [
+      "casual",
+      "Mimi"
+    ],
+    "characters": [
+      "hatsue",
+      "luarie",
+      "mimi"
+    ],
+    "type": "group",
+    "image": "assets/wallpapers/casual/casual-07.png"
+  },
+  {
+    "title": "Comedy 7",
+    "category": [
+      "comedy"
+    ],
+    "characters": [
+      "luarie",
+      "hatsue",
+      "mimi"
+    ],
+    "type": "group",
+    "image": "assets/wallpapers/comedy/comedy-07.png"
+  },
+  {
+    "title": "Luarie 7",
+    "category": [
+      "Luarie"
+    ],
+    "characters": [
+      "hatsue",
+      "mimi",
+      "luarie"
+    ],
+    "type": "group",
+    "image": "assets/wallpapers/Luarie/Luarie-07.png"
+  },
+  {
+    "title": "Mimi 7",
+    "category": [
+      "Mimi"
+    ],
+    "characters": [
+      "luarie",
+      "hatsue"
+    ],
+    "type": "duo",
+    "image": "assets/wallpapers/Mimi/Mimi-07.png"
+  },
+  {
+    "title": "Hatue 7",
+    "category": [
+      "Hatue",
+      "cute"
+    ],
+    "characters": [
+      "luarie"
+    ],
+    "type": "solo",
+    "image": "assets/wallpapers/Hatue/Hatue-07.png"
+  },
+  {
+    "title": "Etc 7",
+    "category": [
+      "etc",
+      "cool"
+    ],
+    "characters": [
+      "luarie",
+      "hatsue"
+    ],
+    "type": "duo",
+    "image": "assets/wallpapers/etc/etc-07.png"
+  },
+  {
+    "title": "Cyber 8",
+    "category": [
+      "cyber",
+      "live"
+    ],
+    "characters": [
+      "luarie",
+      "mimi",
+      "hatsue"
+    ],
+    "type": "group",
+    "image": "assets/wallpapers/cyber/cyber-08.png"
+  },
+  {
+    "title": "Cute 8",
+    "category": [
+      "cute"
+    ],
+    "characters": [
+      "hatsue"
+    ],
+    "type": "solo",
+    "image": "assets/wallpapers/cute/cute-08.png"
+  },
+  {
+    "title": "Cool 8",
+    "category": [
+      "cool",
+      "comedy"
+    ],
+    "characters": [
+      "luarie"
+    ],
+    "type": "solo",
+    "image": "assets/wallpapers/cool/cool-08.png"
+  },
+  {
+    "title": "Live 8",
+    "category": [
+      "live",
+      "Luarie"
+    ],
+    "characters": [
+      "luarie",
+      "hatsue",
+      "mimi"
+    ],
+    "type": "group",
+    "image": "assets/wallpapers/live/live-08.png"
+  },
+  {
+    "title": "Casual 8",
+    "category": [
+      "casual"
+    ],
+    "characters": [
+      "luarie"
+    ],
+    "type": "solo",
+    "image": "assets/wallpapers/casual/casual-08.png"
+  },
+  {
+    "title": "Comedy 8",
+    "category": [
+      "comedy"
+    ],
+    "characters": [
+      "mimi",
+      "hatsue"
+    ],
+    "type": "duo",
+    "image": "assets/wallpapers/comedy/comedy-08.png"
+  },
+  {
+    "title": "Luarie 8",
+    "category": [
+      "Luarie",
+      "etc"
+    ],
+    "characters": [
+      "mimi",
+      "hatsue"
+    ],
+    "type": "duo",
+    "image": "assets/wallpapers/Luarie/Luarie-08.png"
+  },
+  {
+    "title": "Mimi 8",
+    "category": [
+      "Mimi"
+    ],
+    "characters": [
+      "hatsue"
+    ],
+    "type": "solo",
+    "image": "assets/wallpapers/Mimi/Mimi-08.png"
+  },
+  {
+    "title": "Hatue 8",
+    "category": [
+      "Hatue"
+    ],
+    "characters": [
+      "luarie"
+    ],
+    "type": "solo",
+    "image": "assets/wallpapers/Hatue/Hatue-08.png"
+  },
+  {
+    "title": "Etc 8",
+    "category": [
+      "etc"
+    ],
+    "characters": [
+      "mimi",
+      "hatsue"
+    ],
+    "type": "duo",
+    "image": "assets/wallpapers/etc/etc-08.png"
+  },
+  {
+    "title": "Cyber 9",
+    "category": [
+      "cyber"
+    ],
+    "characters": [
+      "hatsue"
+    ],
+    "type": "solo",
+    "image": "assets/wallpapers/cyber/cyber-09.png"
+  },
+  {
+    "title": "Cute 9",
+    "category": [
+      "cute",
+      "casual"
+    ],
+    "characters": [
+      "luarie",
+      "hatsue",
+      "mimi"
+    ],
+    "type": "group",
+    "image": "assets/wallpapers/cute/cute-09.png"
+  },
+  {
+    "title": "Cool 9",
+    "category": [
+      "cool"
+    ],
+    "characters": [
+      "mimi",
+      "hatsue",
+      "luarie"
+    ],
+    "type": "group",
+    "image": "assets/wallpapers/cool/cool-09.png"
+  },
+  {
+    "title": "Live 9",
+    "category": [
+      "live",
+      "Luarie"
+    ],
+    "characters": [
+      "hatsue",
+      "luarie",
+      "mimi"
+    ],
+    "type": "group",
+    "image": "assets/wallpapers/live/live-09.png"
+  },
+  {
+    "title": "Casual 9",
+    "category": [
+      "casual"
+    ],
+    "characters": [
+      "luarie",
+      "hatsue",
+      "mimi"
+    ],
+    "type": "group",
+    "image": "assets/wallpapers/casual/casual-09.png"
+  },
+  {
+    "title": "Comedy 9",
+    "category": [
+      "comedy"
+    ],
+    "characters": [
+      "luarie",
+      "mimi",
+      "hatsue"
+    ],
+    "type": "group",
+    "image": "assets/wallpapers/comedy/comedy-09.png"
+  },
+  {
+    "title": "Luarie 9",
+    "category": [
+      "Luarie"
+    ],
+    "characters": [
+      "luarie",
+      "hatsue"
+    ],
+    "type": "duo",
+    "image": "assets/wallpapers/Luarie/Luarie-09.png"
+  },
+  {
+    "title": "Mimi 9",
+    "category": [
+      "Mimi"
+    ],
+    "characters": [
+      "luarie",
+      "hatsue",
+      "mimi"
+    ],
+    "type": "group",
+    "image": "assets/wallpapers/Mimi/Mimi-09.png"
+  },
+  {
+    "title": "Hatue 9",
+    "category": [
+      "Hatue"
+    ],
+    "characters": [
+      "luarie",
+      "mimi",
+      "hatsue"
+    ],
+    "type": "group",
+    "image": "assets/wallpapers/Hatue/Hatue-09.png"
+  },
+  {
+    "title": "Etc 9",
+    "category": [
+      "etc",
+      "cool"
+    ],
+    "characters": [
+      "luarie",
+      "mimi",
+      "hatsue"
+    ],
+    "type": "group",
+    "image": "assets/wallpapers/etc/etc-09.png"
+  },
+  {
+    "title": "Cyber 10",
+    "category": [
+      "cyber"
+    ],
+    "characters": [
+      "hatsue",
+      "luarie",
+      "mimi"
+    ],
+    "type": "group",
+    "image": "assets/wallpapers/cyber/cyber-10.png"
+  },
+  {
+    "title": "Cute 10",
+    "category": [
+      "cute"
+    ],
+    "characters": [
+      "luarie"
+    ],
+    "type": "solo",
+    "image": "assets/wallpapers/cute/cute-10.png"
+  },
+  {
+    "title": "Cool 10",
+    "category": [
+      "cool"
+    ],
+    "characters": [
+      "hatsue"
+    ],
+    "type": "solo",
+    "image": "assets/wallpapers/cool/cool-10.png"
+  },
+  {
+    "title": "Live 10",
+    "category": [
+      "live"
+    ],
+    "characters": [
+      "mimi"
+    ],
+    "type": "solo",
+    "image": "assets/wallpapers/live/live-10.png"
+  },
+  {
+    "title": "Casual 10",
+    "category": [
+      "casual"
+    ],
+    "characters": [
+      "mimi"
+    ],
+    "type": "solo",
+    "image": "assets/wallpapers/casual/casual-10.png"
+  },
+  {
+    "title": "Comedy 10",
+    "category": [
+      "comedy",
+      "Hatue"
+    ],
+    "characters": [
+      "mimi",
+      "luarie",
+      "hatsue"
+    ],
+    "type": "group",
+    "image": "assets/wallpapers/comedy/comedy-10.png"
+  },
+  {
+    "title": "Luarie 10",
+    "category": [
+      "Luarie",
+      "etc"
+    ],
+    "characters": [
+      "luarie"
+    ],
+    "type": "solo",
+    "image": "assets/wallpapers/Luarie/Luarie-10.png"
+  },
+  {
+    "title": "Mimi 10",
+    "category": [
+      "Mimi",
+      "cyber"
+    ],
+    "characters": [
+      "hatsue",
+      "luarie"
+    ],
+    "type": "duo",
+    "image": "assets/wallpapers/Mimi/Mimi-10.png"
+  }
+]
