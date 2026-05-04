@@ -1,0 +1,66 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>3-Sync | Wallpapers</title>
+  <link rel="stylesheet" href="./style.css">
+</head>
+<body>
+  <!-- 壁紙専用ページ。壁紙追加は site-data.js の wallpapers を編集 -->
+  <div class="site-bg" aria-hidden="true"></div>
+
+  <header class="site-header">
+    <a class="brand" href="./index.html">
+      <img src="./assets/logo.png" alt="3-Sync logo">
+      <span>
+        <strong data-bind="site.title">3-Sync</strong>
+        <small data-bind="site.subtitle">Celestial Pulse Line</small>
+      </span>
+    </a>
+
+    <button class="nav-toggle" aria-label="メニューを開く" aria-expanded="false">☰</button>
+
+    <nav class="global-nav">
+      <a href="./index.html">Home</a>
+      <a href="./index.html#music">Music</a>
+      <a href="./index.html#members">Members</a>
+      <a href="./wallpapers.html">Wallpapers</a>
+    </nav>
+
+    <a class="listen-button" href="./index.html">Back Home →</a>
+  </header>
+
+  <main>
+    <section class="wallpage-hero panel">
+      <p class="eyebrow">3-Sync Wallpaper Library</p>
+      <h1>Wallpapers</h1>
+      <p>壁紙を増やせる専用ページです。画像リストは site-data.js で管理します。</p>
+    </section>
+
+    <div class="filter-row">
+      <button class="chip active" data-filter="all">All</button>
+      <button class="chip" data-filter="luarie">Luarie</button>
+      <button class="chip" data-filter="mimi">Mimi</button>
+      <button class="chip" data-filter="hatsue">Hatsue</button>
+      <button class="chip" data-filter="logo">Logo</button>
+    </div>
+
+    <div class="gallery-grid" id="wallpaperGallery"></div>
+  </main>
+
+  <footer class="site-footer">
+    <a class="brand footer-brand" href="./index.html">
+      <img src="./assets/logo.png" alt="3-Sync logo">
+      <span>
+        <strong data-bind="site.title">3-Sync</strong>
+        <small data-bind="site.subtitle">Celestial Pulse Line</small>
+      </span>
+    </a>
+    <small data-bind="site.copyright">© 2026 3-Sync</small>
+  </footer>
+
+  <script src="./site-data.js"></script>
+  <script src="./script.js"></script>
+</body>
+</html>
