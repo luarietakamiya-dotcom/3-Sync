@@ -86,30 +86,37 @@ if (liveGrid) {
 /* Wallpapers preview */
 const preview = document.getElementById("wallpaperPreviewGrid");
 if (preview) {
-  preview.innerHTML = (DATA.wallpapers || []).slice(0, 3).map((wall) => `
+  preview.innerHTML = (DATA.wallpapers || []).slice(0, 3).map((wall) => {
+    const cats = Array.isArray(wall.category) ? wall.category.join(", ") : (wall.category || "");
+    return `
     <a class="wall-card" href="./wallpapers.html">
       <img src="${escapeHTML(wall.image)}" alt="${escapeHTML(wall.title)}">
       <div>
         <strong>${escapeHTML(wall.title)}</strong>
-        <span>${escapeHTML(wall.category)}</span>
+        <span>${escapeHTML(cats)}</span>
       </div>
     </a>
-  `).join("");
+  `}).join("");
 }
 
 /* Wallpapers gallery */
 const gallery = document.getElementById("wallpaperGallery");
 if (gallery) {
-  gallery.innerHTML = (DATA.wallpapers || []).map((wall) => `
-    <article class="gallery-item wall-card" data-category="${escapeHTML(wall.category)}">
+  gallery.innerHTML = (DATA.wallpapers || []).map((wall) => {
+    const cats = Array.isArray(wall.category) ? wall.category : [wall.category || ""];
+    const chars = Array.isArray(wall.characters) ? wall.characters : [wall.characters || ""];
+    const tags = [...cats, ...chars].map(t => String(t).toLowerCase()).join(",");
+    const displayCats = cats.join(", ");
+    return `
+    <article class="gallery-item wall-card" data-tags="${escapeHTML(tags)}">
       <img src="${escapeHTML(wall.image)}" alt="${escapeHTML(wall.title)}">
       <div>
         <strong>${escapeHTML(wall.title)}</strong>
-        <span>${escapeHTML(wall.category)}</span>
+        <span>${escapeHTML(displayCats)}</span>
       </div>
       <a class="download-button" href="${escapeHTML(wall.image)}" download>Download</a>
     </article>
-  `).join("");
+  `}).join("");
 }
 
 /* 壁紙フィルター */
@@ -117,10 +124,10 @@ document.querySelectorAll(".chip").forEach((button) => {
   button.addEventListener("click", () => {
     document.querySelectorAll(".chip").forEach((b) => b.classList.remove("active"));
     button.classList.add("active");
-    const filter = button.dataset.filter;
+    const filter = button.dataset.filter.toLowerCase();
     document.querySelectorAll(".gallery-item").forEach((item) => {
-      const category = item.dataset.category;
-      item.classList.toggle("hidden-item", filter !== "all" && category !== filter);
+      const tags = item.dataset.tags ? item.dataset.tags.split(",") : [];
+      item.classList.toggle("hidden-item", filter !== "all" && !tags.includes(filter));
     });
   });
 });

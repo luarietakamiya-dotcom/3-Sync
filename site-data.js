@@ -132,42 +132,1230 @@ window.SITE_DATA = {
   ],
 
   wallpapers: [
-    {
-      title: "Luarie Portrait",
-      category: "luarie",
-      image: "./assets/wallpapers/luarie-portrait.jpg",
-    },
-    {
-      title: "Luarie Sheet",
-      category: "luarie",
-      image: "./assets/wallpapers/luarie-sheet.png",
-    },
-    {
-      title: "Mimi Portrait",
-      category: "mimi",
-      image: "./assets/wallpapers/mimi-portrait.jpg",
-    },
-    {
-      title: "Mimi Sheet",
-      category: "mimi",
-      image: "./assets/wallpapers/mimi-sheet.png",
-    },
-    {
-      title: "Hatsue Portrait",
-      category: "hatsue",
-      image: "./assets/wallpapers/hatsue-portrait.jpg",
-    },
-    {
-      title: "Hatsue Sheet",
-      category: "hatsue",
-      image: "./assets/wallpapers/hatsue-sheet.png",
-    },
-    {
-      title: "3-Sync Logo",
-      category: "logo",
-      image: "./assets/wallpapers/3sync-logo.png",
-    },
-  ],
+        {
+            "title": "Cyber 1",
+            "category": [
+                "cyber"
+            ],
+            "characters": [
+                "mimi",
+                "hatsue",
+                "luarie"
+            ],
+            "type": "group",
+            "image": "assets/wallpapers/wp_001.png"
+        },
+        {
+            "title": "Cute 1",
+            "category": [
+                "cute",
+                "casual"
+            ],
+            "characters": [
+                "hatsue",
+                "mimi"
+            ],
+            "type": "duo",
+            "image": "assets/wallpapers/wp_002.png"
+        },
+        {
+            "title": "Cool 1",
+            "category": [
+                "cool",
+                "comedy"
+            ],
+            "characters": [
+                "luarie",
+                "hatsue",
+                "mimi"
+            ],
+            "type": "group",
+            "image": "assets/wallpapers/wp_003.png"
+        },
+        {
+            "title": "Live 1",
+            "category": [
+                "live"
+            ],
+            "characters": [
+                "mimi"
+            ],
+            "type": "solo",
+            "image": "assets/wallpapers/wp_004.png"
+        },
+        {
+            "title": "Casual 1",
+            "category": [
+                "casual"
+            ],
+            "characters": [
+                "luarie"
+            ],
+            "type": "solo",
+            "image": "assets/wallpapers/wp_005.png"
+        },
+        {
+            "title": "Comedy 1",
+            "category": [
+                "comedy"
+            ],
+            "characters": [
+                "luarie",
+                "hatsue",
+                "mimi"
+            ],
+            "type": "group",
+            "image": "assets/wallpapers/wp_006.png"
+        },
+        {
+            "title": "Luarie 1",
+            "category": [
+                "Luarie",
+                "etc"
+            ],
+            "characters": [
+                "mimi"
+            ],
+            "type": "solo",
+            "image": "assets/wallpapers/wp_007.jpg"
+        },
+        {
+            "title": "Mimi 1",
+            "category": [
+                "Mimi",
+                "cyber"
+            ],
+            "characters": [
+                "hatsue"
+            ],
+            "type": "solo",
+            "image": "assets/wallpapers/wp_008.png"
+        },
+        {
+            "title": "Hatue 1",
+            "category": [
+                "Hatue",
+                "cute"
+            ],
+            "characters": [
+                "luarie",
+                "hatsue"
+            ],
+            "type": "duo",
+            "image": "assets/wallpapers/wp_009.jpg"
+        },
+        {
+            "title": "Etc 1",
+            "category": [
+                "etc",
+                "cool"
+            ],
+            "characters": [
+                "luarie"
+            ],
+            "type": "solo",
+            "image": "assets/wallpapers/wp_010.png"
+        },
+        {
+            "title": "Cyber 2",
+            "category": [
+                "cyber",
+                "live"
+            ],
+            "characters": [
+                "mimi",
+                "hatsue"
+            ],
+            "type": "duo",
+            "image": "assets/wallpapers/wp_011.jpg"
+        },
+        {
+            "title": "Cute 2",
+            "category": [
+                "cute",
+                "casual"
+            ],
+            "characters": [
+                "luarie",
+                "hatsue",
+                "mimi"
+            ],
+            "type": "group",
+            "image": "assets/wallpapers/wp_012.png"
+        },
+        {
+            "title": "Cool 2",
+            "category": [
+                "cool",
+                "comedy"
+            ],
+            "characters": [
+                "luarie"
+            ],
+            "type": "solo",
+            "image": "assets/wallpapers/wp_013.jpg"
+        },
+        {
+            "title": "Live 2",
+            "category": [
+                "live",
+                "Luarie"
+            ],
+            "characters": [
+                "mimi"
+            ],
+            "type": "solo",
+            "image": "assets/wallpapers/wp_014.png"
+        },
+        {
+            "title": "Casual 2",
+            "category": [
+                "casual",
+                "Mimi"
+            ],
+            "characters": [
+                "mimi"
+            ],
+            "type": "solo",
+            "image": "assets/wallpapers/wp_015.png"
+        },
+        {
+            "title": "Comedy 2",
+            "category": [
+                "comedy"
+            ],
+            "characters": [
+                "luarie"
+            ],
+            "type": "solo",
+            "image": "assets/wallpapers/wp_016.png"
+        },
+        {
+            "title": "Luarie 2",
+            "category": [
+                "Luarie",
+                "etc"
+            ],
+            "characters": [
+                "hatsue"
+            ],
+            "type": "solo",
+            "image": "assets/wallpapers/wp_017.png"
+        },
+        {
+            "title": "Mimi 2",
+            "category": [
+                "Mimi"
+            ],
+            "characters": [
+                "mimi",
+                "hatsue",
+                "luarie"
+            ],
+            "type": "group",
+            "image": "assets/wallpapers/wp_018.png"
+        },
+        {
+            "title": "Hatue 2",
+            "category": [
+                "Hatue",
+                "cute"
+            ],
+            "characters": [
+                "luarie",
+                "hatsue"
+            ],
+            "type": "duo",
+            "image": "assets/wallpapers/wp_019.png"
+        },
+        {
+            "title": "Etc 2",
+            "category": [
+                "etc"
+            ],
+            "characters": [
+                "hatsue"
+            ],
+            "type": "solo",
+            "image": "assets/wallpapers/wp_020.png"
+        },
+        {
+            "title": "Cyber 3",
+            "category": [
+                "cyber"
+            ],
+            "characters": [
+                "hatsue",
+                "luarie",
+                "mimi"
+            ],
+            "type": "group",
+            "image": "assets/wallpapers/wp_021.png"
+        },
+        {
+            "title": "Cute 3",
+            "category": [
+                "cute"
+            ],
+            "characters": [
+                "luarie"
+            ],
+            "type": "solo",
+            "image": "assets/wallpapers/wp_022.png"
+        },
+        {
+            "title": "Cool 3",
+            "category": [
+                "cool"
+            ],
+            "characters": [
+                "luarie",
+                "mimi",
+                "hatsue"
+            ],
+            "type": "group",
+            "image": "assets/wallpapers/wp_023.png"
+        },
+        {
+            "title": "Live 3",
+            "category": [
+                "live"
+            ],
+            "characters": [
+                "luarie",
+                "mimi"
+            ],
+            "type": "duo",
+            "image": "assets/wallpapers/wp_024.png"
+        },
+        {
+            "title": "Casual 3",
+            "category": [
+                "casual"
+            ],
+            "characters": [
+                "luarie",
+                "hatsue",
+                "mimi"
+            ],
+            "type": "group",
+            "image": "assets/wallpapers/wp_025.png"
+        },
+        {
+            "title": "Comedy 3",
+            "category": [
+                "comedy"
+            ],
+            "characters": [
+                "mimi",
+                "hatsue",
+                "luarie"
+            ],
+            "type": "group",
+            "image": "assets/wallpapers/wp_026.png"
+        },
+        {
+            "title": "Luarie 3",
+            "category": [
+                "Luarie",
+                "etc"
+            ],
+            "characters": [
+                "hatsue",
+                "luarie",
+                "mimi"
+            ],
+            "type": "group",
+            "image": "assets/wallpapers/wp_027.png"
+        },
+        {
+            "title": "Mimi 3",
+            "category": [
+                "Mimi"
+            ],
+            "characters": [
+                "mimi",
+                "luarie"
+            ],
+            "type": "duo",
+            "image": "assets/wallpapers/wp_028.png"
+        },
+        {
+            "title": "Hatue 3",
+            "category": [
+                "Hatue",
+                "cute"
+            ],
+            "characters": [
+                "hatsue",
+                "luarie"
+            ],
+            "type": "duo",
+            "image": "assets/wallpapers/wp_029.png"
+        },
+        {
+            "title": "Etc 3",
+            "category": [
+                "etc"
+            ],
+            "characters": [
+                "luarie",
+                "mimi"
+            ],
+            "type": "duo",
+            "image": "assets/wallpapers/wp_030.png"
+        },
+        {
+            "title": "Cyber 4",
+            "category": [
+                "cyber",
+                "live"
+            ],
+            "characters": [
+                "luarie"
+            ],
+            "type": "solo",
+            "image": "assets/wallpapers/wp_031.png"
+        },
+        {
+            "title": "Cute 4",
+            "category": [
+                "cute"
+            ],
+            "characters": [
+                "mimi",
+                "hatsue",
+                "luarie"
+            ],
+            "type": "group",
+            "image": "assets/wallpapers/wp_032.png"
+        },
+        {
+            "title": "Cool 4",
+            "category": [
+                "cool",
+                "comedy"
+            ],
+            "characters": [
+                "luarie",
+                "hatsue"
+            ],
+            "type": "duo",
+            "image": "assets/wallpapers/wp_033.png"
+        },
+        {
+            "title": "Live 4",
+            "category": [
+                "live"
+            ],
+            "characters": [
+                "mimi",
+                "luarie"
+            ],
+            "type": "duo",
+            "image": "assets/wallpapers/wp_034.png"
+        },
+        {
+            "title": "Casual 4",
+            "category": [
+                "casual",
+                "Mimi"
+            ],
+            "characters": [
+                "hatsue"
+            ],
+            "type": "solo",
+            "image": "assets/wallpapers/wp_035.png"
+        },
+        {
+            "title": "Comedy 4",
+            "category": [
+                "comedy",
+                "Hatue"
+            ],
+            "characters": [
+                "hatsue"
+            ],
+            "type": "solo",
+            "image": "assets/wallpapers/wp_036.png"
+        },
+        {
+            "title": "Luarie 4",
+            "category": [
+                "Luarie",
+                "etc"
+            ],
+            "characters": [
+                "mimi",
+                "hatsue"
+            ],
+            "type": "duo",
+            "image": "assets/wallpapers/wp_037.png"
+        },
+        {
+            "title": "Mimi 4",
+            "category": [
+                "Mimi"
+            ],
+            "characters": [
+                "mimi",
+                "hatsue",
+                "luarie"
+            ],
+            "type": "group",
+            "image": "assets/wallpapers/wp_038.png"
+        },
+        {
+            "title": "Hatue 4",
+            "category": [
+                "Hatue"
+            ],
+            "characters": [
+                "luarie"
+            ],
+            "type": "solo",
+            "image": "assets/wallpapers/wp_039.png"
+        },
+        {
+            "title": "Etc 4",
+            "category": [
+                "etc",
+                "cool"
+            ],
+            "characters": [
+                "luarie",
+                "hatsue"
+            ],
+            "type": "duo",
+            "image": "assets/wallpapers/wp_040.png"
+        },
+        {
+            "title": "Cyber 5",
+            "category": [
+                "cyber"
+            ],
+            "characters": [
+                "mimi",
+                "hatsue",
+                "luarie"
+            ],
+            "type": "group",
+            "image": "assets/wallpapers/wp_041.png"
+        },
+        {
+            "title": "Cute 5",
+            "category": [
+                "cute"
+            ],
+            "characters": [
+                "hatsue"
+            ],
+            "type": "solo",
+            "image": "assets/wallpapers/wp_042.png"
+        },
+        {
+            "title": "Cool 5",
+            "category": [
+                "cool",
+                "comedy"
+            ],
+            "characters": [
+                "hatsue",
+                "luarie"
+            ],
+            "type": "duo",
+            "image": "assets/wallpapers/wp_043.png"
+        },
+        {
+            "title": "Live 5",
+            "category": [
+                "live",
+                "Luarie"
+            ],
+            "characters": [
+                "hatsue",
+                "mimi"
+            ],
+            "type": "duo",
+            "image": "assets/wallpapers/wp_044.png"
+        },
+        {
+            "title": "Casual 5",
+            "category": [
+                "casual"
+            ],
+            "characters": [
+                "hatsue",
+                "mimi"
+            ],
+            "type": "duo",
+            "image": "assets/wallpapers/wp_045.png"
+        },
+        {
+            "title": "Comedy 5",
+            "category": [
+                "comedy",
+                "Hatue"
+            ],
+            "characters": [
+                "luarie",
+                "hatsue"
+            ],
+            "type": "duo",
+            "image": "assets/wallpapers/wp_046.png"
+        },
+        {
+            "title": "Luarie 5",
+            "category": [
+                "Luarie"
+            ],
+            "characters": [
+                "mimi",
+                "luarie",
+                "hatsue"
+            ],
+            "type": "group",
+            "image": "assets/wallpapers/wp_047.png"
+        },
+        {
+            "title": "Mimi 5",
+            "category": [
+                "Mimi"
+            ],
+            "characters": [
+                "hatsue",
+                "mimi"
+            ],
+            "type": "duo",
+            "image": "assets/wallpapers/wp_048.png"
+        },
+        {
+            "title": "Hatue 5",
+            "category": [
+                "Hatue"
+            ],
+            "characters": [
+                "luarie",
+                "hatsue"
+            ],
+            "type": "duo",
+            "image": "assets/wallpapers/wp_049.png"
+        },
+        {
+            "title": "Etc 5",
+            "category": [
+                "etc",
+                "cool"
+            ],
+            "characters": [
+                "mimi",
+                "luarie"
+            ],
+            "type": "duo",
+            "image": "assets/wallpapers/wp_050.png"
+        },
+        {
+            "title": "Cyber 6",
+            "category": [
+                "cyber",
+                "live"
+            ],
+            "characters": [
+                "hatsue",
+                "mimi",
+                "luarie"
+            ],
+            "type": "group",
+            "image": "assets/wallpapers/wp_051.png"
+        },
+        {
+            "title": "Cute 6",
+            "category": [
+                "cute",
+                "casual"
+            ],
+            "characters": [
+                "luarie",
+                "hatsue",
+                "mimi"
+            ],
+            "type": "group",
+            "image": "assets/wallpapers/wp_052.png"
+        },
+        {
+            "title": "Cool 6",
+            "category": [
+                "cool",
+                "comedy"
+            ],
+            "characters": [
+                "luarie",
+                "mimi"
+            ],
+            "type": "duo",
+            "image": "assets/wallpapers/wp_053.png"
+        },
+        {
+            "title": "Live 6",
+            "category": [
+                "live"
+            ],
+            "characters": [
+                "hatsue"
+            ],
+            "type": "solo",
+            "image": "assets/wallpapers/wp_054.png"
+        },
+        {
+            "title": "Casual 6",
+            "category": [
+                "casual",
+                "Mimi"
+            ],
+            "characters": [
+                "mimi"
+            ],
+            "type": "solo",
+            "image": "assets/wallpapers/wp_055.png"
+        },
+        {
+            "title": "Comedy 6",
+            "category": [
+                "comedy",
+                "Hatue"
+            ],
+            "characters": [
+                "mimi",
+                "hatsue",
+                "luarie"
+            ],
+            "type": "group",
+            "image": "assets/wallpapers/wp_056.png"
+        },
+        {
+            "title": "Luarie 6",
+            "category": [
+                "Luarie",
+                "etc"
+            ],
+            "characters": [
+                "mimi"
+            ],
+            "type": "solo",
+            "image": "assets/wallpapers/wp_057.png"
+        },
+        {
+            "title": "Mimi 6",
+            "category": [
+                "Mimi"
+            ],
+            "characters": [
+                "mimi"
+            ],
+            "type": "solo",
+            "image": "assets/wallpapers/wp_058.png"
+        },
+        {
+            "title": "Hatue 6",
+            "category": [
+                "Hatue",
+                "cute"
+            ],
+            "characters": [
+                "hatsue",
+                "luarie",
+                "mimi"
+            ],
+            "type": "group",
+            "image": "assets/wallpapers/wp_059.png"
+        },
+        {
+            "title": "Etc 6",
+            "category": [
+                "etc",
+                "cool"
+            ],
+            "characters": [
+                "luarie",
+                "hatsue",
+                "mimi"
+            ],
+            "type": "group",
+            "image": "assets/wallpapers/wp_060.png"
+        },
+        {
+            "title": "Cyber 7",
+            "category": [
+                "cyber",
+                "live"
+            ],
+            "characters": [
+                "hatsue"
+            ],
+            "type": "solo",
+            "image": "assets/wallpapers/wp_061.png"
+        },
+        {
+            "title": "Cute 7",
+            "category": [
+                "cute"
+            ],
+            "characters": [
+                "hatsue"
+            ],
+            "type": "solo",
+            "image": "assets/wallpapers/wp_062.png"
+        },
+        {
+            "title": "Cool 7",
+            "category": [
+                "cool",
+                "comedy"
+            ],
+            "characters": [
+                "luarie",
+                "hatsue"
+            ],
+            "type": "duo",
+            "image": "assets/wallpapers/wp_063.png"
+        },
+        {
+            "title": "Live 7",
+            "category": [
+                "live",
+                "Luarie"
+            ],
+            "characters": [
+                "luarie"
+            ],
+            "type": "solo",
+            "image": "assets/wallpapers/wp_064.png"
+        },
+        {
+            "title": "Casual 7",
+            "category": [
+                "casual",
+                "Mimi"
+            ],
+            "characters": [
+                "hatsue",
+                "luarie",
+                "mimi"
+            ],
+            "type": "group",
+            "image": "assets/wallpapers/wp_065.png"
+        },
+        {
+            "title": "Comedy 7",
+            "category": [
+                "comedy"
+            ],
+            "characters": [
+                "luarie",
+                "hatsue",
+                "mimi"
+            ],
+            "type": "group",
+            "image": "assets/wallpapers/wp_066.png"
+        },
+        {
+            "title": "Luarie 7",
+            "category": [
+                "Luarie"
+            ],
+            "characters": [
+                "hatsue",
+                "mimi",
+                "luarie"
+            ],
+            "type": "group",
+            "image": "assets/wallpapers/wp_067.png"
+        },
+        {
+            "title": "Mimi 7",
+            "category": [
+                "Mimi"
+            ],
+            "characters": [
+                "luarie",
+                "hatsue"
+            ],
+            "type": "duo",
+            "image": "assets/wallpapers/wp_068.png"
+        },
+        {
+            "title": "Hatue 7",
+            "category": [
+                "Hatue",
+                "cute"
+            ],
+            "characters": [
+                "luarie"
+            ],
+            "type": "solo",
+            "image": "assets/wallpapers/wp_069.png"
+        },
+        {
+            "title": "Etc 7",
+            "category": [
+                "etc",
+                "cool"
+            ],
+            "characters": [
+                "luarie",
+                "hatsue"
+            ],
+            "type": "duo",
+            "image": "assets/wallpapers/wp_070.png"
+        },
+        {
+            "title": "Cyber 8",
+            "category": [
+                "cyber",
+                "live"
+            ],
+            "characters": [
+                "luarie",
+                "mimi",
+                "hatsue"
+            ],
+            "type": "group",
+            "image": "assets/wallpapers/wp_071.png"
+        },
+        {
+            "title": "Cute 8",
+            "category": [
+                "cute"
+            ],
+            "characters": [
+                "hatsue"
+            ],
+            "type": "solo",
+            "image": "assets/wallpapers/wp_072.png"
+        },
+        {
+            "title": "Cool 8",
+            "category": [
+                "cool",
+                "comedy"
+            ],
+            "characters": [
+                "luarie"
+            ],
+            "type": "solo",
+            "image": "assets/wallpapers/wp_073.png"
+        },
+        {
+            "title": "Live 8",
+            "category": [
+                "live",
+                "Luarie"
+            ],
+            "characters": [
+                "luarie",
+                "hatsue",
+                "mimi"
+            ],
+            "type": "group",
+            "image": "assets/wallpapers/wp_074.png"
+        },
+        {
+            "title": "Casual 8",
+            "category": [
+                "casual"
+            ],
+            "characters": [
+                "luarie"
+            ],
+            "type": "solo",
+            "image": "assets/wallpapers/wp_075.png"
+        },
+        {
+            "title": "Comedy 8",
+            "category": [
+                "comedy"
+            ],
+            "characters": [
+                "mimi",
+                "hatsue"
+            ],
+            "type": "duo",
+            "image": "assets/wallpapers/wp_076.png"
+        },
+        {
+            "title": "Luarie 8",
+            "category": [
+                "Luarie",
+                "etc"
+            ],
+            "characters": [
+                "mimi",
+                "hatsue"
+            ],
+            "type": "duo",
+            "image": "assets/wallpapers/wp_077.png"
+        },
+        {
+            "title": "Mimi 8",
+            "category": [
+                "Mimi"
+            ],
+            "characters": [
+                "hatsue"
+            ],
+            "type": "solo",
+            "image": "assets/wallpapers/wp_078.png"
+        },
+        {
+            "title": "Hatue 8",
+            "category": [
+                "Hatue"
+            ],
+            "characters": [
+                "luarie"
+            ],
+            "type": "solo",
+            "image": "assets/wallpapers/wp_079.png"
+        },
+        {
+            "title": "Etc 8",
+            "category": [
+                "etc"
+            ],
+            "characters": [
+                "mimi",
+                "hatsue"
+            ],
+            "type": "duo",
+            "image": "assets/wallpapers/wp_080.png"
+        },
+        {
+            "title": "Cyber 9",
+            "category": [
+                "cyber"
+            ],
+            "characters": [
+                "hatsue"
+            ],
+            "type": "solo",
+            "image": "assets/wallpapers/wp_081.png"
+        },
+        {
+            "title": "Cute 9",
+            "category": [
+                "cute",
+                "casual"
+            ],
+            "characters": [
+                "luarie",
+                "hatsue",
+                "mimi"
+            ],
+            "type": "group",
+            "image": "assets/wallpapers/wp_082.png"
+        },
+        {
+            "title": "Cool 9",
+            "category": [
+                "cool"
+            ],
+            "characters": [
+                "mimi",
+                "hatsue",
+                "luarie"
+            ],
+            "type": "group",
+            "image": "assets/wallpapers/wp_083.png"
+        },
+        {
+            "title": "Live 9",
+            "category": [
+                "live",
+                "Luarie"
+            ],
+            "characters": [
+                "hatsue",
+                "luarie",
+                "mimi"
+            ],
+            "type": "group",
+            "image": "assets/wallpapers/wp_084.png"
+        },
+        {
+            "title": "Casual 9",
+            "category": [
+                "casual"
+            ],
+            "characters": [
+                "luarie",
+                "hatsue",
+                "mimi"
+            ],
+            "type": "group",
+            "image": "assets/wallpapers/wp_085.png"
+        },
+        {
+            "title": "Comedy 9",
+            "category": [
+                "comedy"
+            ],
+            "characters": [
+                "luarie",
+                "mimi",
+                "hatsue"
+            ],
+            "type": "group",
+            "image": "assets/wallpapers/wp_086.png"
+        },
+        {
+            "title": "Luarie 9",
+            "category": [
+                "Luarie"
+            ],
+            "characters": [
+                "luarie",
+                "hatsue"
+            ],
+            "type": "duo",
+            "image": "assets/wallpapers/wp_087.png"
+        },
+        {
+            "title": "Mimi 9",
+            "category": [
+                "Mimi"
+            ],
+            "characters": [
+                "luarie",
+                "hatsue",
+                "mimi"
+            ],
+            "type": "group",
+            "image": "assets/wallpapers/wp_088.png"
+        },
+        {
+            "title": "Hatue 9",
+            "category": [
+                "Hatue"
+            ],
+            "characters": [
+                "luarie",
+                "mimi",
+                "hatsue"
+            ],
+            "type": "group",
+            "image": "assets/wallpapers/wp_089.png"
+        },
+        {
+            "title": "Etc 9",
+            "category": [
+                "etc",
+                "cool"
+            ],
+            "characters": [
+                "luarie",
+                "mimi",
+                "hatsue"
+            ],
+            "type": "group",
+            "image": "assets/wallpapers/wp_090.png"
+        },
+        {
+            "title": "Cyber 10",
+            "category": [
+                "cyber"
+            ],
+            "characters": [
+                "hatsue",
+                "luarie",
+                "mimi"
+            ],
+            "type": "group",
+            "image": "assets/wallpapers/wp_091.png"
+        },
+        {
+            "title": "Cute 10",
+            "category": [
+                "cute"
+            ],
+            "characters": [
+                "luarie"
+            ],
+            "type": "solo",
+            "image": "assets/wallpapers/wp_092.png"
+        },
+        {
+            "title": "Cool 10",
+            "category": [
+                "cool"
+            ],
+            "characters": [
+                "hatsue"
+            ],
+            "type": "solo",
+            "image": "assets/wallpapers/wp_093.png"
+        },
+        {
+            "title": "Live 10",
+            "category": [
+                "live"
+            ],
+            "characters": [
+                "mimi"
+            ],
+            "type": "solo",
+            "image": "assets/wallpapers/wp_094.png"
+        },
+        {
+            "title": "Casual 10",
+            "category": [
+                "casual"
+            ],
+            "characters": [
+                "mimi"
+            ],
+            "type": "solo",
+            "image": "assets/wallpapers/wp_095.png"
+        },
+        {
+            "title": "Comedy 10",
+            "category": [
+                "comedy",
+                "Hatue"
+            ],
+            "characters": [
+                "mimi",
+                "luarie",
+                "hatsue"
+            ],
+            "type": "group",
+            "image": "assets/wallpapers/wp_096.png"
+        },
+        {
+            "title": "Luarie 10",
+            "category": [
+                "Luarie",
+                "etc"
+            ],
+            "characters": [
+                "luarie"
+            ],
+            "type": "solo",
+            "image": "assets/wallpapers/wp_097.png"
+        },
+        {
+            "title": "Mimi 10",
+            "category": [
+                "Mimi",
+                "cyber"
+            ],
+            "characters": [
+                "hatsue",
+                "luarie"
+            ],
+            "type": "duo",
+            "image": "assets/wallpapers/wp_098.png"
+        }
+    ],
 
   lives: [
     {
