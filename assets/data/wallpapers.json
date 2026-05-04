@@ -10,7 +10,7 @@
       "luarie"
     ],
     "type": "group",
-    "image": "assets/wallpapers/cyber/cyber-01.png"
+    "image": "assets/wallpapers/wp_001.png"
   },
   {
     "title": "Cute 1",
@@ -23,7 +23,7 @@
       "mimi"
     ],
     "type": "duo",
-    "image": "assets/wallpapers/cute/cute-01.png"
+    "image": "assets/wallpapers/wp_002.png"
   },
   {
     "title": "Cool 1",
@@ -37,7 +37,7 @@
       "mimi"
     ],
     "type": "group",
-    "image": "assets/wallpapers/cool/cool-01.png"
+    "image": "assets/wallpapers/wp_003.png"
   },
   {
     "title": "Live 1",
@@ -48,7 +48,7 @@
       "mimi"
     ],
     "type": "solo",
-    "image": "assets/wallpapers/live/live-01.png"
+    "image": "assets/wallpapers/wp_004.png"
   },
   {
     "title": "Casual 1",
@@ -59,7 +59,7 @@
       "luarie"
     ],
     "type": "solo",
-    "image": "assets/wallpapers/casual/casual-01.png"
+    "image": "assets/wallpapers/wp_005.png"
   },
   {
     "title": "Comedy 1",
@@ -72,7 +72,7 @@
       "mimi"
     ],
     "type": "group",
-    "image": "assets/wallpapers/comedy/comedy-01.png"
+    "image": "assets/wallpapers/wp_006.png"
   },
   {
     "title": "Luarie 1",
@@ -84,7 +84,7 @@
       "mimi"
     ],
     "type": "solo",
-    "image": "assets/wallpapers/Luarie/Luarie-01.jpg"
+    "image": "assets/wallpapers/wp_007.jpg"
   },
   {
     "title": "Mimi 1",
@@ -96,7 +96,7 @@
       "hatsue"
     ],
     "type": "solo",
-    "image": "assets/wallpapers/Mimi/Mimi-01.png"
+    "image": "assets/wallpapers/wp_008.png"
   },
   {
     "title": "Hatue 1",
@@ -109,7 +109,7 @@
       "hatsue"
     ],
     "type": "duo",
-    "image": "assets/wallpapers/Hatue/Hatue-01.jpg"
+    "image": "assets/wallpapers/wp_009.jpg"
   },
   {
     "title": "Etc 1",
@@ -121,7 +121,7 @@
       "luarie"
     ],
     "type": "solo",
-    "image": "assets/wallpapers/etc/etc-01.png"
+    "image": "assets/wallpapers/wp_010.png"
   },
   {
     "title": "Cyber 2",
@@ -134,7 +134,7 @@
       "hatsue"
     ],
     "type": "duo",
-    "image": "assets/wallpapers/cyber/cyber-02.jpg"
+    "image": "assets/wallpapers/wp_011.jpg"
   },
   {
     "title": "Cute 2",
@@ -148,7 +148,7 @@
       "mimi"
     ],
     "type": "group",
-    "image": "assets/wallpapers/cute/cute-02.png"
+    "image": "assets/wallpapers/wp_012.png"
   },
   {
     "title": "Cool 2",
@@ -160,7 +160,7 @@
       "luarie"
     ],
     "type": "solo",
-    "image": "assets/wallpapers/cool/cool-02.jpg"
+    "image": "assets/wallpapers/wp_013.jpg"
   },
   {
     "title": "Live 2",
@@ -172,7 +172,7 @@
       "mimi"
     ],
     "type": "solo",
-    "image": "assets/wallpapers/live/live-02.png"
+    "image": "assets/wallpapers/wp_014.png"
   },
   {
     "title": "Casual 2",
@@ -184,7 +184,7 @@
       "mimi"
     ],
     "type": "solo",
-    "image": "assets/wallpapers/casual/casual-02.png"
+    "image": "assets/wallpapers/wp_015.png"
   },
   {
     "title": "Comedy 2",
@@ -195,7 +195,7 @@
       "luarie"
     ],
     "type": "solo",
-    "image": "assets/wallpapers/comedy/comedy-02.png"
+    "image": "assets/wallpapers/wp_016.png"
   },
   {
     "title": "Luarie 2",
@@ -207,7 +207,7 @@
       "hatsue"
     ],
     "type": "solo",
-    "image": "assets/wallpapers/Luarie/Luarie-02.png"
+    "image": "assets/wallpapers/wp_017.png"
   },
   {
     "title": "Mimi 2",
@@ -220,7 +220,7 @@
       "luarie"
     ],
     "type": "group",
-    "image": "assets/wallpapers/Mimi/Mimi-02.png"
+    "image": "assets/wallpapers/wp_018.png"
   },
   {
     "title": "Hatue 2",
@@ -233,7 +233,7 @@
       "hatsue"
     ],
     "type": "duo",
-    "image": "assets/wallpapers/Hatue/Hatue-02.png"
+    "image": "assets/wallpapers/wp_019.png"
   },
   {
     "title": "Etc 2",
@@ -244,7 +244,7 @@
       "hatsue"
     ],
     "type": "solo",
-    "image": "assets/wallpapers/etc/etc-02.png"
+    "image": "assets/wallpapers/wp_020.png"
   },
   {
     "title": "Cyber 3",
@@ -257,7 +257,7 @@
       "mimi"
     ],
     "type": "group",
-    "image": "assets/wallpapers/cyber/cyber-03.png"
+    "image": "assets/wallpapers/wp_021.png"
   },
   {
     "title": "Cute 3",
@@ -268,7 +268,7 @@
       "luarie"
     ],
     "type": "solo",
-    "image": "assets/wallpapers/cute/cute-03.png"
+    "image": "assets/wallpapers/wp_022.png"
   },
   {
     "title": "Cool 3",
@@ -281,7 +281,7 @@
       "hatsue"
     ],
     "type": "group",
-    "image": "assets/wallpapers/cool/cool-03.png"
+    "image": "assets/wallpapers/wp_023.png"
   },
   {
     "title": "Live 3",
@@ -293,7 +293,7 @@
       "mimi"
     ],
     "type": "duo",
-    "image": "assets/wallpapers/live/live-03.png"
+    "image": "assets/wallpapers/wp_024.png"
   },
   {
     "title": "Casual 3",
@@ -306,7 +306,7 @@
       "mimi"
     ],
     "type": "group",
-    "image": "assets/wallpapers/casual/casual-03.png"
+    "image": "assets/wallpapers/wp_025.png"
   },
   {
     "title": "Comedy 3",
@@ -319,7 +319,7 @@
       "luarie"
     ],
     "type": "group",
-    "image": "assets/wallpapers/comedy/comedy-03.png"
+    "image": "assets/wallpapers/wp_026.png"
   },
   {
     "title": "Luarie 3",
@@ -333,7 +333,7 @@
       "mimi"
     ],
     "type": "group",
-    "image": "assets/wallpapers/Luarie/Luarie-03.png"
+    "image": "assets/wallpapers/wp_027.png"
   },
   {
     "title": "Mimi 3",
@@ -345,7 +345,7 @@
       "luarie"
     ],
     "type": "duo",
-    "image": "assets/wallpapers/Mimi/Mimi-03.png"
+    "image": "assets/wallpapers/wp_028.png"
   },
   {
     "title": "Hatue 3",
@@ -358,7 +358,7 @@
       "luarie"
     ],
     "type": "duo",
-    "image": "assets/wallpapers/Hatue/Hatue-03.png"
+    "image": "assets/wallpapers/wp_029.png"
   },
   {
     "title": "Etc 3",
@@ -370,7 +370,7 @@
       "mimi"
     ],
     "type": "duo",
-    "image": "assets/wallpapers/etc/etc-03.png"
+    "image": "assets/wallpapers/wp_030.png"
   },
   {
     "title": "Cyber 4",
@@ -382,7 +382,7 @@
       "luarie"
     ],
     "type": "solo",
-    "image": "assets/wallpapers/cyber/cyber-04.png"
+    "image": "assets/wallpapers/wp_031.png"
   },
   {
     "title": "Cute 4",
@@ -395,7 +395,7 @@
       "luarie"
     ],
     "type": "group",
-    "image": "assets/wallpapers/cute/cute-04.png"
+    "image": "assets/wallpapers/wp_032.png"
   },
   {
     "title": "Cool 4",
@@ -408,7 +408,7 @@
       "hatsue"
     ],
     "type": "duo",
-    "image": "assets/wallpapers/cool/cool-04.png"
+    "image": "assets/wallpapers/wp_033.png"
   },
   {
     "title": "Live 4",
@@ -420,7 +420,7 @@
       "luarie"
     ],
     "type": "duo",
-    "image": "assets/wallpapers/live/live-04.png"
+    "image": "assets/wallpapers/wp_034.png"
   },
   {
     "title": "Casual 4",
@@ -432,7 +432,7 @@
       "hatsue"
     ],
     "type": "solo",
-    "image": "assets/wallpapers/casual/casual-04.png"
+    "image": "assets/wallpapers/wp_035.png"
   },
   {
     "title": "Comedy 4",
@@ -444,7 +444,7 @@
       "hatsue"
     ],
     "type": "solo",
-    "image": "assets/wallpapers/comedy/comedy-04.png"
+    "image": "assets/wallpapers/wp_036.png"
   },
   {
     "title": "Luarie 4",
@@ -457,7 +457,7 @@
       "hatsue"
     ],
     "type": "duo",
-    "image": "assets/wallpapers/Luarie/Luarie-04.png"
+    "image": "assets/wallpapers/wp_037.png"
   },
   {
     "title": "Mimi 4",
@@ -470,7 +470,7 @@
       "luarie"
     ],
     "type": "group",
-    "image": "assets/wallpapers/Mimi/Mimi-04.png"
+    "image": "assets/wallpapers/wp_038.png"
   },
   {
     "title": "Hatue 4",
@@ -481,7 +481,7 @@
       "luarie"
     ],
     "type": "solo",
-    "image": "assets/wallpapers/Hatue/Hatue-04.png"
+    "image": "assets/wallpapers/wp_039.png"
   },
   {
     "title": "Etc 4",
@@ -494,7 +494,7 @@
       "hatsue"
     ],
     "type": "duo",
-    "image": "assets/wallpapers/etc/etc-04.png"
+    "image": "assets/wallpapers/wp_040.png"
   },
   {
     "title": "Cyber 5",
@@ -507,7 +507,7 @@
       "luarie"
     ],
     "type": "group",
-    "image": "assets/wallpapers/cyber/cyber-05.png"
+    "image": "assets/wallpapers/wp_041.png"
   },
   {
     "title": "Cute 5",
@@ -518,7 +518,7 @@
       "hatsue"
     ],
     "type": "solo",
-    "image": "assets/wallpapers/cute/cute-05.png"
+    "image": "assets/wallpapers/wp_042.png"
   },
   {
     "title": "Cool 5",
@@ -531,7 +531,7 @@
       "luarie"
     ],
     "type": "duo",
-    "image": "assets/wallpapers/cool/cool-05.png"
+    "image": "assets/wallpapers/wp_043.png"
   },
   {
     "title": "Live 5",
@@ -544,7 +544,7 @@
       "mimi"
     ],
     "type": "duo",
-    "image": "assets/wallpapers/live/live-05.png"
+    "image": "assets/wallpapers/wp_044.png"
   },
   {
     "title": "Casual 5",
@@ -556,7 +556,7 @@
       "mimi"
     ],
     "type": "duo",
-    "image": "assets/wallpapers/casual/casual-05.png"
+    "image": "assets/wallpapers/wp_045.png"
   },
   {
     "title": "Comedy 5",
@@ -569,7 +569,7 @@
       "hatsue"
     ],
     "type": "duo",
-    "image": "assets/wallpapers/comedy/comedy-05.png"
+    "image": "assets/wallpapers/wp_046.png"
   },
   {
     "title": "Luarie 5",
@@ -582,7 +582,7 @@
       "hatsue"
     ],
     "type": "group",
-    "image": "assets/wallpapers/Luarie/Luarie-05.png"
+    "image": "assets/wallpapers/wp_047.png"
   },
   {
     "title": "Mimi 5",
@@ -594,7 +594,7 @@
       "mimi"
     ],
     "type": "duo",
-    "image": "assets/wallpapers/Mimi/Mimi-05.png"
+    "image": "assets/wallpapers/wp_048.png"
   },
   {
     "title": "Hatue 5",
@@ -606,7 +606,7 @@
       "hatsue"
     ],
     "type": "duo",
-    "image": "assets/wallpapers/Hatue/Hatue-05.png"
+    "image": "assets/wallpapers/wp_049.png"
   },
   {
     "title": "Etc 5",
@@ -619,7 +619,7 @@
       "luarie"
     ],
     "type": "duo",
-    "image": "assets/wallpapers/etc/etc-05.png"
+    "image": "assets/wallpapers/wp_050.png"
   },
   {
     "title": "Cyber 6",
@@ -633,7 +633,7 @@
       "luarie"
     ],
     "type": "group",
-    "image": "assets/wallpapers/cyber/cyber-06.png"
+    "image": "assets/wallpapers/wp_051.png"
   },
   {
     "title": "Cute 6",
@@ -647,7 +647,7 @@
       "mimi"
     ],
     "type": "group",
-    "image": "assets/wallpapers/cute/cute-06.png"
+    "image": "assets/wallpapers/wp_052.png"
   },
   {
     "title": "Cool 6",
@@ -660,7 +660,7 @@
       "mimi"
     ],
     "type": "duo",
-    "image": "assets/wallpapers/cool/cool-06.png"
+    "image": "assets/wallpapers/wp_053.png"
   },
   {
     "title": "Live 6",
@@ -671,7 +671,7 @@
       "hatsue"
     ],
     "type": "solo",
-    "image": "assets/wallpapers/live/live-06.png"
+    "image": "assets/wallpapers/wp_054.png"
   },
   {
     "title": "Casual 6",
@@ -683,7 +683,7 @@
       "mimi"
     ],
     "type": "solo",
-    "image": "assets/wallpapers/casual/casual-06.png"
+    "image": "assets/wallpapers/wp_055.png"
   },
   {
     "title": "Comedy 6",
@@ -697,7 +697,7 @@
       "luarie"
     ],
     "type": "group",
-    "image": "assets/wallpapers/comedy/comedy-06.png"
+    "image": "assets/wallpapers/wp_056.png"
   },
   {
     "title": "Luarie 6",
@@ -709,7 +709,7 @@
       "mimi"
     ],
     "type": "solo",
-    "image": "assets/wallpapers/Luarie/Luarie-06.png"
+    "image": "assets/wallpapers/wp_057.png"
   },
   {
     "title": "Mimi 6",
@@ -720,7 +720,7 @@
       "mimi"
     ],
     "type": "solo",
-    "image": "assets/wallpapers/Mimi/Mimi-06.png"
+    "image": "assets/wallpapers/wp_058.png"
   },
   {
     "title": "Hatue 6",
@@ -734,7 +734,7 @@
       "mimi"
     ],
     "type": "group",
-    "image": "assets/wallpapers/Hatue/Hatue-06.png"
+    "image": "assets/wallpapers/wp_059.png"
   },
   {
     "title": "Etc 6",
@@ -748,7 +748,7 @@
       "mimi"
     ],
     "type": "group",
-    "image": "assets/wallpapers/etc/etc-06.png"
+    "image": "assets/wallpapers/wp_060.png"
   },
   {
     "title": "Cyber 7",
@@ -760,7 +760,7 @@
       "hatsue"
     ],
     "type": "solo",
-    "image": "assets/wallpapers/cyber/cyber-07.png"
+    "image": "assets/wallpapers/wp_061.png"
   },
   {
     "title": "Cute 7",
@@ -771,7 +771,7 @@
       "hatsue"
     ],
     "type": "solo",
-    "image": "assets/wallpapers/cute/cute-07.png"
+    "image": "assets/wallpapers/wp_062.png"
   },
   {
     "title": "Cool 7",
@@ -784,7 +784,7 @@
       "hatsue"
     ],
     "type": "duo",
-    "image": "assets/wallpapers/cool/cool-07.png"
+    "image": "assets/wallpapers/wp_063.png"
   },
   {
     "title": "Live 7",
@@ -796,7 +796,7 @@
       "luarie"
     ],
     "type": "solo",
-    "image": "assets/wallpapers/live/live-07.png"
+    "image": "assets/wallpapers/wp_064.png"
   },
   {
     "title": "Casual 7",
@@ -810,7 +810,7 @@
       "mimi"
     ],
     "type": "group",
-    "image": "assets/wallpapers/casual/casual-07.png"
+    "image": "assets/wallpapers/wp_065.png"
   },
   {
     "title": "Comedy 7",
@@ -823,7 +823,7 @@
       "mimi"
     ],
     "type": "group",
-    "image": "assets/wallpapers/comedy/comedy-07.png"
+    "image": "assets/wallpapers/wp_066.png"
   },
   {
     "title": "Luarie 7",
@@ -836,7 +836,7 @@
       "luarie"
     ],
     "type": "group",
-    "image": "assets/wallpapers/Luarie/Luarie-07.png"
+    "image": "assets/wallpapers/wp_067.png"
   },
   {
     "title": "Mimi 7",
@@ -848,7 +848,7 @@
       "hatsue"
     ],
     "type": "duo",
-    "image": "assets/wallpapers/Mimi/Mimi-07.png"
+    "image": "assets/wallpapers/wp_068.png"
   },
   {
     "title": "Hatue 7",
@@ -860,7 +860,7 @@
       "luarie"
     ],
     "type": "solo",
-    "image": "assets/wallpapers/Hatue/Hatue-07.png"
+    "image": "assets/wallpapers/wp_069.png"
   },
   {
     "title": "Etc 7",
@@ -873,7 +873,7 @@
       "hatsue"
     ],
     "type": "duo",
-    "image": "assets/wallpapers/etc/etc-07.png"
+    "image": "assets/wallpapers/wp_070.png"
   },
   {
     "title": "Cyber 8",
@@ -887,7 +887,7 @@
       "hatsue"
     ],
     "type": "group",
-    "image": "assets/wallpapers/cyber/cyber-08.png"
+    "image": "assets/wallpapers/wp_071.png"
   },
   {
     "title": "Cute 8",
@@ -898,7 +898,7 @@
       "hatsue"
     ],
     "type": "solo",
-    "image": "assets/wallpapers/cute/cute-08.png"
+    "image": "assets/wallpapers/wp_072.png"
   },
   {
     "title": "Cool 8",
@@ -910,7 +910,7 @@
       "luarie"
     ],
     "type": "solo",
-    "image": "assets/wallpapers/cool/cool-08.png"
+    "image": "assets/wallpapers/wp_073.png"
   },
   {
     "title": "Live 8",
@@ -924,7 +924,7 @@
       "mimi"
     ],
     "type": "group",
-    "image": "assets/wallpapers/live/live-08.png"
+    "image": "assets/wallpapers/wp_074.png"
   },
   {
     "title": "Casual 8",
@@ -935,7 +935,7 @@
       "luarie"
     ],
     "type": "solo",
-    "image": "assets/wallpapers/casual/casual-08.png"
+    "image": "assets/wallpapers/wp_075.png"
   },
   {
     "title": "Comedy 8",
@@ -947,7 +947,7 @@
       "hatsue"
     ],
     "type": "duo",
-    "image": "assets/wallpapers/comedy/comedy-08.png"
+    "image": "assets/wallpapers/wp_076.png"
   },
   {
     "title": "Luarie 8",
@@ -960,7 +960,7 @@
       "hatsue"
     ],
     "type": "duo",
-    "image": "assets/wallpapers/Luarie/Luarie-08.png"
+    "image": "assets/wallpapers/wp_077.png"
   },
   {
     "title": "Mimi 8",
@@ -971,7 +971,7 @@
       "hatsue"
     ],
     "type": "solo",
-    "image": "assets/wallpapers/Mimi/Mimi-08.png"
+    "image": "assets/wallpapers/wp_078.png"
   },
   {
     "title": "Hatue 8",
@@ -982,7 +982,7 @@
       "luarie"
     ],
     "type": "solo",
-    "image": "assets/wallpapers/Hatue/Hatue-08.png"
+    "image": "assets/wallpapers/wp_079.png"
   },
   {
     "title": "Etc 8",
@@ -994,7 +994,7 @@
       "hatsue"
     ],
     "type": "duo",
-    "image": "assets/wallpapers/etc/etc-08.png"
+    "image": "assets/wallpapers/wp_080.png"
   },
   {
     "title": "Cyber 9",
@@ -1005,7 +1005,7 @@
       "hatsue"
     ],
     "type": "solo",
-    "image": "assets/wallpapers/cyber/cyber-09.png"
+    "image": "assets/wallpapers/wp_081.png"
   },
   {
     "title": "Cute 9",
@@ -1019,7 +1019,7 @@
       "mimi"
     ],
     "type": "group",
-    "image": "assets/wallpapers/cute/cute-09.png"
+    "image": "assets/wallpapers/wp_082.png"
   },
   {
     "title": "Cool 9",
@@ -1032,7 +1032,7 @@
       "luarie"
     ],
     "type": "group",
-    "image": "assets/wallpapers/cool/cool-09.png"
+    "image": "assets/wallpapers/wp_083.png"
   },
   {
     "title": "Live 9",
@@ -1046,7 +1046,7 @@
       "mimi"
     ],
     "type": "group",
-    "image": "assets/wallpapers/live/live-09.png"
+    "image": "assets/wallpapers/wp_084.png"
   },
   {
     "title": "Casual 9",
@@ -1059,7 +1059,7 @@
       "mimi"
     ],
     "type": "group",
-    "image": "assets/wallpapers/casual/casual-09.png"
+    "image": "assets/wallpapers/wp_085.png"
   },
   {
     "title": "Comedy 9",
@@ -1072,7 +1072,7 @@
       "hatsue"
     ],
     "type": "group",
-    "image": "assets/wallpapers/comedy/comedy-09.png"
+    "image": "assets/wallpapers/wp_086.png"
   },
   {
     "title": "Luarie 9",
@@ -1084,7 +1084,7 @@
       "hatsue"
     ],
     "type": "duo",
-    "image": "assets/wallpapers/Luarie/Luarie-09.png"
+    "image": "assets/wallpapers/wp_087.png"
   },
   {
     "title": "Mimi 9",
@@ -1097,7 +1097,7 @@
       "mimi"
     ],
     "type": "group",
-    "image": "assets/wallpapers/Mimi/Mimi-09.png"
+    "image": "assets/wallpapers/wp_088.png"
   },
   {
     "title": "Hatue 9",
@@ -1110,7 +1110,7 @@
       "hatsue"
     ],
     "type": "group",
-    "image": "assets/wallpapers/Hatue/Hatue-09.png"
+    "image": "assets/wallpapers/wp_089.png"
   },
   {
     "title": "Etc 9",
@@ -1124,7 +1124,7 @@
       "hatsue"
     ],
     "type": "group",
-    "image": "assets/wallpapers/etc/etc-09.png"
+    "image": "assets/wallpapers/wp_090.png"
   },
   {
     "title": "Cyber 10",
@@ -1137,7 +1137,7 @@
       "mimi"
     ],
     "type": "group",
-    "image": "assets/wallpapers/cyber/cyber-10.png"
+    "image": "assets/wallpapers/wp_091.png"
   },
   {
     "title": "Cute 10",
@@ -1148,7 +1148,7 @@
       "luarie"
     ],
     "type": "solo",
-    "image": "assets/wallpapers/cute/cute-10.png"
+    "image": "assets/wallpapers/wp_092.png"
   },
   {
     "title": "Cool 10",
@@ -1159,7 +1159,7 @@
       "hatsue"
     ],
     "type": "solo",
-    "image": "assets/wallpapers/cool/cool-10.png"
+    "image": "assets/wallpapers/wp_093.png"
   },
   {
     "title": "Live 10",
@@ -1170,7 +1170,7 @@
       "mimi"
     ],
     "type": "solo",
-    "image": "assets/wallpapers/live/live-10.png"
+    "image": "assets/wallpapers/wp_094.png"
   },
   {
     "title": "Casual 10",
@@ -1181,7 +1181,7 @@
       "mimi"
     ],
     "type": "solo",
-    "image": "assets/wallpapers/casual/casual-10.png"
+    "image": "assets/wallpapers/wp_095.png"
   },
   {
     "title": "Comedy 10",
@@ -1195,7 +1195,7 @@
       "hatsue"
     ],
     "type": "group",
-    "image": "assets/wallpapers/comedy/comedy-10.png"
+    "image": "assets/wallpapers/wp_096.png"
   },
   {
     "title": "Luarie 10",
@@ -1207,7 +1207,7 @@
       "luarie"
     ],
     "type": "solo",
-    "image": "assets/wallpapers/Luarie/Luarie-10.png"
+    "image": "assets/wallpapers/wp_097.png"
   },
   {
     "title": "Mimi 10",
@@ -1220,6 +1220,6 @@
       "luarie"
     ],
     "type": "duo",
-    "image": "assets/wallpapers/Mimi/Mimi-10.png"
+    "image": "assets/wallpapers/wp_098.png"
   }
 ]
