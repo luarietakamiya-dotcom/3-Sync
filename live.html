@@ -3,11 +3,10 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>3-Sync | Wallpapers</title>
+  <title>3-Sync | Live</title>
   <link rel="stylesheet" href="./style.css">
 </head>
 <body>
-  <!-- 壁紙専用ページ。壁紙追加は site-data.js の wallpapers を編集 -->
   <div class="site-bg" aria-hidden="true"></div>
 
   <header class="site-header">
@@ -35,27 +34,12 @@
 
   <main>
     <section class="wallpage-hero panel">
-      <p class="eyebrow">3-Sync Wallpaper Library</p>
-      <h1>Wallpapers</h1>
-      <p>壁紙を増やせる専用ページです。画像リストは site-data.js で管理します。</p>
+      <p class="eyebrow">3-Sync Event Information</p>
+      <h1>Live</h1>
+      <p>ライブやイベントの予定一覧です。スケジュールの追加は site-data.js で管理します。</p>
     </section>
 
-    <div class="filter-row">
-      <button class="chip active" data-filter="all">All</button>
-      <button class="chip" data-filter="luarie">Luarie</button>
-      <button class="chip" data-filter="mimi">Mimi</button>
-      <button class="chip" data-filter="hatsue">Hatsue</button>
-      <button class="chip" data-filter="cyber">Cyber</button>
-      <button class="chip" data-filter="cute">Cute</button>
-      <button class="chip" data-filter="cool">Cool</button>
-      <button class="chip" data-filter="live">Live</button>
-      <button class="chip" data-filter="casual">Casual</button>
-      <button class="chip" data-filter="comedy">Comedy</button>
-      <button class="chip" data-filter="etc">Etc</button>
-      <button class="chip" data-filter="logo">Logo</button>
-    </div>
-
-    <div class="gallery-grid" id="wallpaperGallery"></div>
+    <div class="live-grid" id="livePageGrid"></div>
   </main>
 
   <footer class="site-footer">

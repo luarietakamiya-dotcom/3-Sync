@@ -39,7 +39,21 @@ toggle?.addEventListener("click", () => {
 /* News */
 const newsGrid = document.getElementById("newsGrid");
 if (newsGrid) {
-  newsGrid.innerHTML = (DATA.news || []).map((item) => `
+  newsGrid.innerHTML = (DATA.news || []).slice(0, 3).map((item) => `
+    <article class="news-card">
+      <img src="${escapeHTML(item.image)}" alt="${escapeHTML(item.title)}">
+      <div class="news-body">
+        <span>${escapeHTML(item.tag)}</span>
+        <h3>${escapeHTML(item.title)}</h3>
+        <time>${escapeHTML(item.date)}</time>
+      </div>
+    </article>
+  `).join("");
+}
+
+const newsPageGrid = document.getElementById("newsPageGrid");
+if (newsPageGrid) {
+  newsPageGrid.innerHTML = (DATA.news || []).map((item) => `
     <article class="news-card">
       <img src="${escapeHTML(item.image)}" alt="${escapeHTML(item.title)}">
       <div class="news-body">
@@ -54,7 +68,21 @@ if (newsGrid) {
 /* Members */
 const memberGrid = document.getElementById("memberGrid");
 if (memberGrid) {
-  memberGrid.innerHTML = (DATA.members || []).map((member) => `
+  memberGrid.innerHTML = (DATA.members || []).slice(0, 3).map((member) => `
+    <article class="member-card ${escapeHTML(member.color)}">
+      <img src="${escapeHTML(member.image)}" alt="${escapeHTML(member.name)}">
+      <div class="member-body">
+        <h3>${escapeHTML(member.name)}</h3>
+        <p class="member-jp">${escapeHTML(member.jpName)}</p>
+        <p>${escapeHTML(member.role)}</p>
+      </div>
+    </article>
+  `).join("");
+}
+
+const membersPageGrid = document.getElementById("membersPageGrid");
+if (membersPageGrid) {
+  membersPageGrid.innerHTML = (DATA.members || []).map((member) => `
     <article class="member-card ${escapeHTML(member.color)}">
       <img src="${escapeHTML(member.image)}" alt="${escapeHTML(member.name)}">
       <div class="member-body">
@@ -69,7 +97,23 @@ if (memberGrid) {
 /* Live */
 const liveGrid = document.getElementById("liveGrid");
 if (liveGrid) {
-  liveGrid.innerHTML = (DATA.lives || []).map((live) => `
+  liveGrid.innerHTML = (DATA.lives || []).slice(0, 3).map((live) => `
+    <article class="live-card">
+      <div class="date-box">
+        <strong>${escapeHTML(live.date)}</strong>
+        <span>${escapeHTML(live.day)}</span>
+      </div>
+      <div>
+        <h3>${escapeHTML(live.title)}</h3>
+        <p>${escapeHTML(live.place)}</p>
+      </div>
+    </article>
+  `).join("");
+}
+
+const livePageGrid = document.getElementById("livePageGrid");
+if (livePageGrid) {
+  livePageGrid.innerHTML = (DATA.lives || []).map((live) => `
     <article class="live-card">
       <div class="date-box">
         <strong>${escapeHTML(live.date)}</strong>
