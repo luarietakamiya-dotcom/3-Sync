@@ -133,7 +133,7 @@ main{
 }
 .content-section{
   display:grid;
-  grid-template-columns:150px 1fr;
+  grid-template-columns:240px 1fr;
   gap:24px;
   padding:22px 0;
   border-bottom:1px solid var(--line-soft);
