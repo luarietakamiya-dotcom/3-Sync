@@ -183,9 +183,18 @@ textarea{width:100%;box-sizing:border-box;min-height:80px;font-family:ui-monospa
   .top{flex-direction:row;align-items:center;gap:12px;padding-block:4px}
   .top .hud{flex:0 0 auto;gap:16px}
   .top .tabs{flex:1 1 auto;max-width:520px;margin-left:auto}
-  .mainlay{display:grid;grid-template-columns:minmax(0,var(--stw)) minmax(250px,1fr);gap:12px;align-items:start;
-    --stw:min(calc(100vw - 330px),calc((100vh - 112px) * 16 / 9))}
-  @supports (height:100dvh){.mainlay{--stw:min(calc(100vw - 330px),calc((100dvh - 112px) * 16 / 9))}}
+  .mainlay{display:grid;grid-template-columns:minmax(0,var(--stw)) minmax(230px,1fr);gap:12px;align-items:start;
+    --stw:min(calc(100vw - 280px),calc((100vh - 104px) * 16 / 9))}
+  @supports (height:100dvh){.mainlay{--stw:min(calc(100vw - 280px),calc((100dvh - 104px) * 16 / 9))}}
+  /* side panel is narrow here: gauge on its own row, the two buttons side by side */
+  .divebar{grid-template-columns:1fr 1fr}.divebar>div:first-child{grid-column:1/-1}.divebar .btn{white-space:nowrap}
+  /* skill tab: tree on the left filling the height, details and builds on the right */
+  #p-skill{display:grid;grid-template-columns:minmax(0,1fr) minmax(240px,34%);column-gap:12px;align-items:start}
+  #p-skill>#vsw1,#p-skill>.sktop{grid-column:1/-1}
+  #p-skill>.treewrap{grid-column:1;grid-row:3/span 3;height:max(200px,calc(100vh - 150px));margin:0;position:sticky;top:60px}
+  @supports (height:100dvh){#p-skill>.treewrap{height:max(200px,calc(100dvh - 150px))}}
+  #p-skill>#skdet,#p-skill>#builds,#p-skill>.card{grid-column:2}
+  .viewsw{margin-bottom:6px}.sktop{margin-bottom:6px}
   .sidecol{max-height:calc(100vh - 80px);overflow-y:auto;position:sticky;top:60px;padding-right:2px}
   @supports (height:100dvh){.sidecol{max-height:calc(100dvh - 80px)}}
   .btn{min-height:40px}.btn.sm{min-height:36px}
@@ -697,9 +706,15 @@ function edgePoint(){const s=Math.floor(Math.random()*4),r=Math.random();
   return s===0?[r*W,40]:s===1?[W+16,60+r*(H-60)]:s===2?[r*W,H+16]:[-16,60+r*(H-60)];}
 function pickPool(Z){const fi=floorIn(FLOOR),pool=Z.enemyPool.filter(p=>ENEMIES[p.id]&&(!p.minFloor||fi>=p.minFloor));
   let t=pool.reduce((a,p)=>a+(p.weight||1),0),r=Math.random()*t;for(const p of pool){if((r-=(p.weight||1))<0)return p.id;}return pool[0].id;}
-const scaleOf=f=>({hp:Math.pow(1.2,f-1),atk:Math.pow(1.11,f-1),xp:Math.pow(1.14,f-1)});
+// enemy strength: zone base × growth per floor inside the zone (maps.json zones[].scaling). Pure function, also used by tools/balance-sim.mjs
+function scaleFor(f,zones,boss){
+  const zi=Math.min(zones.length-1,Math.floor((f-1)/10)),c=zones[zi].scaling||{},fi=((f-1)%10)+1,loop=Math.max(0,Math.floor((f-1)/10)-(zones.length-1));
+  return{hp:(c.hp||1)*Math.pow(c.hpPerFloor||1.1,fi-1)*Math.pow(2,loop)*(boss?(c.bossHp||1):1),
+    atk:(c.atk||1)*Math.pow(c.atkPerFloor||1.05,fi-1)*Math.pow(1.4,loop),xp:Math.pow(1.14,f-1)};
+}
+const scaleOf=(f,boss)=>scaleFor(f,ZONES,boss);
 function mkEnemy(id,x,y){
-  const d=ENEMIES[id]||Object.values(ENEMIES)[0],sc=scaleOf(FLOOR),p=d.params||{};
+  const d=ENEMIES[id]||Object.values(ENEMIES)[0],sc=scaleOf(FLOOR,!!d.boss),p=d.params||{};
   const e={x,y,t:d.id,def:d,p,ai:d.aiType,boss:!!d.boss,sd:Math.random()*1000,col:d.color||"#ff7ac8",hue:hueOf(d.color),slow:0,stun:0,vx_:0,vy_:0,
     r:d.r||12,hp:d.hp*sc.hp,mhp:d.hp*sc.hp,dmg:d.atk*sc.atk,spd:d.moveSpeed,cd:rnd(0.6,1.6),ct:p.cd?rnd(1,p.cd):2.5,charge:0,wind:0,gen:0,
     wa:Math.random()*7,off:Math.random()*3,buffT:0,fuse:0,kids:0};
@@ -1220,7 +1235,7 @@ function drawEnemy(e){
   if((e.wind>0)&&e.ca!==undefined){ctx.strokeStyle="rgba(255,60,90,.45)";ctx.lineWidth=e.r;ctx.beginPath();ctx.moveTo(x,y);ctx.lineTo(x+Math.cos(e.ca)*170,y+Math.sin(e.ca)*170);ctx.stroke();ctx.lineWidth=1;}
   if(e.fuse>0){ctx.strokeStyle="rgba(255,140,60,.7)";ctx.beginPath();ctx.ellipse(x,y,e.p.radius||48,(e.p.radius||48)*0.7,0,0,7);ctx.stroke();}
   ctx.save();if(!solid)ctx.globalAlpha=0.22;
-  const image=enemySprite(e.def.spriteId);
+  const image=enemySprite(e.def.id)||enemySprite(e.def.spriteId);
   let top;
   if(image){
     // Source foot anchor (32,56); keep the entity's world-space feet at (x,y).
@@ -1384,7 +1399,7 @@ function claim(m){
 let tab="main",dirty=true,selItem=null,VIEW="luarie";
 const markDirty=()=>{dirty=true;bumpStats();};
 function syncModeUI(){
-  $("townUI").hidden=MODE!=="town";$("diveUI").hidden=MODE!=="dive";
+  $("townUI").hidden=MODE!=="town";$("diveUI").hidden=MODE!=="dive";const sc=document.querySelector(".sidecol");if(sc)sc.scrollTop=0;
   $("help").textContent=MODE==="town"?"建物をタップすると歩いて入ります。施設に入ると、店内の様子が街の上に表示されます。歪みゲートから特殊空間へ潜り、ノイズを倒して素材を集めよう。持ち帰った素材は倉庫に貯まり、怪しい店で売ったり、依頼の納品に使える。":
     "敵をタップで攻撃（指をすべらせると狙いを次々変更）。何もない所をタップで移動。各エリアの10層目にボス（3人で戦う）。やられると持ち帰り中の素材を半分なくす。";
 }
