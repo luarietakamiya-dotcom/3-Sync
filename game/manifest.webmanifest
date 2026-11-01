@@ -1,0 +1,14 @@
+{
+  "name": "3-Sync ノイズダイブ",
+  "short_name": "ノイズダイブ",
+  "start_url": "./",
+  "scope": "./",
+  "display": "fullscreen",
+  "orientation": "landscape",
+  "background_color": "#0e0c15",
+  "theme_color": "#0e0c15",
+  "icons": [
+    {"src": "icons/app/icon-192.png", "sizes": "192x192", "type": "image/png"},
+    {"src": "icons/app/icon-512.png", "sizes": "512x512", "type": "image/png"}
+  ]
+}

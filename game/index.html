@@ -6,6 +6,10 @@
 <meta name="theme-color" content="#0e0c15">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="ノイズダイブ">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="icons/app/icon-180.png">
 <style>
 :root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
 body{margin:0;font-size:14px;-webkit-text-size-adjust:100%}
@@ -201,6 +205,25 @@ textarea{width:100%;box-sizing:border-box;min-height:80px;font-family:ui-monospa
   .facgrid{grid-template-columns:repeat(auto-fill,minmax(110px,1fr))}
 }
 @media (max-width:420px){.tree{gap:6px}.node{padding:6px}}
+.fullbtn{min-height:0!important;padding:4px 9px;font-size:1rem;line-height:1}
+.divebar .btn.sm[aria-pressed="true"]{border-color:var(--cyan);color:var(--cyan)}
+/* landscape phones: every pixel of height goes to the stage */
+@media (orientation:landscape) and (max-height:520px){
+  .wrap{padding-block:4px 8px;gap:4px}
+  .top{padding-block:2px;gap:8px}
+  .money{font-size:1.25rem}.money small{display:none}
+  .lv{font-size:.72rem}.lv b{font-size:.9rem}.bar{width:90px;margin-top:2px}
+  .tabs{padding:3px}.tabs button{padding:5px 2px;font-size:.78rem}
+  .mainlay{grid-template-columns:minmax(0,var(--stw)) minmax(200px,1fr);gap:8px;
+    --stw:min(calc(100vw - 236px),calc((100vh - 78px) * 16 / 9))}
+  @supports (height:100dvh){.mainlay{--stw:min(calc(100vw - 236px),calc((100dvh - 78px) * 16 / 9))}}
+  .stagecol{gap:2px}.locbar{font-size:.7rem}
+  .sidecol{top:44px;max-height:calc(100vh - 52px)}
+  @supports (height:100dvh){.sidecol{max-height:calc(100dvh - 52px)}}
+  .sidecol .stats,#help{display:none}
+  .card{padding:9px;gap:8px}
+  .divebar{gap:6px}.divebar .btn{min-height:38px;padding:6px 8px;font-size:.8rem}
+}
 @media (prefers-reduced-motion:reduce){.toast{transition:none}.syncbtn.ready{animation:none}}
 </style>
 </head>
@@ -211,7 +234,7 @@ textarea{width:100%;box-sizing:border-box;min-height:80px;font-family:ui-monospa
   <div class="top">
     <div class="hud">
       <div class="money">¥<span id="num">0</span><small id="rateTop"></small></div>
-      <div class="lv"><span id="cname">ルアリエ</span> <b id="lv">Lv1</b> ・ SP <b id="sp">0</b><div class="bar"><i id="xpbar"></i></div></div>
+      <button class="btn sm fullbtn" id="bFull" hidden aria-label="全画面">⛶</button><div class="lv"><span id="cname">ルアリエ</span> <b id="lv">Lv1</b> ・ SP <b id="sp">0</b><div class="bar"><i id="xpbar"></i></div></div>
     </div>
     <div class="tabs" role="tablist">
       <button role="tab" data-t="main" aria-selected="true">街・探索</button>
@@ -237,6 +260,8 @@ textarea{width:100%;box-sizing:border-box;min-height:80px;font-family:ui-monospa
         <div><div class="note" style="margin-bottom:4px">同期ゲージ</div><div class="sync"><i id="syncbar"></i></div></div>
         <button class="btn syncbtn" id="bSync" disabled>3-Sync</button>
         <button class="btn" id="bYog">ヨーグルト ×<span id="yogn">0</span></button>
+        <button class="btn sm" id="bAuto" aria-pressed="false">オート攻撃</button>
+        <button class="btn sm" id="bZoom" aria-pressed="false">拡大表示</button>
       </div>
       <div class="bag" id="bag"></div>
       <div class="mis" id="dmis"></div>
@@ -461,7 +486,7 @@ const FREECLIENTS=["迷子の子ども","近所のおばあちゃん","野良猫
 
 const freshCh=()=>({lv:1,xp:0,eq:{w:null,h:null,c:null},nodes:{},builds:Array.from({length:5},(_,i)=>({nm:"ビルド"+(i+1),nodes:null}))});
 const fresh=()=>({n:0,total:0,own:{},ch:{luarie:freshCh(),ht:freshCh(),mimi:freshCh()},inv:[],best:1,uid:1,mid:1,char:"luarie",
-  bag:{},mats:{},yog:1,board:[],active:[],last:Date.now(),intro:false,ver:2});
+  bag:{},mats:{},yog:1,board:[],active:[],auto:null,zoom:null,last:Date.now(),intro:false,ver:2});
 let S=fresh();
 
 /* ================= helpers ================= */
@@ -672,7 +697,7 @@ function drawTown(){
   }
   if(P.dest){ctx.strokeStyle=C.cyan;ctx.lineWidth=1.5;ctx.beginPath();ctx.ellipse(P.dest.x,P.dest.y,6,2.6,0,0,7);ctx.stroke();}
   if(MARK){ctx.strokeStyle=C[MARK.c];ctx.globalAlpha=MARK.t*2;ctx.lineWidth=2;const r=16-MARK.t*10;ctx.beginPath();ctx.ellipse(MARK.x,MARK.y,r,r*0.45,0,0,7);ctx.stroke();ctx.globalAlpha=1;}
-  drawUnit(P);
+  {const k=1.45;ctx.save();ctx.translate(P.x,P.y);ctx.scale(k,k);ctx.translate(-P.x,-P.y);drawUnit(P);ctx.restore();} // town: draw the character larger
   {ctx.strokeStyle="rgba(170,230,200,.18)";ctx.lineWidth=1;ctx.beginPath();
     for(const r of RAIN){const y=(r.y+G.t*r.s)%H,x=(r.x+y*0.18)%W;ctx.moveTo(x,y);ctx.lineTo(x+r.l*0.18,y+r.l);}ctx.stroke();}
 }
@@ -995,7 +1020,13 @@ function useYogurt(){
   S.yog--;const st=statsOf(P.cid);P.hp=Math.min(st.hp,P.hp+st.hp*0.5);P.db={};G.sync=Math.min(100,G.sync+50);
   FX.push({x:P.x,y:P.y-70,txt:"粒子補充！",c:"ok",t:1});markDirty();
 }
-function canvasPoint(e){const r=cv.getBoundingClientRect();return[(e.clientX-r.left)/r.width*W,(e.clientY-r.top)/r.height*H];}
+// camera: in dives the view can zoom in and follow the player (S.zoom). Screen point -> world point.
+const CAM={x:W/2,y:H/2,z:1};
+function updateCam(){const z=MODE==="dive"&&S.zoom?1.4:1;CAM.z=z;const hw=W/(2*z),hh=H/(2*z);
+  CAM.x=Math.max(hw,Math.min(W-hw,P?P.x:W/2));CAM.y=Math.max(hh,Math.min(H-hh,P?P.y-24:H/2));}
+function applyCam(){ctx.translate(W/2,H/2);ctx.scale(CAM.z,CAM.z);ctx.translate(-CAM.x,-CAM.y);}
+function canvasPoint(e){const r=cv.getBoundingClientRect(),sx=(e.clientX-r.left)/r.width*W,sy=(e.clientY-r.top)/r.height*H;
+  return MODE==="dive"?[CAM.x+(sx-W/2)/CAM.z,CAM.y+(sy-H/2)/CAM.z]:[sx,sy];}
 function confusePt(x,y){return hasDb("confuse")?[Math.max(12,Math.min(W-12,2*P.x-x)),Math.max(62,Math.min(H-6,2*P.y-y))]:[x,y];}
 function enemyAt(x,y,rad){let best=null,bd=1e9;for(const en of EN){const off=en.boss?18:en.def&&en.def.fly?22:8;const d=Math.min(Math.hypot(en.x-x,en.y-off-y),Math.hypot(en.x-x,en.y-y))-en.r;if(d<rad&&d<bd){bd=d;best=en;}}return best;}
 cv.addEventListener("pointerdown",e=>{
@@ -1005,14 +1036,15 @@ cv.addEventListener("pointerdown",e=>{
   if(hasDb("stun"))return;
   try{cv.setPointerCapture(e.pointerId)}catch(_){}
   DRAG={x,y,id:e.pointerId};
-  const best=enemyAt(x,y,28);
+  const touch=e.pointerType!=="mouse";
+  const best=enemyAt(x,y,(touch?46:28)/CAM.z);
   if(best){P.target=best;P.dest=null;MARK={x:best.x,y:best.y,t:0.4,c:"danger"};}
   else{const [mx,my]=confusePt(x,y);P.target=null;P.dest={x:mx,y:my};MARK={x:mx,y:my,t:0.5,c:"cyan"};}
 });
 cv.addEventListener("pointermove",e=>{
   if(MODE!=="dive"||!DRAG||e.pointerId!==DRAG.id||G.state!=="fight")return;
   e.preventDefault();const [x,y]=canvasPoint(e);DRAG.x=x;DRAG.y=y;
-  const hit=enemyAt(x,y,20);
+  const hit=enemyAt(x,y,(e.pointerType!=="mouse"?34:20)/CAM.z);
   if(hit){if(hit!==P.target){P.target=hit;P.dest=null;MARK={x:hit.x,y:hit.y,t:0.4,c:"danger"};}}
   else if(!P.target){const [mx,my]=confusePt(x,y);P.dest={x:mx,y:my};}
 });
@@ -1044,6 +1076,7 @@ function updateUnit(u,dt){
       else if(u.cd<=0&&hollowSolid(t)){fire(u,t);u.cd=st.cd*1.15;}}
     else{const d=Math.hypot(P.x-u.x,P.y-u.y);if(d>60)moveUnit(u,Math.atan2(P.y-u.y,P.x-u.x),sp*0.8,dt);}
   }else{
+    if(S.auto&&!u.target&&!u.dest&&!hasDb("stun")){const n=nearestEnemy(u);if(n)u.target=n;} // オート攻撃: pick the nearest enemy when idle
     if(hasDb("stun")){}
     else if(u.target){const t=u.target,d=Math.hypot(t.x-u.x,(t.y-u.y)/0.55);
       if(d>st.range)moveUnit(u,Math.atan2(t.y-u.y,t.x-u.x)+(hasDb("confuse")?Math.PI:0),sp,dt);
@@ -1297,6 +1330,7 @@ function drawUnit(u){
 }
 function drawDive(){
   const R=BGS[zoneOf(FLOOR).backgroundId]||Object.values(BGS)[0],g0=distortion(),fi=floorIn(FLOOR);
+  updateCam();ctx.save();if(CAM.z!==1){ctx.fillStyle=R.ground;ctx.fillRect(0,0,W,H);}applyCam();
   const g=ctx.createLinearGradient(0,0,0,70);g.addColorStop(0,R.sky[0]);g.addColorStop(1,R.sky[1]);ctx.fillStyle=g;ctx.fillRect(0,0,W,70);
   // backdrop skyline of the region, washed toward monochrome
   for(const b of SKYLINE){const h=b.h*0.35,y0=62-h;ctx.fillStyle="#0c0a12";ctx.fillRect(b.x,y0,b.w,h+8);
@@ -1326,6 +1360,7 @@ function drawDive(){
   if(R.rain){ctx.strokeStyle="rgba(170,230,200,.16)";ctx.beginPath();for(const r of RAIN){const y=(r.y+G.t*r.s)%H,x=(r.x+y*0.18)%W;ctx.moveTo(x,y);ctx.lineTo(x+r.l*0.18,y+r.l);}ctx.stroke();}
   if(R.fog){ctx.fillStyle=`rgba(200,210,160,${0.06+Math.sin(G.t*0.7)*0.03})`;ctx.fillRect(0,0,W,H);}
   if(hasDb("blind")){const gg=ctx.createRadialGradient(P.x,P.y-28,26,P.x,P.y-28,82);gg.addColorStop(0,"rgba(6,5,12,0)");gg.addColorStop(1,"rgba(6,5,12,.96)");ctx.fillStyle=gg;ctx.fillRect(0,0,W,H);}
+  ctx.restore();
   // 歪崩壊: the deeper you go, the more the screen tears
   if(Math.random()<g0*0.55){const n=1+Math.floor(g0*4);for(let i=0;i<n;i++){const y=Math.random()*H,h=3+Math.random()*14,dx=(Math.random()-.5)*36*g0;ctx.drawImage(cv,0,y*2,W*2,h*2,dx,y,W,h);}}
   if(Math.random()<g0*0.3){for(let i=0;i<Math.floor(g0*10);i++){ctx.fillStyle=pick(["rgba(255,79,168,.35)","rgba(63,224,255,.35)","rgba(255,255,255,.25)"]);ctx.fillRect(Math.random()*W,Math.random()*H,4+Math.random()*30,2+Math.random()*4);}}
@@ -1346,7 +1381,7 @@ function drawDive(){
   ctx.fillStyle=C.ink;ctx.font="700 10px sans-serif";ctx.fillText(`HP ${fmt(P.hp)}/${fmt(st.hp)}`,136,18);
   let ay=44;for(const a of ALLIES){const sa=statsOf(a.cid);ctx.fillStyle="#2e2942";ctx.fillRect(10,ay,70,5);ctx.fillStyle=a.down?C.danger:CHARS[a.cid].col;ctx.fillRect(10,ay,70*Math.max(0,a.hp)/sa.hp,5);
     ctx.fillStyle=C.muted;ctx.font="9px sans-serif";ctx.fillText(CHARS[a.cid].name+(a.down?"（ダウン）":""),84,ay+5);ay+=10;}
-  ctx.textAlign="center";for(const f of FX){ctx.globalAlpha=Math.min(1,f.t*2);ctx.fillStyle=C[f.c]||C.ink;ctx.font=f.big?"26px DotGothic16, monospace":f.big===0?"13px DotGothic16, monospace":"700 12px sans-serif";ctx.fillText(f.txt,f.x,f.y-14);}ctx.globalAlpha=1;ctx.textAlign="left";
+  ctx.save();applyCam();ctx.textAlign="center";for(const f of FX){ctx.globalAlpha=Math.min(1,f.t*2);ctx.fillStyle=C[f.c]||C.ink;ctx.font=f.big?"26px DotGothic16, monospace":f.big===0?"13px DotGothic16, monospace":"700 12px sans-serif";ctx.fillText(f.txt,f.x,f.y-14);}ctx.globalAlpha=1;ctx.textAlign="left";ctx.restore();
 }
 function drawSyncFx(){
   const t=G.syncT;
@@ -1690,7 +1725,7 @@ function sanMis(m){if(!m||!MISTYPES.includes(m.type))return null;return{id:+m.id
 function sanitize(o){
   const s=fresh();if(!o||typeof o!=="object")return s;
   s.n=Math.max(0,+o.n||0);s.total=Math.max(0,+o.total||0);s.best=Math.max(1,Math.floor(+o.best||1));s.uid=Math.max(1,Math.floor(+o.uid||1));s.mid=Math.max(1,Math.floor(+o.mid||1));
-  s.last=+o.last||Date.now();s.char=CIDS.includes(o.char)?o.char:"luarie";s.yog=Math.min(3,Math.max(0,Math.floor(+o.yog||0)));s.intro=!!o.intro;
+  s.last=+o.last||Date.now();s.char=CIDS.includes(o.char)?o.char:"luarie";s.yog=Math.min(3,Math.max(0,Math.floor(+o.yog||0)));s.auto=typeof o.auto==="boolean"?o.auto:null;s.zoom=typeof o.zoom==="boolean"?o.zoom:null;s.intro=!!o.intro;
   for(const p of PRODUCERS)s.own[p.id]=Math.max(0,Math.floor(+(o.own||{})[p.id]||0));
   if(Array.isArray(o.inv))s.inv=o.inv.filter(i=>i&&SLOTS[i.slot]&&RAR[i.rar]&&i.st).slice(0,INV_MAX).map(i=>({id:+i.id,slot:i.slot,rar:i.rar,name:String(i.name).slice(0,30),sp:GSP[i.sp]?i.sp:undefined,lvl:Math.max(1,+i.lvl||1),plus:Math.min(10,Math.max(0,+i.plus||0)),st:Object.fromEntries(Object.entries(i.st).filter(([k])=>STN[k]).map(([k,v])=>[k,+v||0]))}));
   if(o.ch){for(const c of CIDS)s.ch[c]=sanCh(o.ch[c],c);}
@@ -1718,6 +1753,12 @@ document.querySelectorAll(".tabs button").forEach(b=>b.onclick=()=>{
 $("p-main").addEventListener("contextmenu",e=>e.preventDefault());
 document.addEventListener("selectstart",e=>{if(e.target.tagName!=="TEXTAREA")e.preventDefault();});
 $("bSync").onclick=triggerSync;$("bYog").onclick=useYogurt;
+$("bAuto").onclick=()=>{S.auto=!S.auto;toast(S.auto?"オート攻撃：近くの敵を自動で狙う":"オート攻撃をやめた");renderToggles();save(true);};
+$("bZoom").onclick=()=>{S.zoom=!S.zoom;renderToggles();save(true);};
+function renderToggles(){$("bAuto").setAttribute("aria-pressed",!!S.auto);$("bZoom").setAttribute("aria-pressed",!!S.zoom);
+  $("bAuto").textContent=S.auto?"オート攻撃 ON":"オート攻撃 OFF";$("bZoom").textContent=S.zoom?"拡大表示 ON":"拡大表示 OFF";}
+// fullscreen where the browser allows it (Android / PC). iPhone: add to Home Screen instead.
+if(document.fullscreenEnabled){const fb=$("bFull");fb.hidden=false;fb.onclick=()=>{if(document.fullscreenElement)document.exitFullscreen();else document.documentElement.requestFullscreen({navigationUI:"hide"}).then(()=>{try{screen.orientation.lock("landscape").catch(()=>{});}catch(_){}}).catch(()=>toast("このブラウザでは全画面にできない"));};}
 const hideBoxes=()=>["exportBox","importBox","resetBox"].forEach(i=>$(i).hidden=true);
 $("bSave").onclick=()=>save(false);
 $("bExport").onclick=()=>{hideBoxes();S.last=Date.now();$("exportText").value=encode(S);$("exportBox").hidden=false;};
@@ -1734,6 +1775,7 @@ $("bDoReset").onclick=()=>{S=fresh();fillBoard();save(true);VIEW=S.char;OPEN=nul
 function start(data){
   if(data&&data.S){S=sanitize(data.S);finishLoad();}else load();
   fillBoard();VIEW=S.char;tvSetup();enterTown(false);
+  const coarse=matchMedia("(pointer:coarse)").matches;if(S.auto===null)S.auto=coarse;if(S.zoom===null)S.zoom=coarse&&innerWidth<1000;renderToggles();
   if(!S.intro){S.intro=true;toast("3-Sync、今月もガス代がピンチ。歪みゲートで稼ごう");}
   renderPanels();
   let prev=performance.now(),hudT=0;
