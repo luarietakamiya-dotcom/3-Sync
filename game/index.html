@@ -726,7 +726,18 @@ function eshoot(e,ang,speed,o={}){
   const bf=e.buffT>0?1+(e.buffAtk||0):1;
   ESHOTS.push({x:e.x,y:e.y-(e.def.fly?24:12),vx:Math.cos(ang)*speed,vy:Math.sin(ang)*speed,dmg:e.dmg*bf*(o.mul||1),life:3.2,col:e.col,own:e,db:o.db,dbCh:o.dbCh||0});
 }
-function aimAt(e,tu){return Math.atan2(tu.y-22-(e.y-(e.def.fly?24:12)),tu.x-e.x);}
+// Constant-velocity intercept for lead-enabled enemy shots; normal shots retain direct aiming.
+function aimAt(e,tu,speed,lead=false){
+  const dx=tu.x-e.x,dy=tu.y-22-(e.y-(e.def.fly?24:12));
+  if(!lead||!speed)return Math.atan2(dy,dx);
+  const vx=tu.vx_||0,vy=tu.vy_||0;
+  const qa=vx*vx+vy*vy-speed*speed,qb=2*(dx*vx+dy*vy),qc=dx*dx+dy*dy;
+  let t=0;
+  if(Math.abs(qa)<1e-6){if(qb<0)t=-qc/qb;}
+  else{const disc=qb*qb-4*qa*qc;if(disc>=0){const d=Math.sqrt(disc),t1=(-qb-d)/(2*qa),t2=(-qb+d)/(2*qa);t=t1>0?t1:t2>0?t2:0;}}
+  t=Math.min(1.5,Math.max(0,t));
+  return Math.atan2(dy+vy*t,dx+vx*t);
+}
 function explode(e){
   const R=e.p.radius||48;e.exploded=true;e.hp=0;WAVES.push({x:e.x,y:e.y,t:0,c:"255,140,60"});
   for(const u of alive())if(Math.hypot(u.x-e.x,(u.y-e.y)/0.7)<R)hurtUnit(u,e.dmg,e);
@@ -753,7 +764,7 @@ function enemyAct(e,dt,tu,f){
         if(e.cd<=0&&f>0){e.cd=e.def.attackCooldown||3;WAVES.push({x:e.x,y:e.y,t:0,c:"123,224,160",r:R});if(dist<R&&tu===P&&Math.random()<(p.chance||0.4))applyDebuff(p.debuff);}
         break;}
       if(dist>R)mv(a,sp);else if(dist<R*0.5)mv(a+Math.PI,sp*0.8);else mv(a+Math.PI/2*(Math.sin(G.t*0.7+e.sd)>0?1:-1),sp*0.4);
-      if(dist<=R&&e.cd<=0&&f>0){e.cd=e.def.attackCooldown||2;eshoot(e,aimAt(e,tu),p.shotSpeed||160,e.ai==="debuffer"?{db:p.debuff,dbCh:p.chance||0.35}:{});}
+      if(dist<=R&&e.cd<=0&&f>0){e.cd=e.def.attackCooldown||2;eshoot(e,aimAt(e,tu,p.shotSpeed||160,p.lead===true),p.shotSpeed||160,e.ai==="debuffer"?{db:p.debuff,dbCh:p.chance||0.35}:{});}
       break;}
     case "charger":
       if(e.charge>0){e.charge-=dt;mv(e.ca,e.spd*(p.chargeSpeed||3.6)*f);}
@@ -793,7 +804,7 @@ function bossAct(e,dt,tu,dist,a,f,sp,mv){
     if(m.type==="summon"&&EN.length<G.maxAlive+6)summon(e,m.id,m.count||1);
     else if(m.type==="charge"){e.ca=a;e.wind=m.windup||0.7;e.chSpeed=m.speed||3.4;e.chTime=m.time||0.8;FX.push({x:e.x,y:e.y-e.r*1.6,txt:"！！",c:"danger",t:0.7});}
     else if(m.type==="ring"){const n=m.count||10,o=G.t;for(let i=0;i<n;i++)eshoot(e,o+i/n*Math.PI*2,m.speed||110,{mul:0.7});}
-    else if(m.type==="volley"){const n=m.count||3,b=aimAt(e,tu);for(let i=0;i<n;i++)eshoot(e,b+(i-(n-1)/2)*0.16,m.speed||200);}
+    else if(m.type==="volley"){const n=m.count||3,b=aimAt(e,tu,m.speed||200,m.lead===true);for(let i=0;i<n;i++)eshoot(e,b+(i-(n-1)/2)*0.16,m.speed||200);}
     else if(m.type==="buff"){WAVES.push({x:e.x,y:e.y,t:0,c:"255,79,168",r:m.radius||200});for(const o of EN)if(o.hp>0&&Math.hypot(o.x-e.x,o.y-e.y)<(m.radius||200)){o.buffT=m.dur||5;o.buffAtk=m.atk||0.4;o.buffSpd=m.spd||0.4;}}
     else if(m.type==="debuffPulse"){WAVES.push({x:e.x,y:e.y,t:0,c:"255,255,255",r:m.radius||160});if(Math.hypot(P.x-e.x,P.y-e.y)<(m.radius||160)&&Math.random()<(m.chance||0.5))applyDebuff(m.debuff||"blind");}
     else if(m.type==="teleport"){burst(e.x,e.y,e.hue,20);let nx,ny,g=0;do{nx=clampX(rnd(40,W-40));ny=clampY(rnd(90,H-40));}while(Math.hypot(nx-P.x,ny-P.y)<140&&g++<10);e.x=nx;e.y=ny;burst(e.x,e.y,e.hue,20);}
@@ -1041,7 +1052,11 @@ function updateDive(dt){
   if(G.state==="dead"||G.state==="choice"){for(const u of [P,...ALLIES])if(u.anim)u.anim.t+=dt;return;}
   for(const k in P.db){P.db[k]-=dt;if(P.db[k]<=0)delete P.db[k];}
   if(hasDb("poison")&&G.state==="fight"){P.hp-=statsOf(P.cid).hp*0.04*dt;if(P.hp<=0){P.hp=0;die();return;}}
-  updateUnit(P,dt);for(const a of ALLIES)updateUnit(a,dt);
+  // Record per-frame movement for predictive shots (including AI allies and dash movement).
+  for(const u of [P,...ALLIES]){
+    const px=u.x,py=u.y;updateUnit(u,dt);
+    u.vx_=dt>0?(u.x-px)/dt:0;u.vy_=dt>0?(u.y-py)/dt:0;
+  }
   if(G.state==="fight"&&(G.spawnLeft>0||G.queue.length||(G.boss&&!G.bossSpawned))){G.spawnT-=dt;if(G.spawnT<=0){spawn();G.spawnT=G.boss?2.6:rnd(G.interval[0],G.interval[1]);}}
   if(G.banner>0)G.banner-=dt;
   updateHazards(dt);
