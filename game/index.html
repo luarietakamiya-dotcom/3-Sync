@@ -726,7 +726,18 @@ function eshoot(e,ang,speed,o={}){
   const bf=e.buffT>0?1+(e.buffAtk||0):1;
   ESHOTS.push({x:e.x,y:e.y-(e.def.fly?24:12),vx:Math.cos(ang)*speed,vy:Math.sin(ang)*speed,dmg:e.dmg*bf*(o.mul||1),life:3.2,col:e.col,own:e,db:o.db,dbCh:o.dbCh||0});
 }
-function aimAt(e,tu){return Math.atan2(tu.y-22-(e.y-(e.def.fly?24:12)),tu.x-e.x);}
+// Constant-velocity intercept for lead-enabled enemy shots; normal shots retain direct aiming.
+function aimAt(e,tu,speed,lead=false){
+  const dx=tu.x-e.x,dy=tu.y-22-(e.y-(e.def.fly?24:12));
+  if(!lead||!speed)return Math.atan2(dy,dx);
+  const vx=tu.vx_||0,vy=tu.vy_||0;
+  const qa=vx*vx+vy*vy-speed*speed,qb=2*(dx*vx+dy*vy),qc=dx*dx+dy*dy;
+  let t=0;
+  if(Math.abs(qa)<1e-6){if(qb<0)t=-qc/qb;}
+  else{const disc=qb*qb-4*qa*qc;if(disc>=0){const d=Math.sqrt(disc),t1=(-qb-d)/(2*qa),t2=(-qb+d)/(2*qa);t=t1>0?t1:t2>0?t2:0;}}
+  t=Math.min(1.5,Math.max(0,t));
+  return Math.atan2(dy+vy*t,dx+vx*t);
+}
 function explode(e){
   const R=e.p.radius||48;e.exploded=true;e.hp=0;WAVES.push({x:e.x,y:e.y,t:0,c:"255,140,60"});
   for(const u of alive())if(Math.hypot(u.x-e.x,(u.y-e.y)/0.7)<R)hurtUnit(u,e.dmg,e);
@@ -753,7 +764,7 @@ function enemyAct(e,dt,tu,f){
         if(e.cd<=0&&f>0){e.cd=e.def.attackCooldown||3;WAVES.push({x:e.x,y:e.y,t:0,c:"123,224,160",r:R});if(dist<R&&tu===P&&Math.random()<(p.chance||0.4))applyDebuff(p.debuff);}
         break;}
       if(dist>R)mv(a,sp);else if(dist<R*0.5)mv(a+Math.PI,sp*0.8);else mv(a+Math.PI/2*(Math.sin(G.t*0.7+e.sd)>0?1:-1),sp*0.4);
-      if(dist<=R&&e.cd<=0&&f>0){e.cd=e.def.attackCooldown||2;eshoot(e,aimAt(e,tu),p.shotSpeed||160,e.ai==="debuffer"?{db:p.debuff,dbCh:p.chance||0.35}:{});}
+      if(dist<=R&&e.cd<=0&&f>0){e.cd=e.def.attackCooldown||2;eshoot(e,aimAt(e,tu,p.shotSpeed||160,p.lead===true),p.shotSpeed||160,e.ai==="debuffer"?{db:p.debuff,dbCh:p.chance||0.35}:{});}
       break;}
     case "charger":
       if(e.charge>0){e.charge-=dt;mv(e.ca,e.spd*(p.chargeSpeed||3.6)*f);}
@@ -793,7 +804,7 @@ function bossAct(e,dt,tu,dist,a,f,sp,mv){
     if(m.type==="summon"&&EN.length<G.maxAlive+6)summon(e,m.id,m.count||1);
     else if(m.type==="charge"){e.ca=a;e.wind=m.windup||0.7;e.chSpeed=m.speed||3.4;e.chTime=m.time||0.8;FX.push({x:e.x,y:e.y-e.r*1.6,txt:"！！",c:"danger",t:0.7});}
     else if(m.type==="ring"){const n=m.count||10,o=G.t;for(let i=0;i<n;i++)eshoot(e,o+i/n*Math.PI*2,m.speed||110,{mul:0.7});}
-    else if(m.type==="volley"){const n=m.count||3,b=aimAt(e,tu);for(let i=0;i<n;i++)eshoot(e,b+(i-(n-1)/2)*0.16,m.speed||200);}
+    else if(m.type==="volley"){const n=m.count||3,b=aimAt(e,tu,m.speed||200,m.lead===true);for(let i=0;i<n;i++)eshoot(e,b+(i-(n-1)/2)*0.16,m.speed||200);}
     else if(m.type==="buff"){WAVES.push({x:e.x,y:e.y,t:0,c:"255,79,168",r:m.radius||200});for(const o of EN)if(o.hp>0&&Math.hypot(o.x-e.x,o.y-e.y)<(m.radius||200)){o.buffT=m.dur||5;o.buffAtk=m.atk||0.4;o.buffSpd=m.spd||0.4;}}
     else if(m.type==="debuffPulse"){WAVES.push({x:e.x,y:e.y,t:0,c:"255,255,255",r:m.radius||160});if(Math.hypot(P.x-e.x,P.y-e.y)<(m.radius||160)&&Math.random()<(m.chance||0.5))applyDebuff(m.debuff||"blind");}
     else if(m.type==="teleport"){burst(e.x,e.y,e.hue,20);let nx,ny,g=0;do{nx=clampX(rnd(40,W-40));ny=clampY(rnd(90,H-40));}while(Math.hypot(nx-P.x,ny-P.y)<140&&g++<10);e.x=nx;e.y=ny;burst(e.x,e.y,e.hue,20);}
@@ -1041,7 +1052,11 @@ function updateDive(dt){
   if(G.state==="dead"||G.state==="choice"){for(const u of [P,...ALLIES])if(u.anim)u.anim.t+=dt;return;}
   for(const k in P.db){P.db[k]-=dt;if(P.db[k]<=0)delete P.db[k];}
   if(hasDb("poison")&&G.state==="fight"){P.hp-=statsOf(P.cid).hp*0.04*dt;if(P.hp<=0){P.hp=0;die();return;}}
-  updateUnit(P,dt);for(const a of ALLIES)updateUnit(a,dt);
+  // Record per-frame movement for predictive shots (including AI allies and dash movement).
+  for(const u of [P,...ALLIES]){
+    const px=u.x,py=u.y;updateUnit(u,dt);
+    u.vx_=dt>0?(u.x-px)/dt:0;u.vy_=dt>0?(u.y-py)/dt:0;
+  }
   if(G.state==="fight"&&(G.spawnLeft>0||G.queue.length||(G.boss&&!G.bossSpawned))){G.spawnT-=dt;if(G.spawnT<=0){spawn();G.spawnT=G.boss?2.6:rnd(G.interval[0],G.interval[1]);}}
   if(G.banner>0)G.banner-=dt;
   updateHazards(dt);
@@ -1171,12 +1186,51 @@ const ENEMY_DRAW={
     for(let i=0;i<8;i++){const a=i*0.785+t;ctx.fillStyle=e.col;ctx.beginPath();ctx.moveTo(x+Math.cos(a)*10,fy+Math.sin(a)*10);ctx.lineTo(x+Math.cos(a+0.2)*20,fy+Math.sin(a+0.2)*20);ctx.lineTo(x+Math.cos(a-0.2)*20,fy+Math.sin(a-0.2)*20);ctx.fill();}
     ctx.fillStyle="#fff";ctx.beginPath();ctx.arc(x,fy,9,0,7);ctx.fill();ctx.fillStyle="#2a1440";ctx.beginPath();ctx.arc(x,fy,4,0,7);ctx.fill();return fy-30;},
 };
+// Keep HP bar at the same y as the original procedural version, even with a PNG.
+function enemyHpTop(e,y,t){
+  const id=e.def.spriteId,r=e.r;
+  if(id==="slime")return y-(e.hopping>0?Math.sin((0.38-e.hopping)/0.38*Math.PI)*20:0)-r-12;
+  if(id==="sign")return y-44-(e.awake?Math.abs(Math.sin(t*10))*3:0);
+  if(id==="drone")return y-38+Math.sin(t*5+e.sd)*3;
+  if(id==="bat")return y-42+Math.sin(t*6+e.sd)*4;
+  if(id==="eye")return y-40+Math.sin(t*3+e.sd)*2;
+  if(id==="core")return y-42+Math.sin(t*2+e.sd)*3;
+  if(id==="mirror")return y-2*r-8;
+  if(id==="boss_yogurt")return y-r*0.95-22;
+  if(id==="boss_core")return y-64+Math.sin(t*1.5)*4;
+  const offsets={barrel:34,hound:30,porter:42,speaker:42,runner:40,tank:38,terminal:50,
+    beast:34,cat:26,ghost:38,boss_queen:66,boss_dj:62,boss_exec:60};
+  return y-(offsets[id]||r+12);
+}
+// Optional 64x64 transparent PNG frames (one row, horizontal strip); missing files keep procedural sprites.
+const ENEMY_IMAGES=Object.create(null);
+function enemySprite(id){
+  if(!id||!/^[A-Za-z0-9_-]+$/.test(id))return null;
+  if(!ENEMY_IMAGES[id]){
+    const entry={img:new Image(),ok:false};
+    entry.img.onload=()=>{entry.ok=entry.img.naturalHeight===64&&entry.img.naturalWidth>=64&&entry.img.naturalWidth%64===0;};
+    entry.img.onerror=()=>{entry.ok=false;};
+    entry.img.src="sprites/enemies/"+id+".png";ENEMY_IMAGES[id]=entry;
+  }
+  return ENEMY_IMAGES[id].ok?ENEMY_IMAGES[id].img:null;
+}
 function drawEnemy(e){
   const x=e.x,y=e.y,t=G.t,solid=hollowSolid(e),fn=ENEMY_DRAW[e.def.spriteId]||ENEMY_DRAW.slime;
   if(e.buffT>0){ctx.strokeStyle="rgba(150,120,255,.6)";ctx.lineWidth=2;ctx.beginPath();ctx.ellipse(x,y,e.r+6,(e.r+6)*0.4,0,0,7);ctx.stroke();ctx.lineWidth=1;}
   if((e.wind>0)&&e.ca!==undefined){ctx.strokeStyle="rgba(255,60,90,.45)";ctx.lineWidth=e.r;ctx.beginPath();ctx.moveTo(x,y);ctx.lineTo(x+Math.cos(e.ca)*170,y+Math.sin(e.ca)*170);ctx.stroke();ctx.lineWidth=1;}
   if(e.fuse>0){ctx.strokeStyle="rgba(255,140,60,.7)";ctx.beginPath();ctx.ellipse(x,y,e.p.radius||48,(e.p.radius||48)*0.7,0,0,7);ctx.stroke();}
-  ctx.save();if(!solid)ctx.globalAlpha=0.22;const top=fn(e,x,y,t);ctx.restore();
+  ctx.save();if(!solid)ctx.globalAlpha=0.22;
+  const image=enemySprite(e.def.spriteId);
+  let top;
+  if(image){
+    // Source foot anchor (32,56); keep the entity's world-space feet at (x,y).
+    const size=Math.round(e.r*2.75),frames=image.naturalWidth/64;
+    const frame=Math.floor(t*8+e.sd)%frames,dy=y-size*56/64;
+    shadow(x,y,e.r+2);ctx.imageSmoothingEnabled=false;
+    ctx.drawImage(image,frame*64,0,64,64,Math.round(x-size/2),Math.round(dy),size,size);
+    top=enemyHpTop(e,y,t);
+  }else top=fn(e,x,y,t);
+  ctx.restore();
   if(e.slow>0||e.stun>0){ctx.strokeStyle=e.stun>0?"rgba(255,79,168,.9)":"rgba(255,79,168,.45)";ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(x-e.r,y-e.r);ctx.lineTo(x+e.r,y-e.r*0.3);ctx.moveTo(x+e.r,y-e.r);ctx.lineTo(x-e.r,y-e.r*0.2);ctx.stroke();}
   if(e===P.target){ctx.strokeStyle=C.danger;ctx.lineWidth=2;for(let i=0;i<4;i++){const a=t*2+i*Math.PI/2;ctx.beginPath();ctx.ellipse(x,y,e.r+8,(e.r+8)*0.4,0,a,a+0.8);ctx.stroke();}}
   if(!e.boss){ctx.fillStyle="#2e2942";ctx.fillRect(x-e.r,top,e.r*2,3);ctx.fillStyle=C.danger;ctx.fillRect(x-e.r,top,e.r*2*Math.max(0,e.hp/e.mhp),3);}
