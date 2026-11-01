@@ -96,6 +96,23 @@ button{font:inherit}
 .listen-button{
   background:linear-gradient(135deg, rgba(255,127,193,.15), rgba(135,220,255,.10));
 }
+.game-entry-link{
+  display:block;
+  box-sizing:border-box;
+  width:max-content;
+  max-width:100%;
+  margin:18px auto 6px;
+  padding:12px 26px;
+  border:1px solid rgba(255,127,193,.45);
+  border-radius:999px;
+  background:linear-gradient(135deg,rgba(255,127,193,.18),rgba(135,220,255,.12));
+  color:var(--text);
+  font-weight:700;
+  text-align:center;
+  box-shadow:0 8px 28px rgba(0,0,0,.25);
+}
+.game-entry-link:hover,.game-entry-link:focus-visible{border-color:var(--cyan);outline-offset:3px;}
+
 .nav-toggle{
   display:none;
   background:transparent;
