@@ -1229,6 +1229,16 @@ function enemySprite(id){
   }
   return ENEMY_IMAGES[id].ok?ENEMY_IMAGES[id].img:null;
 }
+// which frame of a PNG strip to show: enemies.json "anim" lists frames per state (sleep / attack / jump / move) and fps; without it, all frames loop
+function spriteFrame(e,t,frames){
+  const a=e.def.anim;if(!a)return Math.floor(t*8+e.sd)%frames;
+  let k="move";
+  if(e.p.ambush&&!e.awake&&a.sleep)k="sleep";
+  else if((e.fuse>0||e.wind>0||e.charge>0)&&a.attack)k="attack";
+  else if(e.hopping>0&&a.jump)k="jump";
+  const list=(a[k]||a.move||[0]).filter(i=>i<frames);
+  return list.length?list[Math.floor(t*(a.fps||8)+e.sd)%list.length]:0;
+}
 function drawEnemy(e){
   const x=e.x,y=e.y,t=G.t,solid=hollowSolid(e),fn=ENEMY_DRAW[e.def.spriteId]||ENEMY_DRAW.slime;
   if(e.buffT>0){ctx.strokeStyle="rgba(150,120,255,.6)";ctx.lineWidth=2;ctx.beginPath();ctx.ellipse(x,y,e.r+6,(e.r+6)*0.4,0,0,7);ctx.stroke();ctx.lineWidth=1;}
@@ -1239,11 +1249,12 @@ function drawEnemy(e){
   let top;
   if(image){
     // Source foot anchor (32,56); keep the entity's world-space feet at (x,y).
-    const size=Math.round(e.r*2.75),frames=image.naturalWidth/64;
-    const frame=Math.floor(t*8+e.sd)%frames,dy=y-size*56/64;
+    const sc=e.def.spriteScale||1,size=Math.round(e.r*2.75*sc),frames=image.naturalWidth/64;
+    const lift=e.hopping>0?Math.sin((0.38-e.hopping)/0.38*Math.PI)*20:0;
+    const frame=spriteFrame(e,t,frames),dy=y-size*56/64-lift;
     shadow(x,y,e.r+2);ctx.imageSmoothingEnabled=false;
     ctx.drawImage(image,frame*64,0,64,64,Math.round(x-size/2),Math.round(dy),size,size);
-    top=enemyHpTop(e,y,t);
+    top=sc!==1?Math.round(dy+size*0.1)-4:enemyHpTop(e,y,t);
   }else top=fn(e,x,y,t);
   ctx.restore();
   if(e.slow>0||e.stun>0){ctx.strokeStyle=e.stun>0?"rgba(255,79,168,.9)":"rgba(255,79,168,.45)";ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(x-e.r,y-e.r);ctx.lineTo(x+e.r,y-e.r*0.3);ctx.moveTo(x+e.r,y-e.r);ctx.lineTo(x-e.r,y-e.r*0.2);ctx.stroke();}
