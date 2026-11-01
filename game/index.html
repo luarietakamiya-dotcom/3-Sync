@@ -1186,12 +1186,35 @@ const ENEMY_DRAW={
     for(let i=0;i<8;i++){const a=i*0.785+t;ctx.fillStyle=e.col;ctx.beginPath();ctx.moveTo(x+Math.cos(a)*10,fy+Math.sin(a)*10);ctx.lineTo(x+Math.cos(a+0.2)*20,fy+Math.sin(a+0.2)*20);ctx.lineTo(x+Math.cos(a-0.2)*20,fy+Math.sin(a-0.2)*20);ctx.fill();}
     ctx.fillStyle="#fff";ctx.beginPath();ctx.arc(x,fy,9,0,7);ctx.fill();ctx.fillStyle="#2a1440";ctx.beginPath();ctx.arc(x,fy,4,0,7);ctx.fill();return fy-30;},
 };
+// Optional 64x64 transparent PNG frames (one row, horizontal strip); missing files keep procedural sprites.
+const ENEMY_IMAGES=Object.create(null);
+function enemySprite(id){
+  if(!id||!/^[A-Za-z0-9_-]+$/.test(id))return null;
+  if(!ENEMY_IMAGES[id]){
+    const entry={img:new Image(),ok:false};
+    entry.img.onload=()=>{entry.ok=entry.img.naturalHeight===64&&entry.img.naturalWidth>=64&&entry.img.naturalWidth%64===0;};
+    entry.img.onerror=()=>{entry.ok=false;};
+    entry.img.src="sprites/enemies/"+id+".png";ENEMY_IMAGES[id]=entry;
+  }
+  return ENEMY_IMAGES[id].ok?ENEMY_IMAGES[id].img:null;
+}
 function drawEnemy(e){
   const x=e.x,y=e.y,t=G.t,solid=hollowSolid(e),fn=ENEMY_DRAW[e.def.spriteId]||ENEMY_DRAW.slime;
   if(e.buffT>0){ctx.strokeStyle="rgba(150,120,255,.6)";ctx.lineWidth=2;ctx.beginPath();ctx.ellipse(x,y,e.r+6,(e.r+6)*0.4,0,0,7);ctx.stroke();ctx.lineWidth=1;}
   if((e.wind>0)&&e.ca!==undefined){ctx.strokeStyle="rgba(255,60,90,.45)";ctx.lineWidth=e.r;ctx.beginPath();ctx.moveTo(x,y);ctx.lineTo(x+Math.cos(e.ca)*170,y+Math.sin(e.ca)*170);ctx.stroke();ctx.lineWidth=1;}
   if(e.fuse>0){ctx.strokeStyle="rgba(255,140,60,.7)";ctx.beginPath();ctx.ellipse(x,y,e.p.radius||48,(e.p.radius||48)*0.7,0,0,7);ctx.stroke();}
-  ctx.save();if(!solid)ctx.globalAlpha=0.22;const top=fn(e,x,y,t);ctx.restore();
+  ctx.save();if(!solid)ctx.globalAlpha=0.22;
+  const image=enemySprite(e.def.spriteId);
+  let top;
+  if(image){
+    // Source foot anchor (32,56); keep the entity's world-space feet at (x,y).
+    const size=Math.round(e.r*2.75),frames=image.naturalWidth/64;
+    const frame=Math.floor(t*8+e.sd)%frames,dy=y-size*56/64;
+    shadow(x,y,e.r+2);ctx.imageSmoothingEnabled=false;
+    ctx.drawImage(image,frame*64,0,64,64,Math.round(x-size/2),Math.round(dy),size,size);
+    top=Math.round(y-Math.max(e.r+12,size*56/64+4));
+  }else top=fn(e,x,y,t);
+  ctx.restore();
   if(e.slow>0||e.stun>0){ctx.strokeStyle=e.stun>0?"rgba(255,79,168,.9)":"rgba(255,79,168,.45)";ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(x-e.r,y-e.r);ctx.lineTo(x+e.r,y-e.r*0.3);ctx.moveTo(x+e.r,y-e.r);ctx.lineTo(x-e.r,y-e.r*0.2);ctx.stroke();}
   if(e===P.target){ctx.strokeStyle=C.danger;ctx.lineWidth=2;for(let i=0;i<4;i++){const a=t*2+i*Math.PI/2;ctx.beginPath();ctx.ellipse(x,y,e.r+8,(e.r+8)*0.4,0,a,a+0.8);ctx.stroke();}}
   if(!e.boss){ctx.fillStyle="#2e2942";ctx.fillRect(x-e.r,top,e.r*2,3);ctx.fillStyle=C.danger;ctx.fillRect(x-e.r,top,e.r*2*Math.max(0,e.hp/e.mhp),3);}
