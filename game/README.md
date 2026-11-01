@@ -20,7 +20,20 @@ game/
     walk_*.png        歩き 12コマ（64×128、下3・左3・右3・上3）
     act_*.png         攻撃・ダメージ・やられ・喜び 29コマ（160×192、足元は(80,150)）
   icons/              デバフ（ノイズ侵食）アイコン
+  data/               ゲームデータ（JSON。ここに追記するだけで敵・エリア・素材が増える）
+    enemies.json      敵（通常・ミッション限定・ボス）
+    maps.json         エリア（10層ずつ、10層目がボス）と背景の色・飾り
+    materials.json    素材（共通・エリア専用・ボス素材）
 ```
+
+## データの増やし方
+
+- **敵を増やす**：`enemies.json` に1件追加し、`maps.json` のどこかの `enemyPool` に `id` を書く。動きは `aiType`（melee_rush / ranged_keep / charger / support_buffer / debuffer / summoner / suicide / flee / boss）と `params` で決まる。見た目は `spriteId`（`index.html` の `ENEMY_DRAW` にある名前）と `color`
+- **ボスの技**：`params.moves` に並べる。type は summon / charge / ring / volley / buff / debuffPulse / teleport
+- **エリアを増やす**：`maps.json` の `zones` の末尾に追加すると、次の10層として開く。床の仕掛けは `hazards`（puddle / falling / electric / noise / rift）
+- **素材を増やす**：`materials.json` に追加し、敵の `dropTable` に `id` を書く
+
+データは起動時に読み込むので、`index.html` をファイルとして直接開くと動きません。GitHub Pages か、ローカルのHTTPサーバー（例：`python3 -m http.server`）で開いてください。
 
 キャラのIDは `luarie`（ルアリエ）・`ht`（えーちゃん）・`mimi`（夜凪ミミ）です。
 

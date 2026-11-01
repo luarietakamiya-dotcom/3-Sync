@@ -1,0 +1,37 @@
+{
+  "_doc": "エリア（ゾーン）。上から順に10階層ずつ。10階目にボス(bossId)。enemyPool の weight は出やすさ、minFloor はエリア内の何階から出るか。spawnRules: base+perFloor×(階-1) 体が出て、同時に出るのは maxAlive[序盤,終盤] まで。hazards の type: puddle / falling / electric / noise / rift。backgrounds は背景の色と飾り。",
+  "zones": [
+    {"id":"slum","name":"新御霊市・下層スラム","recommendedLevel":1,"backgroundId":"slum","floors":10,
+     "enemyPool":[{"id":"pink_slime","weight":5},{"id":"high_jump_slime","weight":3,"minFloor":2},{"id":"junk_drone","weight":3,"minFloor":3},{"id":"drum_mimic","weight":2,"minFloor":4}],
+     "spawnRules":{"base":5,"perFloor":1,"maxAlive":[4,6],"interval":[0.6,1.3],"bossAdds":2},
+     "hazards":[{"type":"puddle","count":3,"dps":0.03,"radius":26}],
+     "dropBonus":{"gear":0,"mat":0},"bossId":"king_yogurt","clearReward":{"money":300,"items":[{"id":"crystal","n":2}]}},
+    {"id":"alley","name":"旧商店路地","recommendedLevel":10,"backgroundId":"alley","floors":10,
+     "enemyPool":[{"id":"sign_mimic","weight":4},{"id":"cable_hound","weight":4},{"id":"noise_porter","weight":2,"minFloor":3},{"id":"drum_mimic","weight":2},{"id":"high_jump_slime","weight":2}],
+     "spawnRules":{"base":7,"perFloor":1,"maxAlive":[5,7],"interval":[0.6,1.2],"bossAdds":3},
+     "hazards":[{"type":"falling","cd":4.5,"radius":30,"dmg":0.12}],
+     "dropBonus":{"gear":0.1,"mat":0.05},"bossId":"junk_queen","clearReward":{"money":1500,"items":[{"id":"crystal","n":3}]}},
+    {"id":"live","name":"ライブ街区・裏通り","recommendedLevel":20,"backgroundId":"live","floors":10,
+     "enemyPool":[{"id":"feedback_bat","weight":4},{"id":"beat_runner","weight":4},{"id":"subwoofer","weight":2,"minFloor":2},{"id":"cable_hound","weight":2}],
+     "spawnRules":{"base":8,"perFloor":1,"maxAlive":[6,8],"interval":[0.5,1.1],"bossAdds":3},
+     "hazards":[{"type":"electric","count":3,"on":1.4,"off":2.6,"dps":0.10,"w":70,"h":26}],
+     "dropBonus":{"gear":0.2,"mat":0.1},"bossId":"noise_dj","clearReward":{"money":6000,"items":[{"id":"core","n":1}]}},
+    {"id":"border","name":"管理区境界","recommendedLevel":30,"backgroundId":"border","floors":10,
+     "enemyPool":[{"id":"watch_drone","weight":4},{"id":"suppress_unit","weight":3},{"id":"jammer","weight":2,"minFloor":2},{"id":"beat_runner","weight":2}],
+     "spawnRules":{"base":8,"perFloor":1,"maxAlive":[6,9],"interval":[0.5,1.0],"bossAdds":3},
+     "hazards":[{"type":"electric","count":2,"on":1.2,"off":2.4,"dps":0.12,"w":90,"h":22},{"type":"noise","count":2,"radius":40,"debuff":"atkdown","chance":0.25}],
+     "dropBonus":{"gear":0.3,"mat":0.15},"bossId":"exec_unit","clearReward":{"money":25000,"items":[{"id":"core","n":2}]}},
+    {"id":"front","name":"歪み前線","recommendedLevel":40,"backgroundId":"front","floors":10,
+     "enemyPool":[{"id":"warp_slime","weight":4},{"id":"beast_fragment","weight":4},{"id":"anomaly_core","weight":2,"minFloor":3},{"id":"jammer","weight":1},{"id":"suppress_unit","weight":1}],
+     "spawnRules":{"base":9,"perFloor":1,"maxAlive":[7,10],"interval":[0.45,0.9],"bossAdds":4},
+     "hazards":[{"type":"rift","count":2,"cd":3.2,"dmg":0.14},{"type":"noise","count":2,"radius":44,"debuff":"confuse","chance":0.2}],
+     "dropBonus":{"gear":0.4,"mat":0.2},"bossId":"distortion_core","clearReward":{"money":90000,"items":[{"id":"core","n":3}]}}
+  ],
+  "backgrounds": {
+    "slum":{"sky":["#07060d","#1d1032"],"ground":"#15121c","grid":"#4a2f6a","acc":"#ff4fa8","acc2":"#3fe0ff","rain":true,"deco":["shack","holo","barrel"],"holo":["SALE","24H","呪符","YOGURT"]},
+    "alley":{"sky":["#0d0806","#2a1810"],"ground":"#1a1410","grid":"#5a3a22","acc":"#f6a845","acc2":"#ff6b6b","rain":true,"deco":["shack","holo","barrel"],"holo":["質屋","営業中","買取","福"]},
+    "live":{"sky":["#110418","#3c0e3c"],"ground":"#190e1e","grid":"#702a70","acc":"#ff4fa8","acc2":"#f6c445","rain":false,"deco":["holo","pillar","barrel"],"holo":["LIVE","DJ","ONE NIGHT","SOLD OUT"]},
+    "border":{"sky":["#0a0e17","#26354e"],"ground":"#151a25","grid":"#3d5a80","acc":"#9fd3ff","acc2":"#ffffff","rain":false,"deco":["pillar","holo","pillar"],"holo":["立入禁止","管理区","STOP","監視中"]},
+    "front":{"sky":["#0c0710","#2a1240"],"ground":"#140e1c","grid":"#5a2a7a","acc":"#c58bf0","acc2":"#ff4fa8","rain":false,"fog":true,"deco":["rock","pillar","rock"],"holo":["ERR0R","NULL","？？？","404"]}
+  }
+}

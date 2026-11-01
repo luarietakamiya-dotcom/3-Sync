@@ -1,0 +1,19 @@
+{
+  "_doc": "素材。price は第1層で拾ったときの1個の基準価格（深い層で拾うほど高くなる）。zone はその素材が主に出るエリアの id。",
+  "materials": [
+    {"id":"shard","name":"ノイズ片","price":3},
+    {"id":"crystal","name":"歪み結晶","price":28},
+    {"id":"odd","name":"変異データ","price":60},
+    {"id":"core","name":"上位粒子の欠片","price":240},
+    {"id":"rusty_neon","name":"錆びたネオン管","price":8,"zone":"slum"},
+    {"id":"lucky_circuit","name":"招き猫回路","price":12,"zone":"alley"},
+    {"id":"howl_coil","name":"ハウリングコイル","price":16,"zone":"live"},
+    {"id":"admin_tag","name":"管理タグ","price":20,"zone":"border"},
+    {"id":"warp_fragment","name":"歪曲核片","price":26,"zone":"front"},
+    {"id":"yogurt_core","name":"キングの菌核","price":120,"zone":"slum","boss":true},
+    {"id":"junk_crown","name":"ジャンクの王冠","price":160,"zone":"alley","boss":true},
+    {"id":"dj_record","name":"ノイズレコード","price":200,"zone":"live","boss":true},
+    {"id":"exec_board","name":"執行基板","price":250,"zone":"border","boss":true},
+    {"id":"core_crystal","name":"中枢結晶","price":320,"zone":"front","boss":true}
+  ]
+}
