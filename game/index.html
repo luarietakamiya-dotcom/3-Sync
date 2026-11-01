@@ -1186,6 +1186,22 @@ const ENEMY_DRAW={
     for(let i=0;i<8;i++){const a=i*0.785+t;ctx.fillStyle=e.col;ctx.beginPath();ctx.moveTo(x+Math.cos(a)*10,fy+Math.sin(a)*10);ctx.lineTo(x+Math.cos(a+0.2)*20,fy+Math.sin(a+0.2)*20);ctx.lineTo(x+Math.cos(a-0.2)*20,fy+Math.sin(a-0.2)*20);ctx.fill();}
     ctx.fillStyle="#fff";ctx.beginPath();ctx.arc(x,fy,9,0,7);ctx.fill();ctx.fillStyle="#2a1440";ctx.beginPath();ctx.arc(x,fy,4,0,7);ctx.fill();return fy-30;},
 };
+// Keep HP bar at the same y as the original procedural version, even with a PNG.
+function enemyHpTop(e,y,t){
+  const id=e.def.spriteId,r=e.r;
+  if(id==="slime")return y-(e.hopping>0?Math.sin((0.38-e.hopping)/0.38*Math.PI)*20:0)-r-12;
+  if(id==="sign")return y-44-(e.awake?Math.abs(Math.sin(t*10))*3:0);
+  if(id==="drone")return y-38+Math.sin(t*5+e.sd)*3;
+  if(id==="bat")return y-42+Math.sin(t*6+e.sd)*4;
+  if(id==="eye")return y-40+Math.sin(t*3+e.sd)*2;
+  if(id==="core")return y-42+Math.sin(t*2+e.sd)*3;
+  if(id==="mirror")return y-2*r-8;
+  if(id==="boss_yogurt")return y-r*0.95-22;
+  if(id==="boss_core")return y-64+Math.sin(t*1.5)*4;
+  const offsets={barrel:34,hound:30,porter:42,speaker:42,runner:40,tank:38,terminal:50,
+    beast:34,cat:26,ghost:38,boss_queen:66,boss_dj:62,boss_exec:60};
+  return y-(offsets[id]||r+12);
+}
 // Optional 64x64 transparent PNG frames (one row, horizontal strip); missing files keep procedural sprites.
 const ENEMY_IMAGES=Object.create(null);
 function enemySprite(id){
@@ -1212,7 +1228,7 @@ function drawEnemy(e){
     const frame=Math.floor(t*8+e.sd)%frames,dy=y-size*56/64;
     shadow(x,y,e.r+2);ctx.imageSmoothingEnabled=false;
     ctx.drawImage(image,frame*64,0,64,64,Math.round(x-size/2),Math.round(dy),size,size);
-    top=Math.round(y-Math.max(e.r+12,size*56/64+4));
+    top=enemyHpTop(e,y,t);
   }else top=fn(e,x,y,t);
   ctx.restore();
   if(e.slow>0||e.stun>0){ctx.strokeStyle=e.stun>0?"rgba(255,79,168,.9)":"rgba(255,79,168,.45)";ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(x-e.r,y-e.r);ctx.lineTo(x+e.r,y-e.r*0.3);ctx.moveTo(x+e.r,y-e.r);ctx.lineTo(x-e.r,y-e.r*0.2);ctx.stroke();}
