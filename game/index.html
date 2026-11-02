@@ -227,6 +227,15 @@ textarea{width:100%;box-sizing:border-box;min-height:80px;font-family:ui-monospa
 .sndset{display:flex;flex-wrap:wrap;gap:10px 18px;align-items:center}
 .sndset label{display:flex;align-items:center;gap:8px;font-size:.9rem}
 .sndset input{width:150px;accent-color:var(--pink,#ff4fa8)}
+.jk-h{margin:16px 0 0;font-size:1rem}.jk-h small{font-weight:400;color:var(--muted);font-size:.78rem}
+.juke{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:6px}
+.jk{display:grid;grid-template-columns:20px 1fr;grid-template-rows:auto auto;column-gap:6px;align-items:center;text-align:left;font:inherit;color:inherit;background:var(--panel2);border:1px solid var(--line);border-radius:10px;padding:7px 10px;cursor:pointer;min-height:44px}
+.jk .jk-ic{grid-row:span 2;color:var(--pink,#ff4fa8);font-size:.9rem}
+.jk .jk-nm{font-weight:700;font-size:.85rem;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.jk .jk-w{font-size:.7rem;color:var(--muted)}
+.jk[aria-pressed="true"]{border-color:var(--pink,#ff4fa8);box-shadow:0 0 0 1px var(--pink,#ff4fa8) inset}
+.jk[aria-pressed="true"] .jk-ic{animation:ttblink 1s ease-in-out infinite}
+.jk:disabled{opacity:.45;cursor:default}
 #bMute[aria-pressed="true"]{opacity:.5;text-decoration:line-through}
 @media (prefers-reduced-motion:reduce){#title .tt-bg,#title .tt-logo,#title .tt-go{animation:none}}
 
@@ -335,6 +344,7 @@ textarea{width:100%;box-sizing:border-box;min-height:80px;font-family:ui-monospa
       <button class="btn" id="bExport">引き継ぎコードを出す</button>
       <button class="btn" id="bImport">コードで復元</button>
       <button class="btn danger" id="bReset">はじめから</button>
+      <button class="btn" id="bTitle">タイトルに戻る</button>
     </div>
     <div class="box" id="exportBox" hidden><textarea id="exportText" readonly aria-label="引き継ぎコード"></textarea><button class="btn" id="bCopy">コピー</button><p class="note">別の端末で「コードで復元」に貼ると続きから遊べます。</p></div>
     <div class="box" id="importBox" hidden><textarea id="importText" aria-label="引き継ぎコードを貼り付け" placeholder="ここにコードを貼り付け"></textarea><button class="btn" id="bDoImport">復元する</button></div>
@@ -528,7 +538,7 @@ const FREECLIENTS=["迷子の子ども","近所のおばあちゃん","野良猫
 
 const freshCh=()=>({lv:1,xp:0,eq:{w:null,h:null,c:null},nodes:{},builds:Array.from({length:5},(_,i)=>({nm:"ビルド"+(i+1),nodes:null}))});
 const fresh=()=>({n:0,total:0,own:{},ch:{luarie:freshCh(),ht:freshCh(),mimi:freshCh()},inv:[],best:1,uid:1,mid:1,char:"luarie",
-  bag:{},mats:{},yog:1,board:[],active:[],auto:null,zoom:null,vol:{bgm:0.6,se:0.7},mute:false,last:Date.now(),intro:false,ver:2});
+  bag:{},mats:{},yog:1,board:[],active:[],auto:null,zoom:null,vol:{bgm:0.6,se:0.7},mute:false,heard:[],last:Date.now(),intro:false,ver:2});
 let S=fresh();
 
 /* ================= helpers ================= */
@@ -706,8 +716,8 @@ function enterTown(fromGate){
   P=mkUnit(S.char,fromGate?g.x-20:300,fromGate?STREET_Y+8:300,false);P.ang=Math.PI/2;
   $("ov").hidden=true;syncModeUI();syncStage();markDirty();
 }
-function enterInterior(id){sfx("door");OPEN=id;P.dest=null;P.pend=null;P.ang=-Math.PI/2;MARK=null;syncStage();markDirty();}
-function leaveInterior(){OPEN=null;P.dest=null;P.ang=Math.PI/2;syncStage();markDirty();}
+function enterInterior(id){sfx("door");OPEN=id;JUKE=null;P.dest=null;P.pend=null;P.ang=-Math.PI/2;MARK=null;syncStage();markDirty();}
+function leaveInterior(){OPEN=null;JUKE=null;P.dest=null;P.ang=Math.PI/2;syncStage();markDirty();}
 function townTap(x,y){
   if(OPEN)leaveInterior(); // tapping the town closes the facility window and carries on as a normal town tap
   const f=FACS.find(f=>x>=f.z[0]&&x<f.z[1]&&y>60&&y<STREET_Y);
@@ -1069,7 +1079,10 @@ const BGM_FILES={title:"bgm_title",town:"bgm_town",home:"bgm_home",shop:"bgm_sho
 const BGM_RESUME=new Set(["title","town","dive"]); // these continue where they left off; the rest restart
 const SYNC_BGM_SEC=20; // how long the 3-Sync song plays after a 3-Sync fires
 const SND={ac:null,mus:null,se:null,noise:null,tracks:{},cur:null,syncUntil:0,last:{}};
-let TITLE=true;
+let TITLE=true,JUKE=null; // JUKE: song picked on the RESONANCE jukebox (null = the shop's own song)
+// jukebox list: [bgm key, title, where it plays]. A song shows up once you've heard it in the game.
+const JUKE_LIST=[["title","Over Sync","タイトル"],["town","遠景ピアノ針","街"],["home","HOME SWEET SIGNAL","家"],["shop","JUNK DEALER","怪しい店"],["guild","CONTROL TERMINAL","ヨーデル管理所"],
+  ["live","NEON AFTER MIDNIGHT","RESONANCE"],["dive","DREAD DEPTHS","探索"],["boss","ABSOLUTE DOMINION","ボス戦"],["sync","3-Sync Error 0","3-Sync発動"]];
 function sndInit(){
   if(SND.ac){if(SND.ac.state!=="running")SND.ac.resume().catch(()=>{});return;}
   const AC=window.AudioContext||window.webkitAudioContext;if(!AC)return;
@@ -1087,15 +1100,22 @@ function playBgm(k){
   if(prev){prev.g.gain.cancelScheduledValues(now);prev.g.gain.setValueAtTime(prev.g.gain.value,now);prev.g.gain.linearRampToValueAtTime(0,now+0.9);
     clearTimeout(prev.stopT);prev.stopT=setTimeout(()=>{if(SND.tracks[SND.cur]!==prev)prev.a.pause();},1000);}
   if(!k||!BGM_FILES[k])return;const t=bgmTrack(k);clearTimeout(t.stopT);
-  if(t.a.paused){if(!BGM_RESUME.has(k)){try{t.a.currentTime=0;}catch(_){}}t.a.play().catch(()=>{});}
+  if(S.heard&&!S.heard.includes(k)){S.heard.push(k);if(OPEN==="live")markDirty();}
+  if(t.a.paused){if(!BGM_RESUME.has(k)||SND.restart===k){SND.restart=null;try{t.a.currentTime=0;}catch(_){}}t.a.play().catch(()=>{});}
   t.g.gain.cancelScheduledValues(now);t.g.gain.setValueAtTime(t.g.gain.value,now);t.g.gain.linearRampToValueAtTime(1,now+0.9);
 }
 function wantBgm(){
   if(TITLE)return"title";
-  if(MODE==="town")return OPEN&&OPEN!=="gate"?OPEN:"town";
+  if(MODE==="town")return OPEN==="live"&&JUKE?JUKE:OPEN&&OPEN!=="gate"?OPEN:"town";
   if(performance.now()<SND.syncUntil)return"sync";
   if(G.state==="dead")return null;
   return G.boss?"boss":"dive";
+}
+function jukePlay(k){
+  if(!SND.ac)sndInit();
+  if(k&&SND.cur===k){const t=SND.tracks[k];try{t.a.currentTime=0;}catch(_){}t.a.play().catch(()=>{});} // same song: start over
+  else if(k){SND.restart=k;const t=SND.tracks[k];if(t&&!t.a.paused){try{t.a.currentTime=0;}catch(_){}}} // still fading out: start over too
+  JUKE=k;markDirty();
 }
 function tone(o,m){
   const ac=SND.ac,t0=ac.currentTime+(o.at||0),g=ac.createGain(),v=Math.max(0.0002,(o.v||0.2)*m);g.connect(SND.se);
@@ -1612,6 +1632,12 @@ function renderFac(){
     PRODUCERS.forEach((p,i)=>{const k=S.own[p.id]||0,c=cost(p.base,k),show=i===0||(S.own[PRODUCERS[i-1].id]||0)>0||S.total>=p.base*.5;
       if(show)h+=`<button class="item" data-buy="${p.id}" data-cost="${c}"><span class="name">${p.name}</span><span class="own">${k}</span><span class="desc">${p.desc} ・ 毎秒 ¥${p.rate}</span><span class="cost">¥${fmt(c)}</span></button>`;});
     h+=`</div>`;
+    const heard=S.heard||[],playing=JUKE||"live";
+    h+=`<h3 class="jk-h">ジュークボックス <small>${heard.length}/${JUKE_LIST.length}曲</small></h3><p class="note">ゲームの中で聴いた曲を、ここでいつでも流せる。</p><div class="juke">`+
+      JUKE_LIST.map(([k,nm,where])=>heard.includes(k)
+        ?`<button class="jk" data-juke="${k}" aria-pressed="${playing===k}"><span class="jk-ic">${playing===k?"♪":"▶"}</span><span class="jk-nm">${nm}</span><span class="jk-w">${where}</span></button>`
+        :`<button class="jk" disabled><span class="jk-ic">・</span><span class="jk-nm">？？？</span><span class="jk-w">まだ聴いていない</span></button>`).join("")+`</div>`;
+    if(JUKE)h+=`<button class="btn sm" data-juke="" style="margin-top:6px">お店の曲に戻す</button>`;
   }else if(OPEN==="gate"){
     h+=`<p class="note">ヨーデル粒子が乱れた特殊空間への入口。各エリアは10層で、10層目にボス。5層を越えると6層目から始められる。深く進むほど歪崩壊が強まる。中でやられると、持ち帰り中の素材を半分なくす。</p>`;
     h+=`<div class="list">`;
@@ -1651,6 +1677,7 @@ $("fac").addEventListener("click",e=>{
   const b=e.target.closest("button");if(!b||b.disabled)return;const d=b.dataset;
   if(d.go)goFac(d.go);
   if(d.close){leaveInterior();}
+  if(d.juke!==undefined)jukePlay(d.juke||null);
   if(d.char){S.char=d.char;VIEW=d.char;P.cid=d.char;markDirty();save(true);}
   if(d.sell){const k=d.sell,n=Math.min(+d.n,stock(d.sell)),v=sellMat(k,n);if(v>0)toast(`${MATS[k].nm}×${n}を ¥${fmt(v)} で売った`);markDirty();save(true);}
   if(d.deliver){const m=S.active.find(m=>m.id===+d.deliver);if(m&&stock(m.mat)>=m.need){takeMat(m.mat,m.need);m.prog=m.need;toast(`${MATS[m.mat].nm}を${m.need}個納品した`);claim(m);}}
@@ -1843,7 +1870,7 @@ function sanMis(m){if(!m||!MISTYPES.includes(m.type))return null;return{id:+m.id
 function sanitize(o){
   const s=fresh();if(!o||typeof o!=="object")return s;
   s.n=Math.max(0,+o.n||0);s.total=Math.max(0,+o.total||0);s.best=Math.max(1,Math.floor(+o.best||1));s.uid=Math.max(1,Math.floor(+o.uid||1));s.mid=Math.max(1,Math.floor(+o.mid||1));
-  s.last=+o.last||Date.now();s.char=CIDS.includes(o.char)?o.char:"luarie";s.yog=Math.min(3,Math.max(0,Math.floor(+o.yog||0)));s.auto=typeof o.auto==="boolean"?o.auto:null;s.zoom=typeof o.zoom==="boolean"?o.zoom:null;{const v=o.vol||{},cl=(x,d)=>Number.isFinite(+x)?Math.min(1,Math.max(0,+x)):d;s.vol={bgm:cl(v.bgm,0.6),se:cl(v.se,0.7)};}s.mute=!!o.mute;s.intro=!!o.intro;
+  s.last=+o.last||Date.now();s.char=CIDS.includes(o.char)?o.char:"luarie";s.yog=Math.min(3,Math.max(0,Math.floor(+o.yog||0)));s.auto=typeof o.auto==="boolean"?o.auto:null;s.zoom=typeof o.zoom==="boolean"?o.zoom:null;{const v=o.vol||{},cl=(x,d)=>Number.isFinite(+x)?Math.min(1,Math.max(0,+x)):d;s.vol={bgm:cl(v.bgm,0.6),se:cl(v.se,0.7)};}s.mute=!!o.mute;s.heard=Array.isArray(o.heard)?o.heard.filter(k=>BGM_FILES[k]):[];s.intro=!!o.intro;
   for(const p of PRODUCERS)s.own[p.id]=Math.max(0,Math.floor(+(o.own||{})[p.id]||0));
   if(Array.isArray(o.inv))s.inv=o.inv.filter(i=>i&&SLOTS[i.slot]&&RAR[i.rar]&&i.st).slice(0,INV_MAX).map(i=>({id:+i.id,slot:i.slot,rar:i.rar,name:String(i.name).slice(0,30),sp:GSP[i.sp]?i.sp:undefined,lvl:Math.max(1,+i.lvl||1),plus:Math.min(10,Math.max(0,+i.plus||0)),st:Object.fromEntries(Object.entries(i.st).filter(([k])=>STN[k]).map(([k,v])=>[k,+v||0]))}));
   if(o.ch){for(const c of CIDS)s.ch[c]=sanCh(o.ch[c],c);}
@@ -1874,12 +1901,15 @@ $("bSync").onclick=triggerSync;$("bYog").onclick=useYogurt;
 
 // title: 1st tap unlocks sound and starts the opening song, 2nd tap goes to town
 $("ttGo").onclick=()=>{
-  if(!SND.ac){sndInit();playBgm("title");const b=$("ttGo");b.textContent="▶ 街へ出る";b.classList.add("ready");$("ttNote").textContent=S.mute?"音：オフ（セーブ画面で変更）":"♪ Over Sync";return;}
+  if(!SND.ac){sndInit();playBgm("title");const b=$("ttGo");b.textContent=MODE==="dive"?"▶ 続きから（探索中）":"▶ 街へ出る";b.classList.add("ready");$("ttNote").textContent=S.mute?"音：オフ（セーブ画面で変更）":"♪ Over Sync";return;}
   sfx("start");TITLE=false;$("title").classList.add("out");setTimeout(()=>{$("title").hidden=true;},700);
 };
 function renderSnd(){$("volBgm").value=S.vol.bgm;$("volSe").value=S.vol.se;$("bMute").setAttribute("aria-pressed",S.mute);$("bMute").setAttribute("aria-label",S.mute?"音を出す":"音を消す");$("bMute2").textContent=S.mute?"音を出す":"音を消す";}
 const toggleMute=()=>{S.mute=!S.mute;sndInit();sndVol();renderSnd();save(true);};
-$("bMute").onclick=toggleMute;$("bMute2").onclick=toggleMute;
+$("bMute").onclick=toggleMute;
+// back to the title screen: the game pauses behind it, "続きから" resumes exactly where you were
+$("bTitle").onclick=()=>{save(true);document.querySelector("[data-t=main]").click();TITLE=true;const t=$("title");t.hidden=false;t.classList.remove("out");
+  const b=$("ttGo");if(SND.ac){b.textContent=MODE==="dive"?"▶ 続きから（探索中）":"▶ 続きから";b.classList.add("ready");$("ttNote").textContent=S.mute?"音：オフ":"♪ Over Sync";}};$("bMute2").onclick=toggleMute;
 $("volBgm").oninput=e=>{S.vol.bgm=+e.target.value;sndInit();sndVol();};
 $("volSe").oninput=e=>{S.vol.se=+e.target.value;sndInit();sndVol();sfx("coin");};
 $("volBgm").onchange=$("volSe").onchange=()=>save(true);
@@ -1913,7 +1943,7 @@ function start(data){
     const dt=Math.min((now-prev)/1000,0.05);prev=now;
     addMoney(perSec()*dt);
     if(SND.ac)playBgm(wantBgm());
-    if(tab==="main"&&!document.hidden){if(MODE==="town"){updateTown(dt);drawTown();}else{updateDive(dt);drawDive();}}
+    if(tab==="main"&&!document.hidden&&!TITLE){if(MODE==="town"){updateTown(dt);drawTown();}else{updateDive(dt);drawDive();}}
     if(tab==="skill"&&!document.hidden){if(TV.cid!==VIEW){if(tvFit())TV.cid=VIEW;}tvDraw();}
     hudT+=dt;if(hudT>0.15){hudT=0;if(dirty)renderPanels();else renderHud();}
     requestAnimationFrame(tick);
