@@ -21,6 +21,7 @@ game/
     act_*.png         攻撃・ダメージ・やられ・喜び 29コマ（160×192、足元は(80,150)）
     enemies/          敵のドット絵（任意。ない場合は図形描画に戻る）
       {spriteId}.png  64×64または横一列の64×64連結コマ
+  audio/              BGM（bgm_{場面}.mp3。同じ名前で差し替えれば曲が変わる）
   icons/              デバフ（ノイズ侵食）アイコン
   data/               ゲームデータ（JSON。ここに追記するだけで敵・エリア・素材が増える）
     enemies.json      敵（通常・ミッション限定・ボス）
@@ -68,6 +69,25 @@ game/
 - 横持ちで画面の高さが520px以下のときは、ヘッダーと右の列を詰めてステージを大きく表示する
 - 探索中の「オート攻撃」（近くの敵を自動で狙う）と「拡大表示」（自キャラを中心に1.4倍で追う）は、タッチ端末では最初からON。設定はセーブに保存される
 - `manifest.webmanifest` と `icons/app/` により、iPhoneの「ホーム画面に追加」から開くとブラウザのバーなしの全画面で動く。Android・PCは右上の全画面ボタンも使える
+
+## サウンド
+
+| ファイル | 流れる場面 |
+| --- | --- |
+| bgm_title.mp3 | タイトル画面（Over Sync） |
+| bgm_town.mp3 | 街・歪みゲート（遠景ピアノ針） |
+| bgm_home.mp3 | 家（HOME SWEET SIGNAL） |
+| bgm_shop.mp3 | 怪しい店（JUNK DEALER） |
+| bgm_guild.mp3 | ヨーデル管理所（CONTROL TERMINAL） |
+| bgm_live.mp3 | ライブハウス RESONANCE（NEON AFTER MIDNIGHT） |
+| bgm_dive.mp3 | 探索（DREAD DEPTHS） |
+| bgm_boss.mp3 | ボス層（ABSOLUTE DOMINION） |
+| bgm_sync.mp3 | 3-Sync発動から20秒（3-Sync Error 0）。秒数は `SYNC_BGM_SEC` |
+
+- 場面の切り替えは `wantBgm()`、曲の割り当ては `BGM_FILES`。0.9秒でクロスフェードする
+- 効果音はファイルを使わず `SFX` の表で音を合成している（音の高さ・長さ・大きさを数字で調整できる）
+- 音量（BGM・効果音）と消音はセーブ画面と画面上の♪ボタン。設定はセーブに保存される
+- ブラウザは最初のタップまで音を出せないので、タイトル画面の1回目のタップで音を有効にしている
 
 ## セーブ
 

@@ -206,6 +206,29 @@ textarea{width:100%;box-sizing:border-box;min-height:80px;font-family:ui-monospa
 }
 @media (max-width:420px){.tree{gap:6px}.node{padding:6px}}
 .fullbtn{min-height:0!important;padding:4px 9px;font-size:1rem;line-height:1}
+/* title screen */
+#title{position:fixed;inset:0;z-index:60;display:flex;align-items:center;justify-content:center;background:#07060d;overflow:hidden;transition:opacity .6s}
+#title.out{opacity:0;pointer-events:none}
+#title .tt-bg{position:absolute;inset:-20px;background:url(bg/town.png) center/cover;image-rendering:pixelated;filter:blur(3px) brightness(.45) saturate(1.3);animation:ttpan 30s linear infinite alternate}
+@keyframes ttpan{from{transform:scale(1.08) translateX(-2%)}to{transform:scale(1.08) translateX(2%)}}
+#title .tt-in{position:relative;display:flex;flex-direction:column;align-items:center;gap:6px;text-align:center;padding:16px}
+#title .tt-logo{font-family:var(--f-display);font-size:clamp(3rem,13vmin,6.5rem);line-height:1;color:#fff;letter-spacing:.04em;
+  text-shadow:-3px 0 rgba(255,60,160,.85),3px 0 rgba(60,220,255,.85),0 0 24px rgba(255,79,168,.6);animation:ttglitch 3.2s steps(1) infinite}
+@keyframes ttglitch{0%,92%,100%{transform:none}93%{transform:translateX(-4px) skewX(-8deg)}95%{transform:translateX(5px)}97%{transform:translateX(-2px) skewX(6deg)}}
+#title .tt-sub{font-family:var(--f-display);font-size:clamp(1rem,4.5vmin,1.7rem);color:var(--cyan,#3fe0ff);letter-spacing:.3em;margin-left:.3em}
+#title .tt-chars{display:flex;gap:4px;margin:6px 0 4px}
+#title .tt-chars i{display:block;width:64px;height:128px;background:var(--s) 0 0/768px 128px no-repeat;image-rendering:pixelated;zoom:.8}
+@media (max-height:420px){#title .tt-chars i{zoom:.55}}
+#title .tt-go{font-size:1.05rem;padding:12px 28px;animation:ttblink 1.4s ease-in-out infinite}
+@keyframes ttblink{50%{opacity:.55}}
+#title .tt-go.ready{animation:none;border-color:var(--pink,#ff4fa8)}
+#title .tt-note{margin:0;font-size:.75rem;color:var(--muted)}
+.sndset{display:flex;flex-wrap:wrap;gap:10px 18px;align-items:center}
+.sndset label{display:flex;align-items:center;gap:8px;font-size:.9rem}
+.sndset input{width:150px;accent-color:var(--pink,#ff4fa8)}
+#bMute[aria-pressed="true"]{opacity:.5;text-decoration:line-through}
+@media (prefers-reduced-motion:reduce){#title .tt-bg,#title .tt-logo,#title .tt-go{animation:none}}
+
 .divebar .btn.sm[aria-pressed="true"]{border-color:var(--cyan);color:var(--cyan)}
 /* landscape phones: every pixel of height goes to the stage */
 @media (orientation:landscape) and (max-height:520px){
@@ -234,7 +257,7 @@ textarea{width:100%;box-sizing:border-box;min-height:80px;font-family:ui-monospa
   <div class="top">
     <div class="hud">
       <div class="money">¥<span id="num">0</span><small id="rateTop"></small></div>
-      <button class="btn sm fullbtn" id="bFull" hidden aria-label="全画面">⛶</button><div class="lv"><span id="cname">ルアリエ</span> <b id="lv">Lv1</b> ・ SP <b id="sp">0</b><div class="bar"><i id="xpbar"></i></div></div>
+      <button class="btn sm fullbtn" id="bFull" hidden aria-label="全画面">⛶</button><button class="btn sm fullbtn" id="bMute" aria-label="音を消す" aria-pressed="false">♪</button><div class="lv"><span id="cname">ルアリエ</span> <b id="lv">Lv1</b> ・ SP <b id="sp">0</b><div class="bar"><i id="xpbar"></i></div></div>
     </div>
     <div class="tabs" role="tablist">
       <button role="tab" data-t="main" aria-selected="true">街・探索</button>
@@ -298,6 +321,14 @@ textarea{width:100%;box-sizing:border-box;min-height:80px;font-family:ui-monospa
   </section>
 
   <section id="p-save" hidden>
+    <h2>サウンド</h2>
+    <div class="sndset">
+      <label>BGM <input type="range" id="volBgm" min="0" max="1" step="0.05"></label>
+      <label>効果音 <input type="range" id="volSe" min="0" max="1" step="0.05"></label>
+      <button class="btn sm" id="bMute2">音を消す</button>
+    </div>
+    <p class="note">iPhoneはマナーモード（消音スイッチ）だと音が出ません。</p>
+    <h2 style="margin-top:14px">セーブ</h2>
     <div class="row">
       <button class="btn" id="bSave">今すぐ保存</button>
       <button class="btn" id="bExport">引き継ぎコードを出す</button>
@@ -312,6 +343,16 @@ textarea{width:100%;box-sizing:border-box;min-height:80px;font-family:ui-monospa
   </section>
 </div>
 <div class="toast" id="toast" role="status"></div>
+<div id="title" role="dialog" aria-label="タイトル">
+  <div class="tt-bg"></div>
+  <div class="tt-in">
+    <div class="tt-logo">3-Sync</div>
+    <div class="tt-sub">ノイズダイブ</div>
+    <div class="tt-chars"><i style="--s:url(sprites/walk_luarie.png)"></i><i style="--s:url(sprites/walk_ht.png)"></i><i style="--s:url(sprites/walk_mimi.png)"></i></div>
+    <button class="btn tt-go" id="ttGo">タップしてスタート</button>
+    <p class="tt-note" id="ttNote">音が出ます</p>
+  </div>
+</div>
 
 <script>
 /* ================= data ================= */
@@ -486,7 +527,7 @@ const FREECLIENTS=["迷子の子ども","近所のおばあちゃん","野良猫
 
 const freshCh=()=>({lv:1,xp:0,eq:{w:null,h:null,c:null},nodes:{},builds:Array.from({length:5},(_,i)=>({nm:"ビルド"+(i+1),nodes:null}))});
 const fresh=()=>({n:0,total:0,own:{},ch:{luarie:freshCh(),ht:freshCh(),mimi:freshCh()},inv:[],best:1,uid:1,mid:1,char:"luarie",
-  bag:{},mats:{},yog:1,board:[],active:[],auto:null,zoom:null,last:Date.now(),intro:false,ver:2});
+  bag:{},mats:{},yog:1,board:[],active:[],auto:null,zoom:null,vol:{bgm:0.6,se:0.7},mute:false,last:Date.now(),intro:false,ver:2});
 let S=fresh();
 
 /* ================= helpers ================= */
@@ -544,7 +585,7 @@ function perSec(){if(livePaused())return 0;const base=PRODUCERS.reduce((a,p)=>a+
 const xpNeed=lv=>Math.floor(10*Math.pow(1.28,lv-1));
 function addMoney(x){S.n+=x;S.total+=Math.max(0,x);}
 function addXp(cid,x){const c=S.ch[cid];c.xp+=x;let up=false;while(c.xp>=xpNeed(c.lv)){c.xp-=xpNeed(c.lv);c.lv++;up=true;}
-  if(up){log(`${CHARS[cid].name} Lv${c.lv}${spEarned(cid)<CFG.SP_CAP||c.lv-1===CFG.SP_CAP?"（SP +1）":""}`);bumpStats();
+  if(up){sfx("lvup");log(`${CHARS[cid].name} Lv${c.lv}${spEarned(cid)<CFG.SP_CAP||c.lv-1===CFG.SP_CAP?"（SP +1）":""}`);bumpStats();
     const u=[P,...ALLIES].find(u=>u&&u.cid===cid);if(u&&!u.down)u.hp=statsOf(cid,u).hp;markDirty();}}
 // explorer 100%, live members 30% (100% when fighting the boss together), with catch-up for those far behind
 function shareXp(x){
@@ -587,7 +628,7 @@ const stock=k=>S.mats[k]?S.mats[k].n:0;
 const unitPrice=k=>S.mats[k]&&S.mats[k].n?S.mats[k].v/S.mats[k].n*statsOf(S.char).gain:MATS[k].base*statsOf(S.char).gain;
 function stashBag(){let n=0;for(const k in S.bag){const b=S.bag[k],m=S.mats[k]||(S.mats[k]={n:0,v:0});m.n+=b.n;m.v+=b.v;n+=b.n;}S.bag={};return n;}
 function takeMat(k,n){const m=S.mats[k];if(!m||m.n<n)return 0;const v=m.v/m.n*n;m.n-=n;m.v-=v;if(m.n<=0)delete S.mats[k];return v;}
-function sellMat(k,n){n=Math.min(n,stock(k));if(n<=0)return 0;const money=takeMat(k,n)*statsOf(S.char).gain;addMoney(money);return money;}
+function sellMat(k,n){n=Math.min(n,stock(k));if(n<=0)return 0;sfx("coin");const money=takeMat(k,n)*statsOf(S.char).gain;addMoney(money);return money;}
 const yogPrice=()=>Math.ceil(40*Math.pow(1.12,Math.min(S.best,60)-1));
 
 /* ================= characters ================= */
@@ -611,7 +652,7 @@ const DEBUFFS={
 };
 for(const k in DEBUFFS){const i=new Image();i.src=DEBUFFS[k].src;DEBUFFS[k].img=i;}
 const hasDb=k=>!!(typeof P!=="undefined"&&P&&P.db&&P.db[k]>0);
-function applyDebuff(k){if(!DEBUFFS[k])return;const nw=!hasDb(k);P.db[k]=DEBUFFS[k].dur;
+function applyDebuff(k){if(!DEBUFFS[k])return;const nw=!hasDb(k);if(nw)sfx("debuff");P.db[k]=DEBUFFS[k].dur;
   if(nw)FX.push({x:P.x,y:P.y-72,txt:"侵食："+DEBUFFS[k].nm,c:"danger",t:1.1});
   if(k==="stun"){P.target=null;P.dest=null;}}
 function drawIcon(k,cx,cy,size){const im=DEBUFFS[k].img;if(!im.complete||!im.naturalWidth)return;
@@ -664,7 +705,7 @@ function enterTown(fromGate){
   P=mkUnit(S.char,fromGate?g.x-20:300,fromGate?STREET_Y+8:300,false);P.ang=Math.PI/2;
   $("ov").hidden=true;syncModeUI();syncStage();markDirty();
 }
-function enterInterior(id){OPEN=id;P.dest=null;P.pend=null;P.ang=-Math.PI/2;MARK=null;syncStage();markDirty();}
+function enterInterior(id){sfx("door");OPEN=id;P.dest=null;P.pend=null;P.ang=-Math.PI/2;MARK=null;syncStage();markDirty();}
 function leaveInterior(){OPEN=null;P.dest=null;P.ang=Math.PI/2;syncStage();markDirty();}
 function townTap(x,y){
   if(OPEN)leaveInterior(); // tapping the town closes the facility window and carries on as a normal town tap
@@ -709,7 +750,7 @@ function hueOf(hex){const m=/^#?([0-9a-f]{6})$/i.exec(hex||"");if(!m)return 300;
   if(!d)return 0;let h=mx===r?((g-b)/d)%6:mx===g?(b-r)/d+2:(r-g)/d+4;return(h*60+360)%360;}
 const resistOf=(e,k)=>{const r=(e.def&&e.def.statusResist)||{};return Math.min(0.95,r[k]??r.all??0);};
 function enterDive(start){
-  MODE="dive";OPEN=null;FLOOR=start;startFloor();syncModeUI();syncStage();markDirty();
+  MODE="dive";OPEN=null;FLOOR=start;SND.syncUntil=0;startFloor();syncModeUI();syncStage();markDirty();
   log(`${zoneOf(FLOOR).name}の歪みに潜った`);
 }
 function startFloor(){
@@ -752,7 +793,7 @@ function addEn(e){
   EN.push(e);return e;}
 function spawn(){
   const [x,y]=edgePoint(),Z=G.zone;
-  if(G.boss&&!G.bossSpawned){G.bossSpawned=true;addEn(mkEnemy(Z.bossId,W/2,44));return;}
+  if(G.boss&&!G.bossSpawned){G.bossSpawned=true;sfx("boss");addEn(mkEnemy(Z.bossId,W/2,44));return;}
   if(EN.length>=G.maxAlive)return;
   if(G.queue.length&&(Math.random()<0.35||G.spawnLeft<=0)){addEn(mkEnemy(G.queue.shift(),x,y));return;}
   if(G.spawnLeft<=0)return;
@@ -762,7 +803,7 @@ const clampX=x=>Math.max(16,Math.min(W-16,x)),clampY=y=>Math.max(70,Math.min(H-1
 function summon(e,id,n){
   for(let i=0;i<n;i++){const c=addEn(mkEnemy(id,clampX(e.x+rnd(-40,40)),clampY(e.y+rnd(-10,40))));c.summoned=true;c.parent=e;e.kids++;burst(c.x,c.y,c.hue,6);}
 }
-function eshoot(e,ang,speed,o={}){
+function eshoot(e,ang,speed,o={}){sfx("eshot");
   const bf=e.buffT>0?1+(e.buffAtk||0):1;
   ESHOTS.push({x:e.x,y:e.y-(e.def.fly?24:12),vx:Math.cos(ang)*speed,vy:Math.sin(ang)*speed,dmg:e.dmg*bf*(o.mul||1),life:3.2,col:e.col,own:e,db:o.db,dbCh:o.dbCh||0});
 }
@@ -779,7 +820,7 @@ function aimAt(e,tu,speed,lead=false){
   return Math.atan2(dy+vy*t,dx+vx*t);
 }
 function explode(e){
-  const R=e.p.radius||48;e.exploded=true;e.hp=0;WAVES.push({x:e.x,y:e.y,t:0,c:"255,140,60"});
+  const R=e.p.radius||48;e.exploded=true;sfx("explode");e.hp=0;WAVES.push({x:e.x,y:e.y,t:0,c:"255,140,60"});
   for(const u of alive())if(Math.hypot(u.x-e.x,(u.y-e.y)/0.7)<R)hurtUnit(u,e.dmg,e);
   for(const o of EN)if(o!==e&&o.hp>0&&Math.hypot(o.x-e.x,o.y-e.y)<R){o.hp-=o.mhp*0.25;}
   FX.push({x:e.x,y:e.y-20,txt:"ドカン",c:"gold",t:0.7});
@@ -921,11 +962,11 @@ function hurtUnit(u,d,from,at){
   const st=statsOf(u.cid,u);
   if(from.ail&&from.ail.blind&&Math.random()<0.5){u.inv=0.3;FX.push({x:u.x,y:u.y-56,txt:"ミス",c:"muted",t:0.6});return;}
   const perfect=st.sp.has("foresee")&&Math.random()<0.15;
-  if(perfect||Math.random()*100<st.dodge){u.inv=0.45;FX.push({x:u.x,y:u.y-56,txt:perfect?"未来視":"回避",c:"cyan",t:0.7});onDodge(u,st,from,perfect);return;}
+  if(perfect||Math.random()*100<st.dodge){u.inv=0.45;FX.push({x:u.x,y:u.y-56,txt:perfect?"未来視":"回避",c:"cyan",t:0.7});if(u===P)sfx("dodge");onDodge(u,st,from,perfect);return;}
   if(from.ail&&from.ail.atkdown)d*=0.65;
   d*=1-st.red;
   if(u.shield>0){const ab=Math.min(u.shield,d);u.shield-=ab;d-=ab;if(ab>0)FX.push({x:u.x+14,y:u.y-46,txt:"バリア",c:"cyan",t:0.5});}
-  u.shieldT=0;u.hp-=d;u.inv=0.8;u.anim={k:"dmg",t:0};
+  u.shieldT=0;u.hp-=d;u.inv=0.8;u.anim={k:"dmg",t:0};sfx("hurt",u===P?1:0.5);
   if(u===P&&from.db&&Math.random()<(from.boss?0.25:0.15))applyDebuff(from.db);
   const kp=at||from,a=Math.atan2(u.y-kp.y,u.x-kp.x);u.x+=Math.cos(a)*14;u.y+=Math.sin(a)*14;
   if(d>0)FX.push({x:u.x,y:u.y-56,txt:"-"+fmt(Math.max(1,d)),c:"danger",t:0.8});
@@ -940,7 +981,7 @@ function onDodge(u,st,from,perfect){
 function shockwave(u,st){WAVES.push({x:u.x,y:u.y,t:0});
   for(const e of EN)if(e.hp>0&&hollowSolid(e)&&Math.hypot(e.x-u.x,e.y-u.y)<70){const d=st.atk*1.5;e.hp-=d;e.lastHit=u;const a=Math.atan2(e.y-u.y,e.x-u.x);e.kx=Math.cos(a)*260;e.ky=Math.sin(a)*260;FX.push({x:e.x,y:e.y-e.r-4,txt:fmt(d),c:"cyan",t:0.6});}}
 function die(){
-  G.state="dying";G.dieT=1.4;P.anim={k:"die",t:0};P.target=null;P.dest=null;P.inv=0;
+  G.state="dying";G.dieT=1.4;sfx("down");P.anim={k:"die",t:0};P.target=null;P.dest=null;P.inv=0;
   let lost=0;for(const k in S.bag){const b=S.bag[k],h=Math.ceil(b.n/2);lost+=h;b.v*= (b.n-h)/Math.max(1,b.n);b.n-=h;if(b.n<=0)delete S.bag[k];}
   G.lost=lost;save(true);
 }
@@ -954,7 +995,7 @@ function burst(x,y,hue,n){for(let i=0;i<n;i++)PARTS.push({x:x+rnd(-8,8),y:y-rnd(
 function killEnemy(e){
   if(e.exploded){burst(e.x,e.y,30,14);return;} // blew itself up: no rewards
   const st=statsOf(S.char),boss=e.boss,k=e.lastHit&&!e.lastHit.down?e.lastHit:P,ks=statsOf(k.cid,k),Z=zoneOf(FLOOR),sc=scaleOf(FLOOR),mul=e.summoned?0.35:1,d=e.def;
-  burst(e.x,e.y,e.hue,boss?40:10);
+  burst(e.x,e.y,e.hue,boss?40:10);sfx(boss?"bossKill":"kill");
   shareXp(Math.ceil((d.expReward||3)*sc.xp*mul));
   const coin=Math.round((d.moneyReward||0)*sc.xp*mul);if(coin>0){addMoney(coin);if(boss)FX.push({x:e.x,y:e.y-30,txt:"+¥"+fmt(coin),c:"gold",t:1});}
   G.sync=Math.min(100,G.sync+(boss?20:4)*statsOf(P.cid).syncM);
@@ -979,7 +1020,7 @@ function fire(u,tgt,opt={}){
   if(u.cid==="luarie"){const d=Math.hypot(ax-u.x,ay-u.y),lt=d/340;ax+=(tgt.vx_||0)*lt;ay+=(tgt.vy_||0)*lt;}
   const base=Math.atan2(ay-u.y,ax-u.x);
   let forced=false;
-  if(!opt.silent){u.ang=base;u.anim={k:"atk",t:0};u.shotN++;forced=(u.cid==="luarie"&&u.shotN%4===0)||!!u.overSync;u.overSync=false;}
+  if(!opt.silent){sfx("shot_"+u.cid,u===P?1:0.45);u.ang=base;u.anim={k:"atk",t:0};u.shotN++;forced=(u.cid==="luarie"&&u.shotN%4===0)||!!u.overSync;u.overSync=false;}
   const mul=opt.mul||1;
   const mk=(a,m,tg)=>{const crit=forced||Math.random()*100<st.crit;
     SHOTS.push({own:u.cid,u,fromP:u===P,x:u.x+Math.cos(a)*12,y:u.y+Math.sin(a)*12,vx:Math.cos(a)*340,vy:Math.sin(a)*340,
@@ -1000,7 +1041,7 @@ function hitEnemy(e,s){
   if(e.p&&e.p.armor)d*=1-e.p.armor;
   e.hp-=d;e.lastHit=s.u;
   const kb=e.boss?40:s.own==="mimi"?240:150,k=Math.hypot(s.vx,s.vy);e.kx=s.vx/k*kb;e.ky=s.vy/k*kb;
-  FX.push({x:e.x,y:e.y-e.r-4,txt:fmt(Math.max(1,d))+(s.crit?"!":""),c:s.crit?"gold":"ink",t:0.7});
+  FX.push({x:e.x,y:e.y-e.r-4,txt:fmt(Math.max(1,d))+(s.crit?"!":""),c:s.crit?"gold":"ink",t:0.7});sfx(s.crit?"crit":"hit",s.fromP?1:0.5);
   if(s.own==="ht")e.slow=1.5;
   if(st.stCh>0&&!s.small){const ak=pick(st.pool);if(Math.random()*100<st.stCh*(1-resistOf(e,ak)))applyAil(e,ak,st,false);}
   if(st.aoe>0&&!s.small)for(const o of EN){if(o!==e&&o.hp>0&&hollowSolid(o)&&Math.hypot(o.x-e.x,o.y-e.y)<st.aoe){o.hp-=d*0.4;o.lastHit=s.u;FX.push({x:o.x,y:o.y-o.r-4,txt:fmt(Math.max(1,d*0.4)),c:"cyan",t:0.6});}}
@@ -1013,13 +1054,89 @@ function hitEnemy(e,s){
 }
 function triggerSync(){
   if(MODE!=="dive"||G.state!=="fight"||G.sync<100||G.syncing)return;
-  G.sync=0;G.syncing=true;G.syncT=0;G.syncFired=false;
+  G.sync=0;G.syncing=true;G.syncT=0;G.syncFired=false;sfx("sync");SND.syncUntil=performance.now()+SYNC_BGM_SEC*1000;
 }
 function useYogurt(){
   if(MODE!=="dive"||G.state!=="fight"||S.yog<=0||P.down)return;
   S.yog--;const st=statsOf(P.cid);P.hp=Math.min(st.hp,P.hp+st.hp*0.5);P.db={};G.sync=Math.min(100,G.sync+50);
   FX.push({x:P.x,y:P.y-70,txt:"粒子補充！",c:"ok",t:1});markDirty();
 }
+/* ===== sound ===== */
+// BGM: streamed <audio> routed through WebAudio so it can crossfade (iOS ignores audio.volume).
+// SFX: synthesized on the fly with oscillators/noise — no files needed.
+const BGM_FILES={title:"bgm_title",town:"bgm_town",home:"bgm_home",shop:"bgm_shop",guild:"bgm_guild",live:"bgm_live",dive:"bgm_dive",boss:"bgm_boss",sync:"bgm_sync"};
+const BGM_RESUME=new Set(["title","town","dive"]); // these continue where they left off; the rest restart
+const SYNC_BGM_SEC=20; // how long the 3-Sync song plays after a 3-Sync fires
+const SND={ac:null,mus:null,se:null,noise:null,tracks:{},cur:null,syncUntil:0,last:{}};
+let TITLE=true;
+function sndInit(){
+  if(SND.ac){if(SND.ac.state!=="running")SND.ac.resume().catch(()=>{});return;}
+  const AC=window.AudioContext||window.webkitAudioContext;if(!AC)return;
+  const ac=SND.ac=new AC();SND.mus=ac.createGain();SND.se=ac.createGain();
+  const comp=ac.createDynamicsCompressor();comp.threshold.value=-14;comp.ratio.value=6;
+  SND.se.connect(comp);comp.connect(ac.destination);SND.mus.connect(ac.destination);
+  const nb=ac.createBuffer(1,Math.floor(ac.sampleRate*0.6),ac.sampleRate),d=nb.getChannelData(0);for(let i=0;i<d.length;i++)d[i]=Math.random()*2-1;SND.noise=nb;
+  sndVol();if(ac.state!=="running")ac.resume().catch(()=>{});
+}
+function sndVol(){if(!SND.ac)return;const v=S.vol||{bgm:0.6,se:0.7},m=S.mute?0:1;SND.mus.gain.value=m*v.bgm*v.bgm*0.8;SND.se.gain.value=m*v.se*v.se*0.9;}
+function bgmTrack(k){let t=SND.tracks[k];if(t)return t;const a=new Audio();a.src="audio/"+BGM_FILES[k]+".mp3";a.loop=true;a.preload="auto";a.setAttribute("playsinline","");
+  const g=SND.ac.createGain();g.gain.value=0;SND.ac.createMediaElementSource(a).connect(g);g.connect(SND.mus);return SND.tracks[k]={a,g,stopT:0};}
+function playBgm(k){
+  if(!SND.ac||SND.cur===k)return;const now=SND.ac.currentTime,prev=SND.cur&&SND.tracks[SND.cur];SND.cur=k;
+  if(prev){prev.g.gain.cancelScheduledValues(now);prev.g.gain.setValueAtTime(prev.g.gain.value,now);prev.g.gain.linearRampToValueAtTime(0,now+0.9);
+    clearTimeout(prev.stopT);prev.stopT=setTimeout(()=>{if(SND.tracks[SND.cur]!==prev)prev.a.pause();},1000);}
+  if(!k||!BGM_FILES[k])return;const t=bgmTrack(k);clearTimeout(t.stopT);
+  if(t.a.paused){if(!BGM_RESUME.has(k)){try{t.a.currentTime=0;}catch(_){}}t.a.play().catch(()=>{});}
+  t.g.gain.cancelScheduledValues(now);t.g.gain.setValueAtTime(t.g.gain.value,now);t.g.gain.linearRampToValueAtTime(1,now+0.9);
+}
+function wantBgm(){
+  if(TITLE)return"title";
+  if(MODE==="town")return OPEN&&OPEN!=="gate"?OPEN:"town";
+  if(performance.now()<SND.syncUntil)return"sync";
+  if(G.state==="dead")return null;
+  return G.boss?"boss":"dive";
+}
+function tone(o,m){
+  const ac=SND.ac,t0=ac.currentTime+(o.at||0),g=ac.createGain(),v=Math.max(0.0002,(o.v||0.2)*m);g.connect(SND.se);
+  g.gain.setValueAtTime(0.0001,t0);g.gain.exponentialRampToValueAtTime(v,t0+0.006);g.gain.exponentialRampToValueAtTime(0.0001,t0+o.d);
+  let src;
+  if(o.noise){src=ac.createBufferSource();src.buffer=SND.noise;const fl=ac.createBiquadFilter();fl.type=o.ft||"bandpass";fl.frequency.setValueAtTime(o.f,t0);if(o.f2)fl.frequency.exponentialRampToValueAtTime(o.f2,t0+o.d);fl.Q.value=o.q||1;src.connect(fl);fl.connect(g);}
+  else{src=ac.createOscillator();src.type=o.type||"square";src.frequency.setValueAtTime(o.f,t0);if(o.f2)src.frequency.exponentialRampToValueAtTime(o.f2,t0+o.d);src.connect(g);}
+  src.start(t0);src.stop(t0+o.d+0.03);
+}
+// each sound = list of layers. f/f2 = start/end pitch (or filter freq for noise), d = length, v = loudness, at = delay
+const SFX={
+  shot_luarie:[{f:1500,f2:650,d:.07,type:"square",v:.09}],
+  shot_ht:[{f:500,f2:1700,d:.09,type:"sawtooth",v:.06},{noise:1,f:3200,d:.05,v:.05,q:5}],
+  shot_mimi:[{f:240,f2:65,d:.15,type:"square",v:.14},{noise:1,f:1000,f2:180,d:.13,v:.14,ft:"lowpass"}],
+  hit:[{noise:1,f:2400,d:.05,v:.11,q:2}],
+  crit:[{f:1800,f2:2800,d:.08,type:"square",v:.08},{noise:1,f:4200,d:.09,v:.12,q:3}],
+  kill:[{f:560,f2:90,d:.18,type:"square",v:.11},{noise:1,f:1500,f2:280,d:.2,v:.13}],
+  bossKill:[{f:320,f2:38,d:1.1,type:"sawtooth",v:.2},{noise:1,f:1400,f2:70,d:1.2,v:.26,ft:"lowpass"},{f:784,d:.2,type:"triangle",v:.12,at:.9},{f:1175,d:.5,type:"triangle",v:.14,at:1.05}],
+  explode:[{noise:1,f:900,f2:60,d:.5,v:.28,ft:"lowpass"},{f:120,f2:40,d:.4,type:"sine",v:.25}],
+  hurt:[{f:320,f2:110,d:.16,type:"sawtooth",v:.16},{noise:1,f:650,d:.12,v:.12}],
+  dodge:[{f:900,f2:1600,d:.1,type:"triangle",v:.09}],
+  debuff:[{f:520,f2:190,d:.32,type:"sawtooth",v:.09},{f:527,f2:194,d:.32,type:"sawtooth",v:.07}],
+  down:[{f:440,f2:100,d:.9,type:"triangle",v:.18},{f:330,f2:80,d:.9,type:"square",v:.05,at:.1}],
+  eshot:[{f:720,f2:380,d:.06,type:"triangle",v:.035}],
+  boss:[{f:55,d:1.3,type:"sawtooth",v:.18},{f:58,d:1.3,type:"sawtooth",v:.14},{noise:1,f:220,d:1.3,v:.12,ft:"lowpass"}],
+  clear:[{f:784,d:.12,type:"triangle",v:.15},{f:988,d:.12,type:"triangle",v:.15,at:.11},{f:1175,d:.4,type:"triangle",v:.17,at:.22}],
+  lvup:[{f:523,d:.1,type:"square",v:.08},{f:659,d:.1,type:"square",v:.08,at:.09},{f:784,d:.1,type:"square",v:.08,at:.18},{f:1047,d:.32,type:"square",v:.09,at:.27}],
+  sync:[{f:110,f2:880,d:.9,type:"sawtooth",v:.12},{f:220,f2:1760,d:.9,type:"square",v:.05},{noise:1,f:300,f2:7000,d:.9,v:.11}],
+  syncHit:[{f:85,f2:28,d:.7,type:"sine",v:.42},{noise:1,f:2400,f2:90,d:.8,v:.3,ft:"lowpass"}],
+  heal:[{f:660,f2:1320,d:.26,type:"triangle",v:.13},{f:990,f2:1980,d:.26,type:"sine",v:.07,at:.06}],
+  coin:[{f:1320,d:.06,type:"square",v:.06},{f:1980,d:.14,type:"square",v:.06,at:.05}],
+  tap:[{f:1100,d:.03,type:"square",v:.04}],
+  door:[{f:380,f2:560,d:.08,type:"triangle",v:.1},{f:560,f2:880,d:.12,type:"triangle",v:.08,at:.07}],
+  start:[{f:392,d:.1,type:"square",v:.08},{f:523,d:.1,type:"square",v:.08,at:.08},{f:784,d:.3,type:"square",v:.09,at:.16},{noise:1,f:500,f2:6000,d:.4,v:.06}]
+};
+const SFX_GAP={shot_luarie:.045,shot_ht:.045,shot_mimi:.06,hit:.035,crit:.05,kill:.04,coin:.08,eshot:.09,tap:.03,hurt:.08,lvup:.6,debuff:.3,explode:.08};
+function sfx(k,m=1){if(!SND.ac||S.mute||SND.ac.state!=="running"||!SFX[k])return;const now=SND.ac.currentTime;if(now-(SND.last[k]??-9)<(SFX_GAP[k]||0.02))return;SND.last[k]=now;for(const o of SFX[k])tone(o,m);}
+document.addEventListener("visibilitychange",()=>{if(!SND.ac)return;if(document.hidden)SND.ac.suspend().catch(()=>{});else SND.ac.resume().catch(()=>{});});
+// iOS can drop the audio context after an interruption: re-arm it on the next touch
+addEventListener("pointerdown",()=>{if(SND.ac&&SND.ac.state!=="running"&&!document.hidden)SND.ac.resume().catch(()=>{});},{capture:true});
+// UI click sound for every button
+document.addEventListener("click",e=>{const b=e.target.closest&&e.target.closest("button");if(b&&!b.disabled&&b.id!=="bSync")sfx(b.id==="bYog"?"heal":"tap");},{capture:true});
 // camera: in dives the view can zoom in and follow the player (S.zoom). Screen point -> world point.
 const CAM={x:W/2,y:H/2,z:1};
 function updateCam(){const z=MODE==="dive"&&S.zoom?1.4:1;CAM.z=z;const hw=W/(2*z),hh=H/(2*z);
@@ -1090,7 +1207,7 @@ function updateDive(dt){
   G.t+=dt;FX.forEach(f=>{f.t-=dt;f.y-=28*dt});FX=FX.filter(f=>f.t>0);if(MARK){MARK.t-=dt;if(MARK.t<=0)MARK=null;}
   for(const p of PARTS){p.x+=p.vx*dt;p.y+=p.vy*dt;p.vy-=40*dt;p.l-=dt;}PARTS=PARTS.filter(p=>p.l>0);
   if(G.syncing){G.syncT+=dt;
-    if(G.syncT>=0.9&&!G.syncFired){G.syncFired=true;const dmg=statsOf(P.cid).atk*18;
+    if(G.syncT>=0.9&&!G.syncFired){G.syncFired=true;sfx("syncHit");const dmg=statsOf(P.cid).atk*18;
       for(const e of EN){e.hp-=dmg*(e.boss?0.6:1);FX.push({x:e.x,y:e.y-e.r-6,txt:fmt(dmg*(e.boss?0.6:1)),c:"gold",t:0.9});}}
     if(G.syncT>=1.7)G.syncing=false;
     if(G.syncT<0.9)return;
@@ -1133,7 +1250,7 @@ function updateDive(dt){
   for(const e of EN)if(e.hp<=0)killEnemy(e);
   EN=EN.filter(e=>e.hp>0);
   if(G.state==="fight"&&G.spawnLeft<=0&&!G.queue.length&&EN.length===0&&(!G.boss||G.bossSpawned)){
-    G.state="clear";G.clearT=2.0;P.db={};
+    G.state="clear";G.clearT=2.0;P.db={};sfx("clear");
     for(const u of [P,...ALLIES]){u.target=null;u.dest=null;if(!u.down)u.anim={k:"joy",t:0};}
     FX.push({x:W/2,y:H/2-40,txt:G.boss?"ボス撃破！":"クリア！",c:"ok",t:1.6,big:1});
   }
@@ -1433,7 +1550,7 @@ function progress(type,e){
     if(type==="reach"&&m.type==="reach"&&FLOOR>=m.floor)inc=1;
     if(inc){m.prog=Math.min(m.need,m.prog+inc);if(m.prog>=m.need){toast(`依頼達成：${m.txt}。管理庁窓口で報告しよう`);}markDirty();}}
 }
-function claim(m){
+function claim(m){sfx("coin");
   S.active=S.active.filter(x=>x!==m);
   const xp=Math.ceil(12*Math.pow(1.14,Math.max(0,S.best-1)))*(m.free?2:1);addXp(S.char,xp);
   if(m.free){if(S.yog<3)S.yog++;toast(`「ありがとう！」${m.cl}からヨーグルトをもらった（経験値 +${xp}）`);}
@@ -1725,7 +1842,7 @@ function sanMis(m){if(!m||!MISTYPES.includes(m.type))return null;return{id:+m.id
 function sanitize(o){
   const s=fresh();if(!o||typeof o!=="object")return s;
   s.n=Math.max(0,+o.n||0);s.total=Math.max(0,+o.total||0);s.best=Math.max(1,Math.floor(+o.best||1));s.uid=Math.max(1,Math.floor(+o.uid||1));s.mid=Math.max(1,Math.floor(+o.mid||1));
-  s.last=+o.last||Date.now();s.char=CIDS.includes(o.char)?o.char:"luarie";s.yog=Math.min(3,Math.max(0,Math.floor(+o.yog||0)));s.auto=typeof o.auto==="boolean"?o.auto:null;s.zoom=typeof o.zoom==="boolean"?o.zoom:null;s.intro=!!o.intro;
+  s.last=+o.last||Date.now();s.char=CIDS.includes(o.char)?o.char:"luarie";s.yog=Math.min(3,Math.max(0,Math.floor(+o.yog||0)));s.auto=typeof o.auto==="boolean"?o.auto:null;s.zoom=typeof o.zoom==="boolean"?o.zoom:null;{const v=o.vol||{},cl=(x,d)=>Number.isFinite(+x)?Math.min(1,Math.max(0,+x)):d;s.vol={bgm:cl(v.bgm,0.6),se:cl(v.se,0.7)};}s.mute=!!o.mute;s.intro=!!o.intro;
   for(const p of PRODUCERS)s.own[p.id]=Math.max(0,Math.floor(+(o.own||{})[p.id]||0));
   if(Array.isArray(o.inv))s.inv=o.inv.filter(i=>i&&SLOTS[i.slot]&&RAR[i.rar]&&i.st).slice(0,INV_MAX).map(i=>({id:+i.id,slot:i.slot,rar:i.rar,name:String(i.name).slice(0,30),sp:GSP[i.sp]?i.sp:undefined,lvl:Math.max(1,+i.lvl||1),plus:Math.min(10,Math.max(0,+i.plus||0)),st:Object.fromEntries(Object.entries(i.st).filter(([k])=>STN[k]).map(([k,v])=>[k,+v||0]))}));
   if(o.ch){for(const c of CIDS)s.ch[c]=sanCh(o.ch[c],c);}
@@ -1753,6 +1870,18 @@ document.querySelectorAll(".tabs button").forEach(b=>b.onclick=()=>{
 $("p-main").addEventListener("contextmenu",e=>e.preventDefault());
 document.addEventListener("selectstart",e=>{if(e.target.tagName!=="TEXTAREA")e.preventDefault();});
 $("bSync").onclick=triggerSync;$("bYog").onclick=useYogurt;
+
+// title: 1st tap unlocks sound and starts the opening song, 2nd tap goes to town
+$("ttGo").onclick=()=>{
+  if(!SND.ac){sndInit();playBgm("title");const b=$("ttGo");b.textContent="▶ 街へ出る";b.classList.add("ready");$("ttNote").textContent=S.mute?"音：オフ（セーブ画面で変更）":"♪ Over Sync";return;}
+  sfx("start");TITLE=false;$("title").classList.add("out");setTimeout(()=>{$("title").hidden=true;},700);
+};
+function renderSnd(){$("volBgm").value=S.vol.bgm;$("volSe").value=S.vol.se;$("bMute").setAttribute("aria-pressed",S.mute);$("bMute").setAttribute("aria-label",S.mute?"音を出す":"音を消す");$("bMute2").textContent=S.mute?"音を出す":"音を消す";}
+const toggleMute=()=>{S.mute=!S.mute;sndInit();sndVol();renderSnd();save(true);};
+$("bMute").onclick=toggleMute;$("bMute2").onclick=toggleMute;
+$("volBgm").oninput=e=>{S.vol.bgm=+e.target.value;sndInit();sndVol();};
+$("volSe").oninput=e=>{S.vol.se=+e.target.value;sndInit();sndVol();sfx("coin");};
+$("volBgm").onchange=$("volSe").onchange=()=>save(true);
 $("bAuto").onclick=()=>{S.auto=!S.auto;toast(S.auto?"オート攻撃：近くの敵を自動で狙う":"オート攻撃をやめた");renderToggles();save(true);};
 $("bZoom").onclick=()=>{S.zoom=!S.zoom;renderToggles();save(true);};
 function renderToggles(){$("bAuto").setAttribute("aria-pressed",!!S.auto);$("bZoom").setAttribute("aria-pressed",!!S.zoom);
@@ -1775,13 +1904,14 @@ $("bDoReset").onclick=()=>{S=fresh();fillBoard();save(true);VIEW=S.char;OPEN=nul
 function start(data){
   if(data&&data.S){S=sanitize(data.S);finishLoad();}else load();
   fillBoard();VIEW=S.char;tvSetup();enterTown(false);
-  const coarse=matchMedia("(pointer:coarse)").matches;if(S.auto===null)S.auto=coarse;if(S.zoom===null)S.zoom=coarse&&innerWidth<1000;renderToggles();
+  const coarse=matchMedia("(pointer:coarse)").matches;if(S.auto===null)S.auto=coarse;if(S.zoom===null)S.zoom=coarse&&innerWidth<1000;renderToggles();renderSnd();
   if(!S.intro){S.intro=true;toast("3-Sync、今月もガス代がピンチ。歪みゲートで稼ごう");}
   renderPanels();
   let prev=performance.now(),hudT=0;
   (function tick(now){
     const dt=Math.min((now-prev)/1000,0.05);prev=now;
     addMoney(perSec()*dt);
+    if(SND.ac)playBgm(wantBgm());
     if(tab==="main"&&!document.hidden){if(MODE==="town"){updateTown(dt);drawTown();}else{updateDive(dt);drawDive();}}
     if(tab==="skill"&&!document.hidden){if(TV.cid!==VIEW){if(tvFit())TV.cid=VIEW;}tvDraw();}
     hudT+=dt;if(hudT>0.15){hudT=0;if(dirty)renderPanels();else renderHud();}
