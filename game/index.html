@@ -183,13 +183,14 @@ textarea{width:100%;box-sizing:border-box;min-height:80px;font-family:ui-monospa
 .stagecol{display:flex;flex-direction:column;gap:6px;min-width:0}
 /* landscape phones and PCs: stage on the left sized to the viewport height, menus beside it */
 @media (min-aspect-ratio:4/3) and (min-width:640px){
-  .wrap{max-width:1500px;padding-block:6px 16px;gap:8px}
+  /* --stw (stage width) lives on .wrap so the whole page can be sized from it: no fixed max width,
+     the stage grows with the screen (big monitors / fullscreen) and the side column stays ~350px */
+  .wrap{--stw:min(calc(100vw - 280px),calc((100vh - 104px) * 16 / 9));max-width:calc(var(--stw) + 360px);padding-block:6px 16px;gap:8px}
+  @supports (height:100dvh){.wrap{--stw:min(calc(100vw - 280px),calc((100dvh - 104px) * 16 / 9))}}
   .top{flex-direction:row;align-items:center;gap:12px;padding-block:4px}
   .top .hud{flex:0 0 auto;gap:16px}
   .top .tabs{flex:1 1 auto;max-width:520px;margin-left:auto}
-  .mainlay{display:grid;grid-template-columns:minmax(0,var(--stw)) minmax(230px,1fr);gap:12px;align-items:start;
-    --stw:min(calc(100vw - 280px),calc((100vh - 104px) * 16 / 9))}
-  @supports (height:100dvh){.mainlay{--stw:min(calc(100vw - 280px),calc((100dvh - 104px) * 16 / 9))}}
+  .mainlay{display:grid;grid-template-columns:minmax(0,var(--stw)) minmax(230px,1fr);gap:12px;align-items:start}
   /* side panel is narrow here: gauge on its own row, the two buttons side by side */
   .divebar{grid-template-columns:1fr 1fr}.divebar>div:first-child{grid-column:1/-1}.divebar .btn{white-space:nowrap}
   /* skill tab: tree on the left filling the height, details and builds on the right */
@@ -237,9 +238,9 @@ textarea{width:100%;box-sizing:border-box;min-height:80px;font-family:ui-monospa
   .money{font-size:1.25rem}.money small{display:none}
   .lv{font-size:.72rem}.lv b{font-size:.9rem}.bar{width:90px;margin-top:2px}
   .tabs{padding:3px}.tabs button{padding:5px 2px;font-size:.78rem}
-  .mainlay{grid-template-columns:minmax(0,var(--stw)) minmax(200px,1fr);gap:8px;
-    --stw:min(calc(100vw - 236px),calc((100vh - 78px) * 16 / 9))}
-  @supports (height:100dvh){.mainlay{--stw:min(calc(100vw - 236px),calc((100dvh - 78px) * 16 / 9))}}
+  .mainlay{grid-template-columns:minmax(0,var(--stw)) minmax(200px,1fr);gap:8px}
+  .wrap{--stw:min(calc(100vw - 236px),calc((100vh - 78px) * 16 / 9))}
+  @supports (height:100dvh){.wrap{--stw:min(calc(100vw - 236px),calc((100dvh - 78px) * 16 / 9))}}
   .stagecol{gap:2px}.locbar{font-size:.7rem}
   .sidecol{top:44px;max-height:calc(100vh - 52px)}
   @supports (height:100dvh){.sidecol{max-height:calc(100dvh - 52px)}}
