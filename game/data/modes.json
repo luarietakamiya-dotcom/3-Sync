@@ -1,0 +1,50 @@
+{
+  "_doc": "歪みゲートの追加モード。run=ノイズ・ラン（区画を進み続ける）、rush=ボスラッシュ、heat=侵食度（難しくする代わりに報酬が増える）、resonance=共鳴研究（共鳴の欠片で永続強化。ヨーデル管理所）。",
+  "run": {
+    "_doc": "区画seg（1,2,3…）。敵の強さはそのエリアの第(1+floor((seg-1)/floorStep))層相当（最大9層目）。deepFrom区画より先はさらにHP×deepHp^n・攻撃×deepAtk^n。bossEvery区画ごとにエリアボス。forkEvery区画ごとに分かれ道（次の区画を選ぶ・撤退できる）。報酬は1区画ごとに+rewardPerSeg。",
+    "floorStep": 2,
+    "deepFrom": 18,
+    "deepHp": 1.07,
+    "deepAtk": 1.035,
+    "rewardPerSeg": 0.03,
+    "bossEvery": 10,
+    "forkEvery": 5,
+    "eliteChance": 0.06,
+    "carryHp": true,
+    "encounters": [
+      {"id": "battle", "name": "ノイズの群れ", "weight": 50, "desc": "いつもの戦闘"},
+      {"id": "swarm", "name": "大群", "weight": 12, "count": 2.2, "hp": 0.45, "desc": "弱い敵が大量に押し寄せる"},
+      {"id": "elite", "name": "レア個体", "weight": 14, "desc": "強化された金色の個体がまざる。良い装備を落とす"},
+      {"id": "treasure", "name": "粒子だまり", "weight": 8, "desc": "戦闘なし。素材とお金が手に入る"},
+      {"id": "rest", "name": "安全地帯", "weight": 8, "heal": 0.45, "desc": "戦闘なし。HPを回復し、状態異常が消える"},
+      {"id": "rareBoss", "name": "変異ボス", "weight": 3, "minSeg": 4, "desc": "まれに現れる強敵。共鳴の欠片と良い装備"}
+    ],
+    "elite": {"hp": 6, "atk": 1.4, "size": 1.35, "speed": 1.1, "money": 5, "mats": 3},
+    "rareBoss": {"hp": 1.4, "atk": 1.15, "name": "変異"},
+    "shards": {"perFork": 1, "elite": 0.35, "rareBoss": 3, "zoneBoss": 2}
+  },
+  "rush": {
+    "_doc": "倒したことのあるエリアボスと順番に連戦。各ボスはそのエリアの10層目の強さ。ボスの間にHPがhealBetween回復。タイムを記録。",
+    "healBetween": 0.3,
+    "shardsPerBoss": 2,
+    "clearBonus": 3
+  },
+  "heat": [
+    {"id": "hp", "name": "硬化", "desc": "敵のHP +60%", "pt": 2, "reward": 0.25},
+    {"id": "atk", "name": "凶暴化", "desc": "敵の攻撃 +40%", "pt": 2, "reward": 0.25},
+    {"id": "swarm", "name": "増殖", "desc": "敵の数 +50%", "pt": 1, "reward": 0.15},
+    {"id": "debuff", "name": "侵食", "desc": "デバフ持ちの敵が増える", "pt": 1, "reward": 0.15},
+    {"id": "noYog", "name": "断食", "desc": "ヨーグルトが使えない", "pt": 1, "reward": 0.15},
+    {"id": "fragile", "name": "消耗", "desc": "安全地帯・ボス間の回復なし", "pt": 2, "reward": 0.2},
+    {"id": "elite", "name": "精鋭", "desc": "レア個体が2倍出る（報酬もふえる）", "pt": 1, "reward": 0.1}
+  ],
+  "resonance": [
+    {"id": "atk", "name": "出力増幅", "desc": "3人の攻撃 +3%", "per": 3, "max": 20, "cost": [3, 2]},
+    {"id": "hp", "name": "位相装甲", "desc": "3人のHP +4%", "per": 4, "max": 20, "cost": [3, 2]},
+    {"id": "crit", "name": "先読み回路", "desc": "3人の会心率 +1", "per": 1, "max": 15, "cost": [4, 2]},
+    {"id": "sync", "name": "同期安定", "desc": "同期ゲージの溜まり +5%", "per": 5, "max": 10, "cost": [3, 2]},
+    {"id": "drop", "name": "粒子感知", "desc": "装備が落ちる率 +6%", "per": 6, "max": 10, "cost": [4, 3]},
+    {"id": "gain", "name": "換金ルート", "desc": "お金の入り +5%", "per": 5, "max": 10, "cost": [3, 2]},
+    {"id": "xp", "name": "経験共鳴", "desc": "経験値 +5%", "per": 5, "max": 10, "cost": [3, 2]}
+  ]
+}
