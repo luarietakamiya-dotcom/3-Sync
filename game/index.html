@@ -1693,7 +1693,7 @@ function enemySprite(id){
   if(!id||!/^[A-Za-z0-9_-]+$/.test(id))return null;
   if(!ENEMY_IMAGES[id]){
     const entry={img:new Image(),ok:false};
-    entry.img.onload=()=>{entry.ok=entry.img.naturalHeight===64&&entry.img.naturalWidth>=64&&entry.img.naturalWidth%64===0;};
+    entry.img.onload=()=>{const h=entry.img.naturalHeight,w=entry.img.naturalWidth;entry.ok=h>=64&&h<=256&&h%32===0&&w>=h&&w%h===0;}; // square frames (64×64 for normal enemies, 128×128 for bosses) in one row
     entry.img.onerror=()=>{entry.ok=false;};
     entry.img.src="sprites/enemies/"+id+".png";ENEMY_IMAGES[id]=entry;
   }
@@ -1724,11 +1724,11 @@ function drawEnemy(e){
   let top;
   if(image){
     // Source foot anchor (32,56); keep the entity's world-space feet at (x,y).
-    const sc=e.def.spriteScale||1,size=Math.round(e.r*2.75*sc),frames=image.naturalWidth/64;
+    const sc=e.def.spriteScale||1,size=Math.round(e.r*2.75*sc),fs=image.naturalHeight,frames=image.naturalWidth/fs;
     const lift=e.hopping>0?Math.sin((0.38-e.hopping)/0.38*Math.PI)*20:0;
     const frame=spriteFrame(e,t,frames),dy=y-size*56/64-lift;
     shadow(x,y,e.r+2);ctx.imageSmoothingEnabled=false;
-    ctx.drawImage(image,frame*64,0,64,64,Math.round(x-size/2),Math.round(dy),size,size);
+    ctx.drawImage(image,frame*fs,0,fs,fs,Math.round(x-size/2),Math.round(dy),size,size);
     top=sc!==1?Math.round(dy+size*0.1)-4:enemyHpTop(e,y,t);
   }else top=fn(e,x,y,t);
   ctx.restore();
