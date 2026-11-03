@@ -33,6 +33,7 @@ game/
 
 - **敵を増やす**：`enemies.json` に1件追加し、`maps.json` のどこかの `enemyPool` に `id` を書く。動きは `aiType`（melee_rush / ranged_keep / charger / support_buffer / debuffer / summoner / suicide / flee / boss）と `params` で決まる。見た目は `spriteId`（`index.html` の `ENEMY_DRAW` にある名前）と `color`
 - **ボスの技**：`params.moves` に並べる。type は summon / charge / ring / volley / buff / debuffPulse / teleport
+- **ボスの段階**：HP50%で「本気モード」、20%で「暴走」。咆哮（約1秒ほぼ無敵）→ 技の間隔が短く、移動と攻撃が強くなる。倍率は `index.html` の `BOSS_PHASE`。ボスの硬さは `maps.json` の `scaling.bossHp`
 - **エリアを増やす**：`maps.json` の `zones` の末尾に追加すると、次の10層として開く。床の仕掛けは `hazards`（puddle / falling / electric / noise / rift）
 - **素材を増やす**：`materials.json` に追加し、敵の `dropTable` に `id` を書く
 

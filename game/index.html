@@ -192,7 +192,7 @@ textarea{width:100%;box-sizing:border-box;min-height:80px;font-family:ui-monospa
   .top .tabs{flex:1 1 auto;max-width:520px;margin-left:auto}
   .mainlay{display:grid;grid-template-columns:minmax(0,var(--stw)) minmax(230px,1fr);gap:12px;align-items:start}
   /* side panel is narrow here: gauge on its own row, the two buttons side by side */
-  .divebar{grid-template-columns:1fr 1fr}.divebar>div:first-child{grid-column:1/-1}.divebar .btn{white-space:nowrap}
+  .divebar{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}.divebar>div:first-child{grid-column:1/-1}.divebar .btn{min-width:0;padding-inline:6px;font-size:.82rem;overflow-wrap:anywhere}
   /* skill tab: tree on the left filling the height, details and builds on the right */
   #p-skill{display:grid;grid-template-columns:minmax(0,1fr) minmax(240px,34%);column-gap:12px;align-items:start}
   #p-skill>#vsw1,#p-skill>.sktop{grid-column:1/-1}
@@ -887,16 +887,27 @@ function enemyAct(e,dt,tu,f){
     default:mv(a,sp);
   }
 }
+// boss phases: at 50% HP "本気モード", at 20% "暴走". Each phase roars (nearly invulnerable for a moment),
+// pushes the party back, then attacks faster (cooldown ×BOSS_PHASE.cd), moves faster and hits harder.
+const BOSS_PHASE=[null,{at:1,cd:1,spd:1,dmg:1},{at:0.5,cd:0.65,spd:1.25,dmg:1.15,txt:"本気モード！"},{at:0.2,cd:0.45,spd:1.45,dmg:1.15,txt:"暴走！"}];
 function bossAct(e,dt,tu,dist,a,f,sp,mv){
+  e.phase=e.phase||1;
+  const nx=BOSS_PHASE[e.phase+1];
+  if(nx&&e.hp/e.mhp<=nx.at){e.phase++;e.roar=1.1;e.charge=0;e.wind=0;e.dmg*=nx.dmg;
+    FX.push({x:e.x,y:e.y-e.r*1.9,txt:nx.txt,c:"danger",t:1.5,big:1});WAVES.push({x:e.x,y:e.y,t:0,c:"255,59,107",r:230});sfx("boss");
+    for(const u of alive()){const d=Math.hypot(u.x-e.x,u.y-e.y);if(d<130){const k=Math.atan2(u.y-e.y,u.x-e.x);u.x=clampX(u.x+Math.cos(k)*46);u.y=clampY(u.y+Math.sin(k)*46);}}
+    for(const m of e.moves)m.t=Math.min(m.t,0.4+Math.random()*0.8);}
+  if(e.roar>0){e.roar-=dt;return;}
+  const ph=BOSS_PHASE[e.phase];sp*=ph.spd;
   if(e.charge>0){e.charge-=dt;mv(e.ca,e.spd*(e.chSpeed||3.4)*f);return;}
   if(e.wind>0){if(f>0)e.wind-=dt;if(e.wind<=0)e.charge=e.chTime||0.8;return;}
   if(dist>95)mv(a,sp);else mv(a+Math.PI/2,sp*0.5);
   e.x=clampX(e.x);e.y=clampY(e.y);
-  for(const m of e.moves){m.t-=dt*f;if(m.t>0)continue;m.t=m.cd||4;
-    if(m.type==="summon"&&EN.length<G.maxAlive+6)summon(e,m.id,m.count||1);
+  for(const m of e.moves){m.t-=dt*f;if(m.t>0)continue;m.t=(m.cd||4)*ph.cd;
+    if(m.type==="summon"&&EN.length<G.maxAlive+6)summon(e,m.id,(m.count||1)+(e.phase-1));
     else if(m.type==="charge"){e.ca=a;e.wind=m.windup||0.7;e.chSpeed=m.speed||3.4;e.chTime=m.time||0.8;FX.push({x:e.x,y:e.y-e.r*1.6,txt:"！！",c:"danger",t:0.7});}
-    else if(m.type==="ring"){const n=m.count||10,o=G.t;for(let i=0;i<n;i++)eshoot(e,o+i/n*Math.PI*2,m.speed||110,{mul:0.7});}
-    else if(m.type==="volley"){const n=m.count||3,b=aimAt(e,tu,m.speed||200,m.lead===true);for(let i=0;i<n;i++)eshoot(e,b+(i-(n-1)/2)*0.16,m.speed||200);}
+    else if(m.type==="ring"){const n=Math.round((m.count||10)*(e.phase>1?1.4:1)),o=G.t;for(let i=0;i<n;i++)eshoot(e,o+i/n*Math.PI*2,m.speed||110,{mul:0.7});}
+    else if(m.type==="volley"){const n=(m.count||3)+(e.phase-1)*2,b=aimAt(e,tu,m.speed||200,m.lead===true);for(let i=0;i<n;i++)eshoot(e,b+(i-(n-1)/2)*0.16,m.speed||200);}
     else if(m.type==="buff"){WAVES.push({x:e.x,y:e.y,t:0,c:"255,79,168",r:m.radius||200});for(const o of EN)if(o.hp>0&&Math.hypot(o.x-e.x,o.y-e.y)<(m.radius||200)){o.buffT=m.dur||5;o.buffAtk=m.atk||0.4;o.buffSpd=m.spd||0.4;}}
     else if(m.type==="debuffPulse"){WAVES.push({x:e.x,y:e.y,t:0,c:"255,255,255",r:m.radius||160});if(Math.hypot(P.x-e.x,P.y-e.y)<(m.radius||160)&&Math.random()<(m.chance||0.5))applyDebuff(m.debuff||"blind");}
     else if(m.type==="teleport"){burst(e.x,e.y,e.hue,20);let nx,ny,g=0;do{nx=clampX(rnd(40,W-40));ny=clampY(rnd(90,H-40));}while(Math.hypot(nx-P.x,ny-P.y)<140&&g++<10);e.x=nx;e.y=ny;burst(e.x,e.y,e.hue,20);}
@@ -1050,6 +1061,7 @@ function hitEnemy(e,s){
   if(e.ail&&e.ail.poison&&st.gsp.poisonDmg)d*=1+0.3*Math.min(2,st.gsp.poisonDmg);
   if(s.crit&&e.ail&&e.ail.miss)d*=1.5;
   if(e.p&&e.p.armor)d*=1-e.p.armor;
+  if(e.roar>0)d*=0.15; // boss roaring between phases
   e.hp-=d;e.lastHit=s.u;
   const kb=e.boss?40:s.own==="mimi"?240:150,k=Math.hypot(s.vx,s.vy);e.kx=s.vx/k*kb;e.ky=s.vy/k*kb;
   FX.push({x:e.x,y:e.y-e.r-4,txt:fmt(Math.max(1,d))+(s.crit?"!":""),c:s.crit?"gold":"ink",t:0.7});sfx(s.crit?"crit":"hit",s.fromP?1:0.5);
@@ -1412,6 +1424,8 @@ function spriteFrame(e,t,frames){
 }
 function drawEnemy(e){
   const x=e.x,y=e.y,t=G.t,solid=hollowSolid(e),fn=ENEMY_DRAW[e.def.spriteId]||ENEMY_DRAW.slime;
+  if(e.boss&&e.phase>1){const pu=0.35+0.25*Math.sin(t*(e.phase===3?14:8));ctx.fillStyle=`rgba(255,40,80,${pu})`;ctx.beginPath();ctx.ellipse(x,y,e.r+10,(e.r+10)*0.42,0,0,7);ctx.fill();
+    if(e.roar>0){ctx.strokeStyle=`rgba(255,80,110,${Math.min(1,e.roar)})`;ctx.lineWidth=3;ctx.beginPath();ctx.ellipse(x,y-e.r,e.r*1.6+(1.1-e.roar)*30,(e.r*1.6+(1.1-e.roar)*30)*0.6,0,0,7);ctx.stroke();ctx.lineWidth=1;}}
   if(e.buffT>0){ctx.strokeStyle="rgba(150,120,255,.6)";ctx.lineWidth=2;ctx.beginPath();ctx.ellipse(x,y,e.r+6,(e.r+6)*0.4,0,0,7);ctx.stroke();ctx.lineWidth=1;}
   if((e.wind>0)&&e.ca!==undefined){ctx.strokeStyle="rgba(255,60,90,.45)";ctx.lineWidth=e.r;ctx.beginPath();ctx.moveTo(x,y);ctx.lineTo(x+Math.cos(e.ca)*170,y+Math.sin(e.ca)*170);ctx.stroke();ctx.lineWidth=1;}
   if(e.fuse>0){ctx.strokeStyle="rgba(255,140,60,.7)";ctx.beginPath();ctx.ellipse(x,y,e.p.radius||48,(e.p.radius||48)*0.7,0,0,7);ctx.stroke();}
@@ -1507,7 +1521,7 @@ function drawDive(){
   if(fi>=7&&!G.boss){ctx.fillStyle=`rgba(255,40,80,${0.04+(fi-7)*0.015})`;ctx.fillRect(0,0,W,H);}
   if(G.boss){const vg=ctx.createRadialGradient(W/2,H/2,H*0.3,W/2,H/2,H*0.85);vg.addColorStop(0,"rgba(120,0,30,0)");vg.addColorStop(1,`rgba(160,0,40,${0.35+Math.sin(G.t*3)*0.08})`);ctx.fillStyle=vg;ctx.fillRect(0,0,W,H);}
   if(G.syncing)drawSyncFx();
-  {const b=EN.find(e=>e.boss);if(b){ctx.fillStyle="rgba(14,12,21,.75)";ctx.fillRect(W/2-150,H-26,300,18);ctx.fillStyle="#2e2942";ctx.fillRect(W/2-140,H-14,280,4);ctx.fillStyle="#ff3b6b";ctx.fillRect(W/2-140,H-14,280*Math.max(0,b.hp/b.mhp),4);
+  {const b=EN.find(e=>e.boss);if(b){ctx.fillStyle="rgba(14,12,21,.75)";ctx.fillRect(W/2-150,H-26,300,18);ctx.fillStyle="#2e2942";ctx.fillRect(W/2-140,H-14,280,4);ctx.fillStyle=b.phase>1?"#ff2050":"#ff3b6b";ctx.fillRect(W/2-140,H-14,280*Math.max(0,b.hp/b.mhp),4);ctx.fillStyle="#f6c445";for(const pt of [0.5,0.2])ctx.fillRect(W/2-140+280*pt-0.5,H-16,1,8);
     ctx.font="10px DotGothic16, monospace";ctx.textAlign="center";ctx.fillStyle="#ece8f4";ctx.fillText(b.def.name,W/2,H-17);ctx.textAlign="left";}}
   if(G.banner>0){const a=Math.min(1,G.banner,3.2-G.banner+0.2);ctx.save();ctx.globalAlpha=a;ctx.fillStyle="rgba(10,0,6,.6)";ctx.fillRect(0,H/2-46,W,92);
     ctx.fillStyle="#ff3b6b";for(let i=-1;i<W/20+1;i++){const x=i*20+(G.t*60)%20;ctx.beginPath();ctx.moveTo(x,H/2-46);ctx.lineTo(x+10,H/2-46);ctx.lineTo(x,H/2-38);ctx.lineTo(x-10,H/2-38);ctx.fill();ctx.beginPath();ctx.moveTo(x,H/2+38);ctx.lineTo(x+10,H/2+38);ctx.lineTo(x,H/2+46);ctx.lineTo(x-10,H/2+46);ctx.fill();}
