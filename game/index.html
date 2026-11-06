@@ -1699,11 +1699,13 @@ function enemySprite(id){
   }
   return ENEMY_IMAGES[id].ok?ENEMY_IMAGES[id].img:null;
 }
-// which frame of a PNG strip to show: enemies.json "anim" lists frames per state (sleep / attack / jump / move) and fps; without it, all frames loop
+// which frame of a PNG strip to show: enemies.json "anim" lists frames per state (sleep / windup / attack / jump / move) and fps; without it, all frames loop
+// windup = charge wind-up (e.wind>0); if omitted, the wind-up uses the attack frames as before
 function spriteFrame(e,t,frames){
   const a=e.def.anim;if(!a)return Math.floor(t*8+e.sd)%frames;
   let k="move";
   if(e.p.ambush&&!e.awake&&a.sleep)k="sleep";
+  else if(e.wind>0&&a.windup)k="windup";
   else if((e.fuse>0||e.wind>0||e.charge>0)&&a.attack)k="attack";
   else if(e.hopping>0&&a.jump)k="jump";
   const list=(a[k]||a.move||[0]).filter(i=>i<frames);
