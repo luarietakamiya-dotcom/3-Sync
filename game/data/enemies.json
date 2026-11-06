@@ -1,5 +1,5 @@
 {
-  "_doc": "敵データ。画像を使う敵は anim（状態ごとのコマ番号: sleep 待ち伏せ中 / attack 自爆前・突進の溜め / jump 跳躍中 / move 通常、fps）と spriteScale（表示倍率）を指定できる。hp/atk/expReward/moneyReward は第1層での基準値で、階層に応じて自動で強くなる。aiType: melee_rush / ranged_keep / charger / support_buffer / debuffer / summoner / suicide / flee / boss。spriteId は index.html の ENEMY_DRAW にある描き方の名前。dropTable の id は materials.json の id、または gear（装備）。statusResist は状態異常の耐性（0〜1、all は全種類、個別指定が優先）。",
+  "_doc": "敵データ。画像を使う敵は anim（状態ごとのコマ番号: sleep 待ち伏せ中 / windup 溜め中（未指定なら従来どおり attack を使う） / attack 攻撃時（自爆前・突進中。windup 未指定なら溜め中にも使う） / jump 跳躍中 / move 通常、fps）と spriteScale（表示倍率）を指定できる。hp/atk/expReward/moneyReward は第1層での基準値で、階層に応じて自動で強くなる。aiType: melee_rush / ranged_keep / charger / support_buffer / debuffer / summoner / suicide / flee / boss。spriteId は index.html の ENEMY_DRAW にある描き方の名前。dropTable の id は materials.json の id、または gear（装備）。statusResist は状態異常の耐性（0〜1、all は全種類、個別指定が優先）。",
   "enemies": [
     {"id":"pink_slime","anim":{"fps":5,"move":[0,1,2,1]},"name":"ピンクスライム","family":"slime","tier":1,"hp":8,"atk":3,"moveSpeed":32,"attackRange":10,"attackCooldown":0.8,"expReward":3,"moneyReward":1,
      "dropTable":[{"id":"shard","chance":0.7},{"id":"rusty_neon","chance":0.12},{"id":"gear","chance":0.03}],
