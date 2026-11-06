@@ -792,8 +792,8 @@ function goFac(id){if(OPEN)leaveInterior();const f=FACS.find(f=>f.id===id);P.des
 const NPC_FW=128,NPC_FH=192,NPC_FOOT=188,NPC_VW=960,NPC_VH=300;
 const NPC_DEBUG=/[?&]npcdebug=1(&|$)/.test(location.search);
 const NPC_RM=matchMedia("(prefers-reduced-motion:reduce)");
-let NPCS=[],HOME={slots:[],sis:{}},TALK=null,NPC_KEY=""; // TALK: talk state of the open facility, reset when leaving it
-// HOME: the house shows the 2 sisters not being played (data/npcs.json "home"): slots = where they stand, sis = art + lines per character id
+let NPCS=[],HOME={sis:{}},TALK=null,NPC_KEY=""; // TALK: talk state of the open facility, reset when leaving it
+// HOME: the house shows the 2 sisters not being played (data/npcs.json "home"): sis = art, lines and fixed spot (pos) per character id
 function npcEntry(n,id,fac,role,phase){
   const num=npcNum,a=n.anim||{},fr=v=>Array.isArray(v)?v.filter(i=>Number.isInteger(i)&&i>=0):[];
   const e={id,fac,role,sprite:n.sprite||"",flip:!!n.flip,x:0,footY:0,clipY:null,bodyH:num(n.bodyH,20,NPC_FOOT)?n.bodyH:150,
@@ -811,22 +811,19 @@ const npcNum=(v,lo,hi)=>typeof v==="number"&&isFinite(v)&&v>=lo&&v<=hi;
 const npcPos=p=>p&&npcNum(p.x,0,NPC_VW)&&npcNum(p.footY,0,NPC_VH)?{x:p.x,footY:p.footY,clipY:npcNum(p.clipY,0,NPC_VH)?p.clipY:null}:null;
 function setNpcs(d){
   const facs=new Set(FACS.map(f=>f.id));
-  NPCS=[];HOME={slots:[],sis:{}};
+  NPCS=[];HOME={sis:{}};
   for(const n of (d&&Array.isArray(d.interior))?d.interior:[]){
     const p=npcPos(n&&n.pos);
     if(!n||!n.id||!facs.has(n.fac)||n.fac==="home"||!p){console.warn("npcs.json: skipped",n&&n.id);continue;}
     NPCS.push(Object.assign(npcEntry(n,String(n.id),n.fac,String(n.role||""),NPCS.length*0.37),p));
   }
   const h=d&&d.home;if(!h)return;
-  HOME.slots=(Array.isArray(h.slots)?h.slots:[]).map(npcPos).filter(Boolean).slice(0,2);
-  CIDS.forEach((c,i)=>{const n=h.sisters&&h.sisters[c];if(n)HOME.sis[c]=npcEntry(n,"home_"+c,"home",CHARS[c].name,i*0.37+0.2);});
+  CIDS.forEach((c,i)=>{const n=h.sisters&&h.sisters[c];if(!n)return;const p=npcPos(n.pos);
+    if(!p){console.warn("npcs.json: skipped home sister",c);return;}
+    HOME.sis[c]=Object.assign(npcEntry(n,"home_"+c,"home",CHARS[c].name,i*0.37+0.2),p);});
 }
-// the house: the 2 sisters other than S.char, in CIDS order, on slots[0] / slots[1]; their lines and art follow them
-function homeNpcs(){
-  const out=[];
-  CIDS.filter(c=>c!==S.char).forEach((c,i)=>{const e=HOME.sis[c],sl=HOME.slots[i];if(e&&sl){e.slot=sl;Object.assign(e,sl);out.push(e);}});
-  return out;
-}
+// the house: the 2 sisters other than S.char (in CIDS order, for talk turns), each on her own fixed spot; the player's spot stays empty
+const homeNpcs=()=>CIDS.filter(c=>c!==S.char&&HOME.sis[c]).map(c=>HOME.sis[c]);
 const npcsAt=fac=>fac==="home"?homeNpcs():NPCS.filter(n=>n.fac===fac);
 const npcTalking=n=>!!(TALK&&TALK.cur&&TALK.cur.id===n.id&&TALK.t>0);
 // "話す": next line of the facility's NPC, in order; with 2 NPCs they take turns
@@ -842,20 +839,18 @@ function talkHtml(){
   const list=npcsAt(OPEN);if(!list.length)return "";
   let h="";
   if(TALK&&TALK.fac===OPEN&&TALK.cur)h+=`<div class="talkbox" aria-live="polite"><p><b>${esc(TALK.cur.role)}</b>${esc(TALK.cur.text)}</p><button class="btn sm" data-talkclose="1" aria-label="会話を閉じる">×</button></div>`;
-  if(NPC_DEBUG)h+=`<div class="npcdbg"><b>NPC仮配置（?npcdebug=1）</b>${list.map(n=>`<div>${esc(n.role)}（${esc(n.id)}${n.slot?" ・立ち位置"+(HOME.slots.indexOf(n.slot)+1):""}）${n.ok?"":" ・画像なし"}<br>`+
+  if(NPC_DEBUG)h+=`<div class="npcdbg"><b>NPC仮配置（?npcdebug=1）</b>${list.map(n=>`<div>${esc(n.role)}（${esc(n.id)}）${n.ok?"":" ・画像なし"}<br>`+
     [["x","x"],["footY","footY"],["clipY","clipY"],["bodyH","体の高さ"]].map(([k,nm])=>`<label>${nm}<input type="number" step="1" data-npcid="${esc(n.id)}" data-npck="${k}" value="${n[k]===null?"":n[k]}" placeholder="なし"></label>`).join("")+
     `<br><code data-npcjson="${esc(n.id)}">${npcJson(n)}</code></div>`).join("")}</div>`;
   return h;
 }
 const npcJson=n=>{const p=`{ "x": ${n.x}, "footY": ${n.footY}, "clipY": ${n.clipY===null?"null":n.clipY} }`;
-  return esc(n.slot?`slots[${HOME.slots.indexOf(n.slot)}]: ${p} / sisters.${n.id.slice(5)}.bodyH: ${n.bodyH}`:`"pos": ${p}, "bodyH": ${n.bodyH}`);};
+  return esc(`"pos": ${p}, "bodyH": ${n.bodyH}`);};
 function npcDebugInput(el){
-  const n=NPCS.find(n=>n.id===el.dataset.npcid);if(!n)return;
-  const k=el.dataset.npck,v=el.value.trim()===""?null:Math.round(+el.value);
-  const t=n.slot&&k!=="bodyH"?n.slot:n; // in the house x/footY/clipY belong to the standing place, bodyH to the sister
+  const n=npcsAt(OPEN).find(n=>n.id===el.dataset.npcid);if(!n)return;
+  const k=el.dataset.npck,v=el.value.trim()===""?null:Math.round(+el.value),t=n;
   if(k==="clipY")t.clipY=v===null?null:Math.max(0,Math.min(NPC_VH,v));
   else if(v!==null&&isFinite(v))t[k]=k==="bodyH"?Math.max(20,Math.min(NPC_FOOT,v)):k==="x"?Math.max(0,Math.min(NPC_VW,v)):Math.max(0,Math.min(NPC_VH,v));
-  if(n.slot)Object.assign(n,n.slot);
   const c=document.querySelector(`[data-npcjson="${n.id}"]`);if(c)c.innerHTML=npcJson(n);
   NPC_KEY="";
 }
