@@ -1,0 +1,210 @@
+{
+  "_doc": "施設内NPC（内装の小窓 .vig に重ねて表示）。座標はすべて内装背景 960×300 のpx。pos.x / pos.footY = 足元の中心、pos.clipY = この線より下は描かない（カウンターの天板の線。null なら全身表示）。bodyH = 組み立て時の体の高さ（靴底〜頭頂のpx。tools/build_npc_sprite.py の --height に渡す値で、?npcdebug=1 の仮人影もこの高さで描く）。sprite = 128×192px のコマを横一列に4コマ（512×192、足元はコマ内の(64,188)）。anim.idle = 待機のコマ、anim.talk = 話すコマ、fps = 1秒あたりのコマ数。flip = true で左右反転。画像が無い・読めない・寸法違いのときは何も描かず、会話だけ使える。role = 表示名（役職名のみ）。家（home）は interior に入れず、下の home で扱う。talks = 「話す」を押すたびに上から順に1つずつ表示し、最後まで行ったら最初に戻る。施設を出ると最初からに戻る。同じ施設に2人いるときは、押すたびに交互に話す。_todo がある会話は仮文。",
+  "version": 2,
+  "interior": [
+    {
+      "id": "shop_keeper",
+      "fac": "shop",
+      "role": "店主",
+      "sprite": "sprites/npc/shop_keeper.png",
+      "anim": {
+        "idle": [
+          0,
+          1
+        ],
+        "talk": [
+          2,
+          3
+        ],
+        "fps": 2
+      },
+      "pos": {
+        "x": 470,
+        "footY": 240,
+        "clipY": 150
+      },
+      "bodyH": 160,
+      "flip": false,
+      "talks": [
+        "この部品、まだ働く気でいるね。磨けば案外いい顔になるよ。",
+        "棚の奥のは触らないでおくれ。まだ機嫌が悪いんだ。",
+        "濡れた素材は値が落ちる……なんて言わないよ。拭けば同じさ。"
+      ],
+      "_todo": "talks[1]・talks[2] は仮文。設計室長の確定文に差し替える"
+    },
+    {
+      "id": "guild_clerk",
+      "fac": "guild",
+      "role": "受付職員",
+      "sprite": "sprites/npc/guild_clerk.png",
+      "anim": {
+        "idle": [
+          0,
+          1
+        ],
+        "talk": [
+          2,
+          3
+        ],
+        "fps": 2
+      },
+      "pos": {
+        "x": 575,
+        "footY": 243,
+        "clipY": 167
+      },
+      "bodyH": 150,
+      "flip": false,
+      "talks": [
+        "雨の日は書類まで湿るんです。端末だけは元気ですね。",
+        "依頼の受付は2件までです。無理のない範囲でお願いします。",
+        "掲示板の貼り紙、角が丸まってきたので明日貼り替えますね。"
+      ],
+      "_todo": "talks[1]・talks[2] は仮文。設計室長の確定文に差し替える"
+    },
+    {
+      "id": "live_manager",
+      "fac": "live",
+      "role": "店長",
+      "sprite": "sprites/npc/live_manager.png",
+      "anim": {
+        "idle": [
+          0,
+          1
+        ],
+        "talk": [
+          2,
+          3
+        ],
+        "fps": 2
+      },
+      "pos": {
+        "x": 840,
+        "footY": 276,
+        "clipY": null
+      },
+      "bodyH": 150,
+      "flip": false,
+      "talks": [
+        "雨音まで低音に混ざってるね。今日はいい響きになりそうだ。",
+        "ケーブルは足で踏まないでね。音より先に機嫌が悪くなるんだ。",
+        "終わったら水を飲もう。喉はアンプより替えがきかないからね。"
+      ],
+      "_todo": "talks[1]・talks[2] は仮文。設計室長の確定文に差し替える"
+    },
+    {
+      "id": "gate_keeper",
+      "fac": "gate",
+      "role": "保守員",
+      "sprite": "sprites/npc/gate_keeper.png",
+      "anim": {
+        "idle": [
+          0,
+          1
+        ],
+        "talk": [
+          2,
+          3
+        ],
+        "fps": 2
+      },
+      "pos": {
+        "x": 695,
+        "footY": 254,
+        "clipY": null
+      },
+      "bodyH": 150,
+      "flip": false,
+      "talks": [
+        "端末の水滴は拭いておいた。足元にも気をつけてくれ。",
+        "ゲートの揺れが大きい日は、無理に奥へ行かないでくれ。",
+        "戻ったら声をかけてくれ。記録をつけておく。"
+      ],
+      "_todo": "talks[1]・talks[2] は仮文。設計室長の確定文に差し替える"
+    }
+  ],
+  "town": [],
+  "home": {
+    "_doc": "家のお留守番＝主人公3姉妹のうち『いま操作していない2人』。固定NPCではなく、家を開くたびに現在の操作キャラ（S.char）を除く2人を姉妹の並び順（ルアリエ→えーちゃん→夜凪ミミ）で選び、1人目を slots[0]、2人目を slots[1] に立たせる。表示名はキャラ名（ゲーム内の CHARS の name）。家の中で操作キャラを切り替えると、その場で顔ぶれが入れ替わり、会話は最初からになる。slots = 立ち位置（x / footY / clipY の意味は interior と同じ）。sisters = キャラID（luarie / ht / mimi）ごとの絵と会話。どちらの立ち位置に来ても同じ絵を使うので、2つの slot は足元の高さ（footY）をそろえ、bodyH は姉妹ごとに持つ。sprite は室内用（128×192×4コマ）。",
+    "slots": [
+      {
+        "x": 205,
+        "footY": 282,
+        "clipY": null
+      },
+      {
+        "x": 690,
+        "footY": 283,
+        "clipY": null
+      }
+    ],
+    "sisters": {
+      "luarie": {
+        "sprite": "sprites/npc/home_luarie.png",
+        "anim": {
+          "idle": [
+            0,
+            1
+          ],
+          "talk": [
+            2,
+            3
+          ],
+          "fps": 2
+        },
+        "bodyH": 148,
+        "flip": false,
+        "talks": [
+          "（仮）おかえり。ルアリエの家での一言その1。",
+          "（仮）ルアリエの家での一言その2。",
+          "（仮）ルアリエの家での一言その3。"
+        ],
+        "_todo": "talks はすべて仮文。本台詞は設計室長が作成して差し替える"
+      },
+      "ht": {
+        "sprite": "sprites/npc/home_ht.png",
+        "anim": {
+          "idle": [
+            0,
+            1
+          ],
+          "talk": [
+            2,
+            3
+          ],
+          "fps": 2
+        },
+        "bodyH": 148,
+        "flip": false,
+        "talks": [
+          "（仮）おかえり。えーちゃんの家での一言その1。",
+          "（仮）えーちゃんの家での一言その2。",
+          "（仮）えーちゃんの家での一言その3。"
+        ],
+        "_todo": "talks はすべて仮文。本台詞は設計室長が作成して差し替える"
+      },
+      "mimi": {
+        "sprite": "sprites/npc/home_mimi.png",
+        "anim": {
+          "idle": [
+            0,
+            1
+          ],
+          "talk": [
+            2,
+            3
+          ],
+          "fps": 2
+        },
+        "bodyH": 148,
+        "flip": false,
+        "talks": [
+          "（仮）おかえり。夜凪ミミの家での一言その1。",
+          "（仮）夜凪ミミの家での一言その2。",
+          "（仮）夜凪ミミの家での一言その3。"
+        ],
+        "_todo": "talks はすべて仮文。本台詞は設計室長が作成して差し替える"
+      }
+    }
+  }
+}
