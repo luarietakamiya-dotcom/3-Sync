@@ -16,7 +16,7 @@
     {"id":"junk_drone","name":"ジャンクドローン","family":"machine","tier":1,"hp":6,"atk":3,"moveSpeed":52,"attackRange":120,"attackCooldown":1.8,"expReward":3,"moneyReward":1,
      "dropTable":[{"id":"shard","chance":0.7},{"id":"rusty_neon","chance":0.12},{"id":"gear","chance":0.03}],
      "aiType":"ranged_keep","statusResist":{"all":0},"spriteId":"drone","r":9,"color":"#ff9a4f","fly":true,"params":{"shotSpeed":150},"desc":"距離を取って撃ってくる"},
-    {"id":"cable_hound","name":"ケーブルハウンド","family":"beast","tier":2,"hp":12,"atk":5,"moveSpeed":42,"attackRange":10,"attackCooldown":0.8,"expReward":5,"moneyReward":2,
+    {"id":"cable_hound","anim":{"fps":4,"move":[0,1],"windup":[3],"attack":[4],"jump":[2]},"name":"ケーブルハウンド","family":"beast","tier":2,"hp":12,"atk":5,"moveSpeed":42,"attackRange":10,"attackCooldown":0.8,"expReward":5,"moneyReward":2,
      "dropTable":[{"id":"shard","chance":0.6},{"id":"lucky_circuit","chance":0.15},{"id":"gear","chance":0.04}],
      "aiType":"charger","statusResist":{"all":0.1},"spriteId":"hound","r":12,"color":"#3fe0ff","params":{"chargeSpeed":3.6,"windup":0.5,"chargeTime":0.7,"cd":2.8},"desc":"身をかがめたら突進の合図"},
     {"id":"noise_porter","name":"ノイズポーター","family":"noise","tier":2,"hp":16,"atk":3,"moveSpeed":24,"attackRange":10,"attackCooldown":0.8,"expReward":6,"moneyReward":3,
