@@ -42,7 +42,7 @@
      "aiType":"debuffer","statusResist":{"all":0.1},"spriteId":"terminal","r":12,"color":"#7be0a0","params":{"debuff":"miss","chance":0.5,"aura":true},"desc":"周囲に妨害電波を出し、焦りを付ける"},
     {"id":"warp_slime","name":"ワープスライム","family":"slime","tier":3,"hp":12,"atk":5,"moveSpeed":30,"attackRange":10,"attackCooldown":0.8,"expReward":6,"moneyReward":2,
      "dropTable":[{"id":"shard","chance":0.6},{"id":"warp_fragment","chance":0.12},{"id":"gear","chance":0.04}],
-     "aiType":"melee_rush","statusResist":{"all":0.1},"spriteId":"slime","r":12,"color":"#c58bf0","params":{"teleport":3.4},"desc":"ときどき瞬間移動してくる"},
+     "aiType":"melee_rush","statusResist":{"all":0.1},"spriteId":"slime","r":12,"color":"#c58bf0","params":{"teleport":3.4},"desc":"ときどき瞬間移動してくる","anim":{"fps":7,"move":[0,1,2,1],"windup":[3],"attack":[4]}},
     {"id":"beast_fragment","name":"歪獣フラグメント","family":"beast","tier":4,"hp":22,"atk":7,"moveSpeed":55,"attackRange":10,"attackCooldown":0.8,"expReward":8,"moneyReward":3,
      "dropTable":[{"id":"crystal","chance":0.12},{"id":"warp_fragment","chance":0.2},{"id":"gear","chance":0.05}],
      "aiType":"charger","statusResist":{"all":0.15},"spriteId":"beast","r":13,"color":"#ff6b6b","params":{"chargeSpeed":4,"windup":0.4,"chargeTime":0.6,"cd":2.2},"desc":"短い溜めで何度も突進する"},
