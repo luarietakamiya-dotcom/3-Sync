@@ -578,7 +578,10 @@ async function loadData(){
   for(const e of en.enemies){ENEMIES[e.id]=e;if(e.missionOnly)SPECIAL[e.id]={nm:e.name,minF:e.minFloor||1,desc:e.desc||""};}
   ZONES=mp.zones;BGS=mp.backgrounds||{};
   try{const md=await get("data/modes.json");MODES={...MODES,...md};}catch(err){console.warn("modes.json",err);}
-  try{setNpcs(await get("data/npcs.json"));}catch(err){NPCS=[];console.warn("npcs.json",err);} // optional: without it there are simply no facility staff
+  try{const d=await get("data/npcs.json");
+    try{setNpcs(d);}catch(err){NPCS=[];console.warn("npcs.json",err);} // optional: without it there are simply no facility staff
+    try{setTownsfolk(d&&d.townspeople);}catch(err){TPC=null;console.warn("npcs.json townspeople",err);} // optional: without it the street is empty
+  }catch(err){NPCS=[];TPC=null;console.warn("npcs.json",err);}
 }
 // extra gate modes (data/modes.json). RUN = the active mode run (null in normal floor-by-floor dives).
 let MODES={run:{encounters:[],shards:{},elite:{},rareBoss:{}},rush:{},heat:[],resonance:[]},RUN=null;
@@ -769,7 +772,7 @@ function syncStage(){
   vig.hidden=false;
 }
 function enterTown(fromGate){
-  RUN=null;stashBag();MODE="town";WW=W;WH=H;G={state:"town",t:0};EN=[];SHOTS=[];PARTS=[];FX=[];ALLIES=[];MARK=null;OPEN=null;TALK=null;
+  RUN=null;stashBag();MODE="town";WW=W;WH=H;G={state:"town",t:0};EN=[];SHOTS=[];PARTS=[];FX=[];ALLIES=[];MARK=null;OPEN=null;TALK=null;tpReset();
   const g=FACS.find(f=>f.id==="gate");
   P=mkUnit(S.char,fromGate?g.x-20:300,fromGate?STREET_Y+8:300,false);P.ang=Math.PI/2;
   $("ov").hidden=true;syncModeUI();syncStage();markDirty();
@@ -897,11 +900,153 @@ function npcDebugDraw(g,n,fill){
   g.fillStyle="rgba(14,12,21,.82)";g.fillRect(lx,ly-13,tw,14);g.fillStyle="#ece8f4";g.fillText(s,lx+3,ly);
   g.restore();
 }
+
+/* ================= townspeople (passers-by) ================= */
+// data/npcs.json "townspeople": up to maxActive passers-by, one per kind, walking one way along a route from an
+// off-screen exit to another off-screen exit, then removed. Routes are axis-aligned polylines (turns only at corners).
+// No collision with the player or each other; at most one stop per walk. No talking (for now).
+// Sprite = same layout and size as the player's walk sheet: 12 frames 64x128, [down x3][left x3][right x3][up x3]
+// (walk, stand, walk), foot (32,126), drawn at half size and x1.45 like the player in town.
+// baseSpeed = the player's normal walk (dive 110px/s x the town draw scale 1.45 = 160), not the 300px/s tap-move in town;
+// speedFactor is relative to it, and the walk cycle too: 8 frames/s at baseSpeed like the player (frame every base/8 px walked)
+const TP_FW=64,TP_FH=128,TP_K=1.45;
+const TP_HW=Math.ceil(TP_FW/4*TP_K)+1,TP_TOP=Math.ceil(63*TP_K)+1,TP_BOT=6; // on-screen extent of a figure around its foot
+const TP_MARGIN=24; // stop points keep this far from corners and exits
+let TPC=null,TP={list:[],timers:[],exitT:{},fresh:false,seq:0};
+const tpVisible=(x,y)=>x+TP_HW>0&&x-TP_HW<W&&y+TP_BOT>0&&y-TP_TOP<H; // any part of the figure on screen
+function setTownsfolk(t){
+  TPC=null;if(!t||typeof t!=="object")return;
+  const num=npcNum,rng=(v,lo,hi,def)=>Array.isArray(v)&&num(v[0],lo,hi)&&num(v[1],v[0],hi)?[v[0],v[1]]:def;
+  const exits={};
+  for(const [id,e] of Object.entries(t.exits||{})){
+    if(!e||!num(e.x,-2000,W+2000)||!num(e.y,-2000,H+2000)){console.warn("npcs.json townspeople: bad exit",id);continue;}
+    if(tpVisible(e.x,e.y)){console.warn("npcs.json townspeople: exit is on screen",id);continue;}
+    exits[id]={id,x:e.x,y:e.y};}
+  const routes=[];
+  for(const r of Array.isArray(t.routes)?t.routes:[]){
+    const raw=r&&Array.isArray(r.path)?r.path:[],id=String(r&&r.id||routes.length);
+    const pts=raw.map(q=>typeof q==="string"?(exits[q]?{x:exits[q].x,y:exits[q].y,exit:q}:null)
+      :Array.isArray(q)&&num(q[0],-2000,W+2000)&&num(q[1],-2000,H+2000)?{x:q[0],y:q[1]}:null);
+    let bad=pts.length<2||pts.some(p=>!p)||!pts[0].exit||!pts[pts.length-1].exit||pts[0].exit===pts[pts.length-1].exit;
+    if(!bad)for(let i=1;i<pts.length;i++){const a=pts[i-1],b=pts[i];if((a.x!==b.x&&a.y!==b.y)||(a.x===b.x&&a.y===b.y))bad=true;} // no diagonals
+    if(!bad)for(const p of pts)if(!p.exit&&tpVisible(p.x,p.y)&&(p.y<STREET_Y||p.y>H))bad=true; // on-screen corners stay on the street
+    if(bad){console.warn("npcs.json townspeople: skipped route",id);continue;}
+    routes.push({id,pts});}
+  const kinds=[];
+  for(const k of Array.isArray(t.kinds)?t.kinds:[]){
+    if(!k||!k.id||!k.sprite||kinds.some(o=>o.id===k.id)){console.warn("npcs.json townspeople: skipped kind",k&&k.id);continue;}
+    const e={id:String(k.id),role:String(k.role||k.id),sprite:String(k.sprite),speed:num(k.speedFactor,0.1,3)?k.speedFactor:0.8,
+      stopChance:num(k.stopChance,0,1)?k.stopChance:0,stopSec:rng(k.stopSec,0,60,[2,3]),img:new Image(),ok:false};
+    e.img.onload=()=>{if(e.img.naturalWidth===TP_FW*12&&e.img.naturalHeight===TP_FH)e.ok=true;
+      else console.warn(`townspeople sprite ${e.sprite}: ${e.img.naturalWidth}x${e.img.naturalHeight} is not 768x128 (64x128 x 12)`);};
+    e.img.onerror=()=>console.warn("townspeople sprite missing",e.sprite);e.img.src=e.sprite;
+    kinds.push(e);}
+  if(!kinds.length||!routes.length)return;
+  TPC={base:num(t.baseSpeed,10,1000)?t.baseSpeed:160,max:Math.min(kinds.length,num(t.maxActive,0,99)?Math.floor(t.maxActive):3),respawn:rng(t.respawnSec,0,600,[3,6]),
+    exitGap:num(t.exitGapSec,0,600)?t.exitGapSec:3,noStop:num(t.noStopSec,0,600)?t.noStopSec:3,kinds,routes,exits};
+}
+// a walker: pts in walking order, cum = distance at each point, s = distance walked along the route
+function tpMake(k,route,rev){
+  const pts=rev?route.pts.slice().reverse():route.pts,cum=[0];
+  for(let i=1;i<pts.length;i++)cum.push(cum[i-1]+Math.abs(pts[i].x-pts[i-1].x)+Math.abs(pts[i].y-pts[i-1].y));
+  return{id:++TP.seq,k,route:route.id,rev,from:pts[0].exit,to:pts[pts.length-1].exit,pts,cum,len:cum[cum.length-1],
+    s:0,sp:TPC.base*k.speed,t:0,walk:Math.random()*TPC.base/2,stopAt:null,stopT:0,stops:0,x:pts[0].x,y:pts[0].y,dir:0};
+}
+function tpAt(n,s){ // position and facing at distance s
+  let i=1;while(i<n.pts.length-1&&s>n.cum[i])i++;
+  const a=n.pts[i-1],b=n.pts[i],f=Math.max(0,Math.min(1,(s-n.cum[i-1])/(n.cum[i]-n.cum[i-1]||1)));
+  const dx=b.x-a.x,dy=b.y-a.y;
+  return{x:a.x+dx*f,y:a.y+dy*f,dir:dx?(dx<0?1:2):(dy>0?0:3),seg:i};
+}
+function tpPlace(n){const p=tpAt(n,n.s);n.x=p.x;n.y=p.y;n.dir=p.dir;}
+// candidate distances on the visible street, away from exits and corners (optionally only from distance `from` on)
+function tpSpots(n,from){
+  const out=[];
+  for(let s=Math.max(from,0);s<n.len;s+=4){const p=tpAt(n,s);
+    if(s-n.cum[p.seg-1]<TP_MARGIN||n.cum[p.seg]-s<TP_MARGIN)continue;
+    if(p.x>=28&&p.x<=W-28&&p.y>=STREET_Y&&p.y<=H-6)out.push(s);}
+  return out;
+}
+// roll this walk's single stop: chance per kind, not before noStop seconds of walking
+function tpPlanStop(n){
+  if(Math.random()>=n.k.stopChance)return;
+  const c=tpSpots(n,n.s+TPC.noStop*n.sp);if(c.length)n.stopAt=pick(c);
+}
+const tpKindsFree=()=>{const have=new Set(TP.list.map(n=>n.k.id));return TPC.kinds.filter(k=>k.ok&&!have.has(k.id));};
+// new walker at an exit: a free kind; route + direction spread out from the walkers already out; same exit at most every exitGap s
+function tpSpawn(){
+  const kinds=tpKindsFree();if(!kinds.length||TP.list.length>=TPC.max)return "full";
+  const cand=[];
+  for(const r of TPC.routes)for(const rev of[false,true]){
+    const from=rev?r.pts[r.pts.length-1].exit:r.pts[0].exit,to=rev?r.pts[0].exit:r.pts[r.pts.length-1].exit;
+    if(G.t-(TP.exitT[from]??-1e9)<TPC.exitGap)continue;
+    let sc=0;for(const n of TP.list){if(n.route===r.id)sc+=n.rev===rev?3:2;if(n.from===from)sc+=1;if(n.to===to)sc+=1;}
+    if(TP.last===r.id+(rev?"<":">"))sc+=2;
+    cand.push({r,rev,from,sc});}
+  if(!cand.length)return "wait";
+  const best=Math.min(...cand.map(c=>c.sc)),c=pick(cand.filter(c=>c.sc===best));
+  const n=tpMake(pick(kinds),c.r,c.rev);tpPlace(n);tpPlanStop(n);
+  TP.exitT[c.from]=G.t;TP.last=c.r.id+(c.rev?"<":">");TP.list.push(n);return "ok";
+}
+// entering town: up to maxActive walkers already part-way along different routes, not right next to the player
+function tpPopulate(){
+  const kinds=TPC.kinds.filter(k=>k.ok).sort(()=>Math.random()-0.5).slice(0,TPC.max); // equal draw
+  const routes=TPC.routes.slice().sort(()=>Math.random()-0.5);
+  for(const k of kinds){
+    let placed=false;
+    for(let i=0;i<routes.length&&!placed;i++){
+      const n=tpMake(k,routes[i],Math.random()<0.5);
+      const c=tpSpots(n,0).filter(s=>{const p=tpAt(n,s);return Math.hypot(p.x-P.x,p.y-P.y)>=120&&TP.list.every(o=>Math.hypot(p.x-o.x,p.y-o.y)>=48);});
+      if(!c.length)continue;
+      const keep=c.filter(s=>n.len-s>=3*n.sp); // prefer spots with some walk left, so they don't all leave at once
+      n.s=pick(keep.length?keep:c);tpPlace(n);tpPlanStop(n);TP.list.push(n);routes.splice(i,1);placed=true;}
+  }
+  while(TP.list.length+TP.timers.length<TPC.max)TP.timers.push(rnd(...TPC.respawn)); // slots not filled come in from exits
+}
+function tpReset(){TP={list:[],timers:[],exitT:{},fresh:true,seq:TP.seq};}
+function tpUpdate(dt){
+  if(!TPC)return;
+  if(TP.fresh){TP.fresh=false; // mid-route placement only right after entering (never pop up in view later)
+    if(G.t<0.5&&TPC.kinds.some(k=>k.ok))tpPopulate();else TP.timers=Array.from({length:TPC.max},()=>rnd(...TPC.respawn));}
+  for(const n of TP.list){
+    if(n.stopT>0){n.stopT-=dt;continue;} // standing still on the stand frame
+    n.t+=dt;let ns=n.s+n.sp*dt;
+    if(n.stopAt!==null&&ns>=n.stopAt){ns=n.stopAt;n.stopAt=null;n.stopT=rnd(...n.k.stopSec);n.stops++;}
+    n.walk+=ns-n.s;n.s=ns;
+    if(n.s>=n.len){n.gone=true;continue;}
+    tpPlace(n);
+  }
+  for(const n of TP.list)if(n.gone)TP.timers.push(rnd(...TPC.respawn)); // gone off screen at the far exit
+  TP.list=TP.list.filter(n=>!n.gone);
+  for(let i=TP.timers.length-1;i>=0;i--){
+    if((TP.timers[i]-=dt)>0)continue;
+    const r=tpSpawn();
+    if(r==="wait")TP.timers[i]=0.25;else TP.timers.splice(i,1); // "full": nothing to bring in (e.g. sprite missing)
+  }
+}
+function tpDraw(n){
+  const k=n.k;if(!k.ok)return;
+  const fr=n.stopT>0?1:[0,1,2,1][Math.floor(n.walk/(TPC.base/8))%4];
+  ctx.save();ctx.translate(n.x,n.y);ctx.scale(TP_K,TP_K);shadow(0,0,11);ctx.imageSmoothingEnabled=true;
+  ctx.drawImage(k.img,(n.dir*3+fr)*TP_FW,0,TP_FW,TP_FH,-16,-63,32,64);ctx.restore();
+}
+function tpDebugDraw(){ // ?npcdebug=1: routes, exits (arrows at the screen edge) and planned stop points
+  ctx.save();ctx.lineWidth=1;ctx.font="9px monospace";ctx.textAlign="center";
+  for(const r of TPC.routes){ctx.strokeStyle="rgba(63,224,255,.45)";ctx.setLineDash([4,3]);ctx.beginPath();r.pts.forEach((p,i)=>i?ctx.lineTo(p.x,p.y):ctx.moveTo(p.x,p.y));ctx.stroke();}
+  ctx.setLineDash([]);
+  for(const e of Object.values(TPC.exits)){const x=Math.max(10,Math.min(W-10,e.x)),y=Math.max(10,Math.min(H-6,e.y));
+    ctx.fillStyle="rgba(14,12,21,.8)";ctx.fillRect(x-10,y-7,20,11);ctx.fillStyle="#3fe0ff";ctx.fillText(e.id,x,y+2);}
+  for(const n of TP.list){if(n.stopAt!==null){const p=tpAt(n,n.stopAt);ctx.strokeStyle="#f6c445";ctx.strokeRect(p.x-3,p.y-3,6,6);}
+    ctx.fillStyle="rgba(14,12,21,.8)";const s=`${n.k.role}${n.stopT>0?" 停止":""}`,tw=ctx.measureText(s).width+6;
+    ctx.fillRect(n.x-tw/2,n.y-TP_TOP-12,tw,11);ctx.fillStyle="#f6c445";ctx.fillText(s,n.x,n.y-TP_TOP-4);}
+  ctx.restore();
+}
 function updateTown(dt){
   G.t+=dt;if(MARK){MARK.t-=dt;if(MARK.t<=0)MARK=null;}
   if(P.dest){const d=Math.hypot(P.dest.x-P.x,P.dest.y-P.y),sp=300;
     if(d<3){P.dest=null;if(P.pend){const id=P.pend;P.pend=null;enterInterior(id);}}
     else{const a=Math.atan2(P.dest.y-P.y,P.dest.x-P.x);P.ang=a;const m=Math.min(d,sp*dt);P.x+=Math.cos(a)*m;P.y+=Math.sin(a)*m;}}
+  tpUpdate(dt);
   npcTick(dt);
 }
 function drawTown(){
@@ -922,7 +1067,12 @@ function drawTown(){
   }
   if(P.dest){ctx.strokeStyle=C.cyan;ctx.lineWidth=1.5;ctx.beginPath();ctx.ellipse(P.dest.x,P.dest.y,6,2.6,0,0,7);ctx.stroke();}
   if(MARK){ctx.strokeStyle=C[MARK.c];ctx.globalAlpha=MARK.t*2;ctx.lineWidth=2;const r=16-MARK.t*10;ctx.beginPath();ctx.ellipse(MARK.x,MARK.y,r,r*0.45,0,0,7);ctx.stroke();ctx.globalAlpha=1;}
-  {const k=1.45;ctx.save();ctx.translate(P.x,P.y);ctx.scale(k,k);ctx.translate(-P.x,-P.y);drawUnit(P);ctx.restore();} // town: draw the character larger
+  // player and passers-by, back to front (no collision: they simply overlap and pass)
+  for(const u of[...TP.list.filter(n=>tpVisible(n.x,n.y)),P].sort((a,b)=>a.y-b.y)){
+    if(u!==P){tpDraw(u);continue;}
+    const k=1.45;ctx.save();ctx.translate(P.x,P.y);ctx.scale(k,k);ctx.translate(-P.x,-P.y);drawUnit(P);ctx.restore(); // town: draw the character larger
+  }
+  if(NPC_DEBUG&&TPC)tpDebugDraw();
   {ctx.strokeStyle="rgba(170,230,200,.18)";ctx.lineWidth=1;ctx.beginPath();
     for(const r of RAIN){const y=(r.y+G.t*r.s)%H,x=(r.x+y*0.18)%W;ctx.moveTo(x,y);ctx.lineTo(x+r.l*0.18,y+r.l);}ctx.stroke();}
 }
