@@ -71,7 +71,7 @@
     {"id":"noise_dj","name":"ノイズDJ","family":"noise","tier":5,"hp":115,"atk":7,"moveSpeed":28,"attackRange":10,"attackCooldown":0.8,"expReward":38,"moneyReward":90,"boss":true,
      "dropTable":[{"id":"dj_record","chance":1},{"id":"howl_coil","chance":1,"min":2,"max":4},{"id":"crystal","chance":0.8},{"id":"gear","chance":1}],
      "aiType":"boss","statusResist":{"all":0.5,"stun":0.75},"spriteId":"boss_dj","r":26,"color":"#ff4fa8",
-     "params":{"moves":[{"type":"ring","cd":3.5,"count":14,"speed":120},{"type":"buff","cd":8,"radius":200,"dur":5,"atk":0.4,"spd":0.4},{"type":"summon","id":"beat_runner","count":2,"cd":7}]},"desc":"ビートに合わせて音波の輪を放ち、客を煽って強化する"},
+     "params":{"moves":[{"type":"ring","cd":3.5,"count":14,"speed":120},{"type":"buff","cd":8,"radius":200,"dur":5,"atk":0.4,"spd":0.4},{"type":"summon","id":"beat_runner","count":2,"cd":7}]},"desc":"ビートに合わせて音波の輪を放ち、客を煽って強化する","anim":{"fps":5,"move":[0,1],"windup":[2],"attack":[3],"roar":[4],"flinch":[5]}},
     {"id":"exec_unit","name":"監理執行機","family":"machine","tier":5,"hp":145,"atk":9,"moveSpeed":26,"attackRange":10,"attackCooldown":0.8,"expReward":44,"moneyReward":130,"boss":true,
      "dropTable":[{"id":"exec_board","chance":1},{"id":"admin_tag","chance":1,"min":2,"max":4},{"id":"core","chance":0.3},{"id":"gear","chance":1}],
      "aiType":"boss","statusResist":{"all":0.55,"stun":0.8},"spriteId":"boss_exec","r":28,"color":"#9fd3ff",
