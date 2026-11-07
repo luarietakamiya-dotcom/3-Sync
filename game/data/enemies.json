@@ -67,7 +67,7 @@
     {"id":"junk_queen","name":"ジャンククイーン","family":"object","tier":5,"hp":95,"atk":7,"moveSpeed":26,"attackRange":10,"attackCooldown":0.8,"expReward":34,"moneyReward":60,"boss":true,
      "dropTable":[{"id":"junk_crown","chance":1},{"id":"lucky_circuit","chance":1,"min":2,"max":4},{"id":"crystal","chance":0.7},{"id":"gear","chance":1}],
      "aiType":"boss","statusResist":{"all":0.45,"stun":0.7},"spriteId":"boss_queen","r":28,"color":"#f6c445",
-     "params":{"moves":[{"type":"summon","id":"drum_mimic","count":2,"cd":6},{"type":"volley","cd":3,"count":5,"speed":170},{"type":"summon","id":"sign_mimic","count":1,"cd":9}]},"desc":"ガラクタの兵隊を呼び、まとめて撃ってくる"},
+     "params":{"moves":[{"type":"summon","id":"drum_mimic","count":2,"cd":6},{"type":"volley","cd":3,"count":5,"speed":170},{"type":"summon","id":"sign_mimic","count":1,"cd":9}]},"desc":"ガラクタの兵隊を呼び、まとめて撃ってくる","anim":{"fps":4,"move":[0,1],"windup":[2],"attack":[3],"roar":[4],"flinch":[5]}},
     {"id":"noise_dj","name":"ノイズDJ","family":"noise","tier":5,"hp":115,"atk":7,"moveSpeed":28,"attackRange":10,"attackCooldown":0.8,"expReward":38,"moneyReward":90,"boss":true,
      "dropTable":[{"id":"dj_record","chance":1},{"id":"howl_coil","chance":1,"min":2,"max":4},{"id":"crystal","chance":0.8},{"id":"gear","chance":1}],
      "aiType":"boss","statusResist":{"all":0.5,"stun":0.75},"spriteId":"boss_dj","r":26,"color":"#ff4fa8",
