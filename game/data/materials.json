@@ -14,6 +14,7 @@
     {"id":"junk_crown","name":"ジャンクの王冠","price":160,"zone":"alley","boss":true},
     {"id":"dj_record","name":"ノイズレコード","price":200,"zone":"live","boss":true},
     {"id":"exec_board","name":"執行基板","price":250,"zone":"border","boss":true},
-    {"id":"core_crystal","name":"中枢結晶","price":320,"zone":"front","boss":true}
+    {"id":"core_crystal","name":"中枢結晶","price":320,"zone":"front","boss":true},
+    {"id":"dragon_vein_core","name":"龍脈核","price":320,"boss":true}
   ]
 }
