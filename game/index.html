@@ -1670,8 +1670,14 @@ function updateDive(dt){
   if(G.pbuf){for(const b of G.pbuf)b.t-=dt;G.pbuf=G.pbuf.filter(b=>b.t>0);}
   if(G.beams){for(const b of G.beams){if(b.ch>0){b.ch-=dt*ofUk(b.u);if(b.ch<=0){const st=statsOf(b.u.cid,b.u);beamHit(b.u,b.a,900,26,st.atk*15,"gold");sfx("syncHit");}}else b.life-=dt;}G.beams=G.beams.filter(b=>b.ch>0||b.life>0);}
   if(G.strikes){for(const k of G.strikes){k.t-=dt*ofUk(k.u);if(k.t<=0){for(const e of EN)if(e.hp>0&&Math.hypot(e.x-k.x,(e.y-k.y)/0.6)<k.r+e.r)skHit(e,k.dmg,k.u,"cyan");WAVES.push({x:k.x,y:k.y,t:0,c:"63,224,255",r:k.r});}}G.strikes=G.strikes.filter(k=>k.t>0);}
-  if(G.loot&&G.loot.length){if(G.state==="fight"){G.loot=G.loot.filter(l=>{if(Math.hypot(l.x-P.x,(l.y-P.y)/0.7)<22){takeLoot(l,true);return false;}return true;});}
-    else if(G.state==="clear"){for(const l of G.loot)takeLoot(l,false);FX.push({scr:1,x:W/2,y:H/2-10,txt:`残りの粒子を回収（素材のみ）`,c:"muted",t:1.6});G.loot=[];}}
+  if(G.loot&&G.loot.length){if(G.state==="fight"){
+      // auto-pickup: a particle that comes into the camera view gets pulled to the player, then taken like a walk-over pickup
+      updateCam();const vw=W/CAM.z,vh=H/CAM.z,vx0=CAM.x-vw/2,vy0=CAM.y-vh/2;
+      G.loot=G.loot.filter(l=>{if(!l.mag&&l.x>vx0+4&&l.x<vx0+vw-4&&l.y-12>vy0+4&&l.y-12<vy0+vh-4){l.mag=1;l.mt=0;}
+        if(l.mag){l.mt+=dt;const dx=P.x-l.x,dy=P.y-l.y,d=Math.hypot(dx,dy)||1,st=Math.min(d,(140+l.mt*l.mt*1400)*dt);l.x+=dx/d*st;l.y+=dy/d*st;}
+        if(Math.hypot(l.x-P.x,(l.y-P.y)/0.7)<22){takeLoot(l,true);return false;}return true;});}
+    else if(G.state==="clear"){const rest=G.loot.filter(l=>!l.mag);for(const l of G.loot)takeLoot(l,!!l.mag); // in-flight (already seen) ones count as full pickups
+      if(rest.length)FX.push({scr:1,x:W/2,y:H/2-10,txt:`残りの粒子を回収（素材のみ）`,c:"muted",t:1.6});G.loot=[];}}
   if(G.state==="dying"){if(P.anim)P.anim.t+=dt;G.dieT-=dt;if(G.dieT<=0)showDeath();return;}
   if(G.state==="dead"||G.state==="choice"||G.state==="ofReady"){for(const u of [P,...ALLIES])if(u.anim)u.anim.t+=dt;return;} // ofReady: CDs frozen before 星骸龍
   for(const k in P.db){P.db[k]-=dt;if(P.db[k]<=0)delete P.db[k];}
