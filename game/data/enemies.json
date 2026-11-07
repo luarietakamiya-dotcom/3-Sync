@@ -58,7 +58,7 @@
      "missionOnly":true,"minFloor":4,"desc":"倒すと分裂する"},
     {"id":"hollow","name":"怨念ノイズ","family":"noise","tier":3,"hp":22,"atk":5,"moveSpeed":40,"attackRange":10,"attackCooldown":0.8,"expReward":6,"moneyReward":2,
      "dropTable":[{"id":"odd","chance":0.6}],"aiType":"melee_rush","statusResist":{"all":0.2},"spriteId":"ghost","r":12,"color":"#c8a8ff","fly":true,"params":{"phase":true},
-     "missionOnly":true,"minFloor":7,"desc":"ときどき透けて、攻撃がすり抜ける"},
+     "missionOnly":true,"minFloor":7,"desc":"ときどき透けて、攻撃がすり抜ける","anim":{"fps":5,"move":[0,1,2,1],"windup":[3],"attack":[4]}},
 
     {"id":"king_yogurt","name":"キングヨーグルト","family":"slime","tier":5,"hp":75,"atk":6,"moveSpeed":30,"attackRange":10,"attackCooldown":0.8,"expReward":30,"moneyReward":40,"boss":true,
      "dropTable":[{"id":"yogurt_core","chance":1},{"id":"rusty_neon","chance":1,"min":2,"max":4},{"id":"crystal","chance":0.6},{"id":"gear","chance":1}],
