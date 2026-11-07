@@ -325,6 +325,7 @@ textarea{width:100%;box-sizing:border-box;min-height:80px;font-family:ui-monospa
       <div class="bag" id="bag"></div>
       <div class="mis" id="dmis"></div>
       <div class="zinfo" id="zinfo"></div>
+      <div class="zinfo" id="oftog" hidden></div>
       <div class="log" id="log"></div>
     </div>
     <div class="stats">
@@ -578,13 +579,25 @@ async function loadData(){
   for(const e of en.enemies){ENEMIES[e.id]=e;if(e.missionOnly)SPECIAL[e.id]={nm:e.name,minF:e.minFloor||1,desc:e.desc||""};}
   ZONES=mp.zones;BGS=mp.backgrounds||{};
   try{const md=await get("data/modes.json");MODES={...MODES,...md};}catch(err){console.warn("modes.json",err);}
+  MODES.overflow={...OF_DEF,...(MODES.overflow||{})};
   try{const d=await get("data/npcs.json");
     try{setNpcs(d);}catch(err){NPCS=[];console.warn("npcs.json",err);} // optional: without it there are simply no facility staff
     try{setTownsfolk(d&&d.townspeople);}catch(err){TPC=null;console.warn("npcs.json townspeople",err);} // optional: without it the street is empty
   }catch(err){NPCS=[];TPC=null;console.warn("npcs.json",err);}
 }
 // extra gate modes (data/modes.json). RUN = the active mode run (null in normal floor-by-floor dives).
-let MODES={run:{encounters:[],shards:{},elite:{},rareBoss:{}},rush:{},heat:[],resonance:[]},RUN=null;
+// 龍脈溢界 (RUN.kind "overflow"): defaults, overridden by data/modes.json "overflow"
+const OF_DEF={unlock:["king_yogurt","junk_queen","noise_dj","exec_unit","distortion_core"],
+  waves:[["king_yogurt",3],["junk_queen",3],["noise_dj",3],["exec_unit",3],["distortion_core",3],["ryumyaku_overflow",1]],
+  rest:5,restHeal:0.25,copy:{hp:0.18,atk:0.55,r:0.75,atkCd:1.5,reward:0.1,gear:0.2},boss:{id:"ryumyaku_overflow",floor:50,hp:1.3,atk:1.1},
+  stageMax:5,stageHp:1.15,stageAtk:1.08,
+  tele:{circle:{r:64,t:3,dmg:0.45},grid:{cols:4,rows:3,danger:6,t:3.5,dmg:0.5},fan:{r:260,deg:90,t:3,dmg:0.55},donut:{ri:72,ro:220,t:3.5,dmg:0.55},line:{w:64,t:3,dmg:0.5},all:{t:5,dmg:1.1}},
+  teleCut:0.6,copyFirst:4,copyGap:6,bossGap:4,allGap:8,allMin:45,
+  copyShapes:{king_yogurt:["circle"],junk_queen:["grid"],noise_dj:["donut"],exec_unit:["line","fan"],distortion_core:["circle","donut"]},
+  bossLoops:[["circle","line","grid","all"],["donut","fan","grid","all"],["circle","donut","line","grid","all"]],
+  reward:{copyFrag:1,waveFrag:1,bossGear:2,bossCore:2,bossFrag:5,clearShards:5,clearMoney:90000,firstCore:3,coreFromStage:3},
+  socket:{n:[0.6,0.3,0.1],ability:0.4,first:[10,20],max:30}};
+let MODES={run:{encounters:[],shards:{},elite:{},rareBoss:{}},rush:{},heat:[],resonance:[],overflow:OF_DEF},RUN=null;
 const heatOf=()=>RUN?RUN.heat:(S.heat||{});
 const heatOn=k=>!!(RUN&&RUN.heat[k]);
 const heatMul=(h=heatOf())=>1+MODES.heat.reduce((a,d)=>a+(h[d.id]?d.reward:0),0);
@@ -598,7 +611,7 @@ const FREECLIENTS=["迷子の子ども","近所のおばあちゃん","野良猫
 
 const freshCh=()=>({lv:1,xp:0,eq:{w:null,h:null,c:null},nodes:{},builds:Array.from({length:5},(_,i)=>({nm:"ビルド"+(i+1),nodes:null}))});
 const fresh=()=>({n:0,total:0,own:{},ch:{luarie:freshCh(),ht:freshCh(),mimi:freshCh()},inv:[],best:1,uid:1,mid:1,char:"luarie",
-  bag:{},mats:{},yog:1,board:[],active:[],auto:null,zoom:null,vol:{bgm:0.6,se:0.7},mute:false,heard:[],shards:0,res:{},heat:{},runBest:{},rushBest:null,ally:{},autoSkill:true,last:Date.now(),intro:false,ver:2});
+  bag:{},mats:{},yog:1,board:[],active:[],auto:null,zoom:null,vol:{bgm:0.6,se:0.7},mute:false,heard:[],shards:0,res:{},heat:{},runBest:{},rushBest:null,overflowUnlocked:false,ofBest:{top:-1,clears:0,t:0},dragonFragments:{atk:0,hp:0,range:0,speed:0,crit:0},ofAuto:{},ally:{},autoSkill:true,last:Date.now(),intro:false,ver:2});
 let S=fresh();
 
 /* ================= helpers ================= */
@@ -617,6 +630,20 @@ const ist=(it,k)=>(it.st[k]||0)*(1+0.12*it.plus);
 const ownerOf=id=>CIDS.find(c=>Object.values(S.ch[c].eq).includes(id));
 const GSP={evadeBolt:"回避に成功すると追加魔法を3発",critSplit:"会心時に弾が分裂する",speedAtk:"移動速度に応じて攻撃力アップ",poisonDmg:"毒の敵へのダメージ+30%",
   barrierRange:"バリアが残っている間は射程+20%",killHaste:"敵を倒すと3秒間 攻撃速度+30%",pierceAll:"弾がさらに2体貫通する"};
+// 龍脈溢界 slot gear: item.sockets=[{kind:"ability"|"stat",effectId,invested}] (item.slot is the body part, so these are "sockets")
+// 龍鱗片 (S.dragonFragments) by kind; each effect grows by per×(fragments invested), capped per character across all equipped gear
+const FRAG_T={atk:"攻撃",hp:"生命",range:"射程",speed:"速度",crit:"会心"};
+const OFX={atkP:{nm:"攻撃",kind:"stat",fr:"atk",u:"%",per:1,cap:60},hpP:{nm:"HP",kind:"stat",fr:"hp",u:"%",per:1,cap:60},rangeP:{nm:"射程",kind:"stat",fr:"range",u:"%",per:1,cap:40},
+  aspdP:{nm:"攻撃速度",kind:"stat",fr:"speed",u:"%",per:1,cap:40},moveP:{nm:"移動速度",kind:"stat",fr:"speed",u:"%",per:1,cap:20},atkF:{nm:"攻撃（固定値）",kind:"stat",fr:"atk",u:"",per:1,cap:60},
+  hpF:{nm:"HP（固定値）",kind:"stat",fr:"hp",u:"",per:5,cap:300},crit:{nm:"会心率",kind:"stat",fr:"crit",u:"pt",per:0.1,cap:10},
+  barrierRange:{nm:"バリア中の射程",kind:"ability",fr:"range",u:"%",per:1,cap:40},poisonDmg:{nm:"毒の敵へのダメージ",kind:"ability",fr:"atk",u:"%",per:1,cap:40},killHaste:{nm:"撃破後3秒の攻撃速度",kind:"ability",fr:"speed",u:"%",per:1,cap:40}};
+const OF_STAT=Object.keys(OFX).filter(k=>OFX[k].kind==="stat"),OF_ABIL=Object.keys(OFX).filter(k=>OFX[k].kind==="ability");
+const SP_FRAG={barrierRange:{range:2},poisonDmg:{atk:3},killHaste:{speed:3},speedAtk:{atk:2},critSplit:{atk:2},pierceAll:{atk:2},evadeBolt:{crit:2}}; // 分解: existing GSP → fragments
+const sockVal=s=>s&&s.effectId&&OFX[s.effectId]?s.invested*OFX[s.effectId].per:0;
+const fmtOfx=(k,v)=>{const d=OFX[k];return d.u==="pt"?`+${(+v).toFixed(1)}`:d.u==="%"?`+${+(+v).toFixed(1)}%`:`+${+(+v).toFixed(1)}`;};
+function ofxSum(cid){const raw={};for(const k in OFX)raw[k]=0;
+  for(const sl in S.ch[cid].eq){const it=itemById(S.ch[cid].eq[sl]);if(!it||!it.sockets)continue;for(const s of it.sockets)if(s.effectId&&OFX[s.effectId])raw[s.effectId]+=sockVal(s);}
+  const cap={};for(const k in OFX)cap[k]=Math.min(OFX[k].cap,raw[k]);return{raw,cap};}
 // unified stat pipeline: base profile + level + gear (stats & specials) + tree nodes + temporary unit buffs
 let STATV=0;const _cache={};
 function bumpStats(){STATV++;}
@@ -624,31 +651,32 @@ function cached(key,fn){const c=_cache[key];if(c&&c.v===STATV)return c.d;const d
 const nodeSum=cid=>cached("n"+cid,()=>{const T=TREES[cid].nodes,s={},sp=new Set(),ail=new Set(),sk=new Set();
   for(const id in S.ch[cid].nodes){const n=T[id];if(!n)continue;for(const k in n.eff){const v=n.eff[k];if(k==="sp")sp.add(v);else if(k==="ail")ail.add(v);else if(k==="skill")sk.add(v);else s[k]=(s[k]||0)+v;}}return{s,sp,ail,sk};});
 const gearOf=cid=>cached("g"+cid,()=>{const g={atk:0,hp:0,crit:0,gain:0,sp:{}};
-  for(const sl in S.ch[cid].eq){const it=itemById(S.ch[cid].eq[sl]);if(!it)continue;for(const k of["atk","hp","crit","gain"])g[k]+=ist(it,k);if(it.sp)g.sp[it.sp]=(g.sp[it.sp]||0)+1;}return g;});
+  for(const sl in S.ch[cid].eq){const it=itemById(S.ch[cid].eq[sl]);if(!it)continue;for(const k of["atk","hp","crit","gain"])g[k]+=ist(it,k);if(it.sp)g.sp[it.sp]=(g.sp[it.sp]||0)+1;}
+  g.of=ofxSum(cid).cap;g.atk+=g.of.atkF;g.hp+=g.of.hpF;return g;}); // slot effects: not multiplied by ist() (装備強化)
 const partyHas=cid=>MODE==="dive"&&[P,...ALLIES].some(u=>u&&u.cid===cid&&!u.down);
 const bossParty=()=>MODE==="dive"&&ALLIES.length>0;
 function fieldOn(cid){if(!nodeSum("ht").sp.has("field"))return false;return cid==="ht"||(bossParty()&&partyHas("ht"));}
 function statsOf(cid,u){
-  const c=S.ch[cid],b=CB[cid],N=nodeSum(cid),g=gearOf(cid),v=k=>N.s[k]||0,has=k=>N.sp.has(k),gs=k=>Math.min(2,g.sp[k]||0);
-  let atkP=v("atkP")+resV("atk"),aspd=v("aspd"),crit=b.crit+v("crit")+g.crit+resV("crit"),critDmg=v("critDmg"),def=v("def"),stCh=b.stCh+v("stCh"),aoe=b.splash+v("aoe");
-  let move=b.move*Math.max(0.4,1+v("move")/100);
+  const c=S.ch[cid],b=CB[cid],N=nodeSum(cid),g=gearOf(cid),v=k=>N.s[k]||0,has=k=>N.sp.has(k),gs=k=>Math.min(2,g.sp[k]||0),ox=g.of;
+  let atkP=v("atkP")+resV("atk")+ox.atkP,aspd=v("aspd")+ox.aspdP,crit=b.crit+v("crit")+g.crit+resV("crit")+ox.crit,critDmg=v("critDmg"),def=v("def"),stCh=b.stCh+v("stCh"),aoe=b.splash+v("aoe");
+  let move=b.move*Math.max(0.4,1+(v("move")+ox.moveP)/100);
   if(has("discard")){crit*=0.5;atkP+=45;aoe+=25;}
   if(has("release")){stCh*=0.4;crit+=25;atkP+=30;}
   if(has("echo")){def+=10+Math.max(0,move-1)*100*0.6;move*=0.85;}
   if(fieldOn(cid)){atkP+=15;def+=10;}
   if(bossParty()&&partyHas("ht"))atkP+=10;
   if(has("speedAtk")||gs("speedAtk"))atkP+=Math.min(40,Math.max(0,move-1)*100*(0.8+0.2*gs("speedAtk")));
-  if(u){if(u.streak){atkP+=8*u.streak;aspd+=6*u.streak;}if(u.haste>0)aspd+=30;}
+  if(u){if(u.streak){atkP+=8*u.streak;aspd+=6*u.streak;}if(u.haste>0)aspd+=(has("killHaste")||g.sp.killHaste||!(ox.killHaste>0)?30:0)+ox.killHaste;} // +30 as before; a 龍鱗-only haste gives just its own %
   let bDodge=0,bPierce=0;if(MODE==="dive"&&typeof G!=="undefined"&&G&&G.pbuf)for(const b of G.pbuf){if(b.cid&&b.cid!==cid)continue;atkP+=b.atkP||0;aspd+=b.aspd||0;crit+=b.crit||0;bDodge+=b.dodge||0;bPierce+=b.pierce||0;}
   const down=(typeof P!=="undefined"&&P&&P.cid===cid&&hasDb("atkdown"))?0.5:1;
   const atk=(3+c.lv*0.6+g.atk)*b.atk*Math.max(0.2,1+atkP/100)*down;
-  const hp=(20+c.lv*4+g.hp)*b.hp*Math.max(0.3,1+(v("hpP")+resV("hp"))/100);
-  let range=RANGE*Math.min(2.2,Math.max(0.6,1+v("range")/100));if(u&&u.shield>0&&gs("barrierRange"))range*=1.2;
+  const hp=(20+c.lv*4+g.hp)*b.hp*Math.max(0.3,1+(v("hpP")+resV("hp")+ox.hpP)/100);
+  let range=RANGE*Math.min(2.2,Math.max(0.6,1+(v("range")+ox.rangeP)/100));if(u&&u.shield>0){const br=(gs("barrierRange")?0.2:0)+ox.barrierRange/100;if(br>0)range*=1+br;} // 龍鱗版はGSPの+20%に加算（乗算しない）
   return{atk,hp,crit:Math.max(0,Math.min(100,crit)),cdm:b.cdm+critDmg/100,cd:Math.max(0.12,0.38*b.cd/Math.max(0.3,1+aspd/100)),
     move:Math.max(0.5,move),def:Math.max(0,def),red:Math.min(0.75,Math.max(0,def)/(Math.max(0,def)+80)),dodge:Math.min(75,b.dodge+v("dodge")+bDodge),counter:Math.min(100,v("counter")),
     barrier:hp*Math.min(80,v("barrier"))/100,regen:hp*v("regen")/100,range,aoe,extra:Math.min(4,Math.max(0,v("extra"))),pierce:b.pierce+v("pierce")+2*gs("pierceAll")+bPierce,
     homing:v("homing")>0,multiT:Math.min(3,v("multiT")),followUp:Math.min(60,v("followUp")),stCh:Math.min(90,stCh),stPow:Math.max(0.3,1+v("stPow")/100),weak:v("weak")/100,
-    pool:[...new Set([...b.pool,...N.ail])],drop:0.06*(1+(v("drop")+resV("drop"))/100),luck:v("luck"),syncM:Math.max(0.3,1+(v("syncM")+resV("sync"))/100),gain:(1+g.gain/100)*(1+resV("gain")/100),sp:N.sp,gsp:g.sp};
+    pool:[...new Set([...b.pool,...N.ail])],drop:0.06*(1+(v("drop")+resV("drop"))/100),luck:v("luck"),syncM:Math.max(0.3,1+(v("syncM")+resV("sync"))/100),gain:(1+g.gain/100)*(1+resV("gain")/100),sp:N.sp,gsp:g.sp,ofx:ox};
 }
 // live: the two members not exploring perform and earn; paused while they fight a boss
 const liveChars=()=>CIDS.filter(c=>c!==S.char);
@@ -1229,6 +1257,7 @@ function enemyAct(e,dt,tu,f){
       mv(dir,e.spd*f);if(e.x<16||e.x>WW-16||e.y<70||e.y>WH-10)e.wa=Math.atan2(WH/2-e.y,WW/2-e.x)+rnd(-1,1);e.x=clampX(e.x);e.y=clampY(e.y);
       break;}
     case "boss":bossAct(e,dt,tu,dist,a,f,sp,mv);break;
+    case "of_copy":case "of_boss":ofAct(e,dt,tu,dist,a,f,sp,mv);break;
     default:mv(a,sp);
   }
 }
@@ -1307,7 +1336,7 @@ function drawHazards(){
 }
 function updateEShots(dt){
   const us=alive();
-  for(const s of ESHOTS){let k=dt;if(G.tstop>0)k=0;else if(G.slowF&&G.slowF.t>0&&Math.hypot(s.x-G.slowF.u.x,s.y-G.slowF.u.y)<G.slowF.r)k*=0.3;s.x+=s.vx*k;s.y+=s.vy*k;s.life-=k;if(s.x<-20||s.x>WW+20||s.y<-20||s.y>WH+20)s.life=0;
+  for(const s of ESHOTS){let k=dt;if(OFM())k=dt*ofTimeK(s.x,s.y,0.3);else if(G.tstop>0)k=0;else if(G.slowF&&G.slowF.t>0&&Math.hypot(s.x-G.slowF.u.x,s.y-G.slowF.u.y)<G.slowF.r)k*=0.3;s.x+=s.vx*k;s.y+=s.vy*k;s.life-=k;if(s.x<-20||s.x>WW+20||s.y<-20||s.y>WH+20)s.life=0;
     for(const u of us){if(Math.hypot(u.x-s.x,(u.y-26)-s.y)<12){if(G.state==="fight"){hurtUnit(u,s.dmg,s.own,s);if(s.db&&u===P&&Math.random()<s.dbCh)applyDebuff(s.db);}s.life=0;break;}}}
   ESHOTS=ESHOTS.filter(s=>s.life>0);
 }
@@ -1326,13 +1355,18 @@ function applyAil(e,k,st,spread){
 }
 function hurtUnit(u,d,from,at){
   if(u.inv>0||G.state!=="fight"||u.down)return;
+  if(u.ofDash)return; // 流星貫走 in motion
   const st=statsOf(u.cid,u);
+  if(u.ofEvade>0){u.inv=0.45;FX.push({x:u.x,y:u.y-56,txt:"回避",c:"cyan",t:0.7});return;} // 虚像歩法: certain dodge
   if(from.ail&&from.ail.blind&&Math.random()<0.5){u.inv=0.3;FX.push({x:u.x,y:u.y-56,txt:"ミス",c:"muted",t:0.6});return;}
   const perfect=st.sp.has("foresee")&&Math.random()<0.15;
   if(perfect||Math.random()*100<st.dodge){u.inv=0.45;FX.push({x:u.x,y:u.y-56,txt:perfect?"未来視":"回避",c:"cyan",t:0.7});if(u===P)sfx("dodge");onDodge(u,st,from,perfect);return;}
+  if(u.ofNull>0){u.ofNull=0;u.inv=0.8;FX.push({x:u.x,y:u.y-56,txt:"一撃無効",c:"gold",t:0.9});return;} // 未来遮断: after a failed dodge, before cuts/barrier; also blocks knockback & ailments
   if(from.ail&&from.ail.atkdown)d*=0.65;
   d*=1-st.red;
+  if(u.ofCut>0)d*=1-OFC().teleCut; // 位相防壁 (multiplies with other cuts)
   if(u.shield>0){const ab=Math.min(u.shield,d);u.shield-=ab;d-=ab;if(ab>0)FX.push({x:u.x+14,y:u.y-46,txt:"バリア",c:"cyan",t:0.5});}
+  if(u.ofGuard>0&&d>0&&u.hp-d<=0){u.ofGuard=0;d=u.hp-Math.min(10,st.hp);FX.push({x:u.x,y:u.y-70,txt:"命脈保持",c:"ok",t:1});} // HP10保護
   u.shieldT=0;u.hp-=d;u.inv=0.8;u.anim={k:"dmg",t:0};sfx("hurt",u===P?1:0.5);
   if(u===P&&from.db&&Math.random()<(from.boss?0.25:0.15))applyDebuff(from.db);
   const kp=at||from,a=Math.atan2(u.y-kp.y,u.x-kp.x);u.x+=Math.cos(a)*14;u.y+=Math.sin(a)*14;
@@ -1354,6 +1388,8 @@ function die(){
 }
 function showDeath(){
   G.state="dead";
+  if(RUN&&RUN.kind==="overflow"){const r=RUN;
+    overlay("やられた…",`龍脈溢界：第${r.wave}波で力つきた（再溢出段階${r.stage}）。持ち帰り中の素材を${G.lost}個なくした。手に入れた装備・龍鱗片 +${r.frags}・経験値・お金はそのまま。星骸龍とクリアの報酬はなし。`,[["街へ戻る","primary",()=>enterTown(true)]]);return;}
   if(RUN){const r=RUN,rec=runRecord(),txt=r.kind==="run"?`ノイズ・ラン：${r.cleared}区画突破${rec?"（自己ベスト！）":""}。`:`ボスラッシュ：${r.cleared}/${r.list.length}体撃破。`;
     overlay("やられた…",`${txt}持ち帰り中の素材を${G.lost}個なくした。共鳴の欠片 +${r.shards}（獲得済み）。装備とレベルはそのまま。`,[["街へ戻る","primary",()=>enterTown(true)]]);return;}
   overlay("やられた…",`第${FLOOR}層で力つきた。持ち帰り中の素材を${G.lost}個なくした。装備とレベルはそのまま。`,[["街へ戻る","primary",()=>enterTown(true)]]);
@@ -1363,13 +1399,14 @@ function overlay(t,s,btns){$("ovt").textContent=t;$("ovs").textContent=s;const b
 function burst(x,y,hue,n){for(let i=0;i<n;i++)PARTS.push({x:x+rnd(-8,8),y:y-rnd(4,20),vx:rnd(-15,15),vy:rnd(-70,-30),l:rnd(0.8,1.5),hue:hue+rnd(-20,20),s:rnd(1.5,3)});}
 function killEnemy(e){
   if(e.exploded){burst(e.x,e.y,30,14);return;} // blew itself up: no rewards
+  if(OFM())return ofKill(e);
   const st=statsOf(S.char),boss=e.boss,k=e.lastHit&&!e.lastHit.down?e.lastHit:P,ks=statsOf(k.cid,k),Z=zoneOf(FLOOR),sc=scaleOf(FLOOR),mul=e.summoned?0.35:1,d=e.def;
   burst(e.x,e.y,e.hue,boss?40:10);sfx(boss?"bossKill":"kill");
   shareXp(Math.ceil((d.expReward||3)*sc.xp*mul));
   const coin=Math.round((d.moneyReward||0)*sc.xp*mul);if(coin>0){addMoney(coin);if(boss)FX.push({x:e.x,y:e.y-30,txt:"+¥"+fmt(coin),c:"gold",t:1});}
   G.sync=Math.min(100,G.sync+(boss?20:4)*statsOf(P.cid).syncM);
   if(ks.sp.has("pinkNoise")){k.streak=Math.min(10,(k.streak||0)+1);k.streakT=3;}
-  if(ks.sp.has("killHaste")||ks.gsp.killHaste)k.haste=3;
+  if(ks.sp.has("killHaste")||ks.gsp.killHaste||ks.ofx.killHaste>0)k.haste=3;
   if(ks.sp.has("sonic")&&!k.dash){const n=EN.filter(o=>o!==e&&o.hp>0&&hollowSolid(o)).sort((a,b)=>Math.hypot(a.x-k.x,a.y-k.y)-Math.hypot(b.x-k.x,b.y-k.y))[0];if(n)k.dash={tgt:n,t:0.35};}
   const bon=Z.dropBonus||{},gearMul=st.drop/0.06;
   for(const dr of d.dropTable||[]){
@@ -1411,7 +1448,7 @@ function hitEnemy(e,s){
   const st=statsOf(s.own,s.u);let d=s.dmg;
   const ailing=e.ail&&Object.keys(e.ail).length>0;
   if(ailing)d*=1+st.weak;
-  if(e.ail&&e.ail.poison&&st.gsp.poisonDmg)d*=1+0.3*Math.min(2,st.gsp.poisonDmg);
+  if(e.ail&&e.ail.poison){const pb=(st.gsp.poisonDmg?0.3*Math.min(2,st.gsp.poisonDmg):0)+st.ofx.poisonDmg/100;if(pb>0)d*=1+pb;}
   if(s.crit&&e.ail&&e.ail.miss)d*=1.5;
   if(e.p&&e.p.armor)d*=1-e.p.armor;
   if(e.roar>0)d*=0.15; // boss roaring between phases
@@ -1527,7 +1564,8 @@ addEventListener("pointerdown",()=>{if(SND.ac&&SND.ac.state!=="running"&&!docume
 document.addEventListener("click",e=>{const b=e.target.closest&&e.target.closest("button");if(b&&!b.disabled&&b.id!=="bSync")sfx(b.id==="bYog"?"heal":"tap");},{capture:true});
 // camera: in dives the view can zoom in and follow the player (S.zoom). Screen point -> world point.
 const CAM={x:W/2,y:H/2,z:1};
-function updateCam(){const z=MODE==="dive"&&S.zoom?1.4:1;CAM.z=z;const hw=W/(2*z),hh=H/(2*z),ww=MODE==="dive"?WW:W,wh=MODE==="dive"?WH:H;
+// 龍脈溢界 always shows the whole arena (S.zoom itself is left untouched, so it comes back after the mode)
+function updateCam(){const z=MODE==="dive"&&S.zoom&&!OFM()?1.4:1;CAM.z=z;const hw=W/(2*z),hh=H/(2*z),ww=MODE==="dive"?WW:W,wh=MODE==="dive"?WH:H;
   CAM.x=Math.max(hw,Math.min(ww-hw,P?P.x:W/2));CAM.y=Math.max(hh,Math.min(wh-hh,P?P.y-24:H/2));}
 function applyCam(){ctx.translate(W/2,H/2);ctx.scale(CAM.z,CAM.z);ctx.translate(-CAM.x,-CAM.y);}
 function canvasPoint(e){const r=cv.getBoundingClientRect(),sx=(e.clientX-r.left)/r.width*W,sy=(e.clientY-r.top)/r.height*H;
@@ -1538,6 +1576,8 @@ cv.addEventListener("pointerdown",e=>{
   e.preventDefault();const [x,y]=canvasPoint(e);
   if(MODE==="town"){townTap(x,y);return;}
   if(!G||G.state!=="fight"||G.syncing)return;
+  if(OFM()){const r=cv.getBoundingClientRect(),hit=ofPanelAt((e.clientX-r.left)/r.width*W,(e.clientY-r.top)/r.height*H);
+    if(hit){ofCommand(hit.cid,hit.k);return;}if(G.ofAim){ofAimAt(x,y);return;}} // command panel works for any sister, whoever is controlled
   if(hasDb("stun"))return;
   {const r=cv.getBoundingClientRect(),sx=(e.clientX-r.left)/r.width*W,sy=(e.clientY-r.top)/r.height*H,k=skillAtScreen(sx,sy);
     if(k){P.skcd=P.skcd||{};if(!(P.skcd[k]>0))castSkill(P,k);else FX.push({x:P.x,y:P.y-70,txt:`あと${Math.ceil(P.skcd[k])}秒`,c:"muted",t:0.6});return;}}
@@ -1561,19 +1601,21 @@ cv.addEventListener("pointerup",endDrag);cv.addEventListener("pointercancel",end
 function moveUnit(u,a,sp,dt){u.mv=true;u.ang=a;u.x+=Math.cos(a)*sp*dt;u.y+=Math.sin(a)*sp*dt;}
 function nearestEnemy(u){let b=null,bd=1e9;for(const e of EN){if(!hollowSolid(e))continue;const d=Math.hypot(e.x-u.x,(e.y-u.y)/0.55);if(d<bd){bd=d;b=e;}}return b;}
 function updateUnit(u,dt){
-  const st=statsOf(u.cid,u),sp=110*st.move;u.mv=false;
-  if(u.anim){u.anim.t+=dt;if(u.anim.t>=ANIM[u.anim.k].dur)u.anim=null;}
+  const st=statsOf(u.cid,u),sp=110*st.move,adt=dt*(u.tk??1);u.mv=false; // adt: this unit's action clock (灰時演算 slows all but the caster); buffs, regen and skill CDs stay on dt
+  if(u.anim){u.anim.t+=adt;if(u.anim.t>=ANIM[u.anim.k].dur)u.anim=null;}
+  if(u.ofNull>0)u.ofNull-=dt;if(u.ofCut>0)u.ofCut-=dt;if(u.ofGuard>0)u.ofGuard-=dt;if(u.ofEvade>0)u.ofEvade-=dt;if(u.ofRegen>0)u.ofRegen-=dt;
   if(u.down)return;
-  u.inv=Math.max(0,u.inv-dt);u.cd=Math.max(0,u.cd-dt);u.hp=Math.min(st.hp,u.hp+st.regen*dt);
+  u.inv=Math.max(0,u.inv-dt);u.cd=Math.max(0,u.cd-adt);u.hp=Math.min(st.hp,u.hp+st.regen*dt+(u.ofRegen>0?st.hp*0.04*dt:0));
   if(u.streakT>0){u.streakT-=dt;if(u.streakT<=0)u.streak=0;}
   if(u.haste>0)u.haste-=dt;
   u.shieldT=(u.shieldT||0)+dt;if(st.barrier>0&&u.shieldT>2.5)u.shield=Math.min(st.barrier,(u.shield||0)+st.barrier*0.2*dt);if(u.shield>st.barrier)u.shield=st.barrier;
-  if(u.fu){u.fu.t-=dt;if(u.fu.t<=0){const t=u.fu.tgt;u.fu=null;if(t.hp>0&&G.state==="fight")fire(u,t,{silent:true,mul:0.7});}}
+  if(u.fu){u.fu.t-=adt;if(u.fu.t<=0){const t=u.fu.tgt;u.fu=null;if(t.hp>0&&G.state==="fight")fire(u,t,{silent:true,mul:0.7});}}
   if(u.target&&u.target.hp<=0)u.target=null;
-  if(G.state!=="fight"){u.target=null;u.dest=null;u.dash=null;return;}
+  if(G.state!=="fight"){u.target=null;u.dest=null;u.dash=null;u.ofDash=null;return;}
   if(!(u===P&&hasDb("stun")))updateSkills(u,dt);
-  if(u.dash){const t=u.dash.tgt;u.dash.t-=dt;const d=Math.hypot(t.x-u.x,t.y-u.y);
-    if(t.hp<=0)u.dash=null;else{moveUnit(u,Math.atan2(t.y-u.y,t.x-u.x),420,dt);if(d<40||u.dash.t<=0){u.dash=null;fire(u,t,{silent:true,mul:1.2});FX.push({x:u.x,y:u.y-66,txt:"音速追撃",c:"cyan",t:0.6});}}
+  if(u.ofDash){ofDashStep(u,adt);return;}
+  if(u.dash){const t=u.dash.tgt;u.dash.t-=adt;const d=Math.hypot(t.x-u.x,t.y-u.y);
+    if(t.hp<=0)u.dash=null;else{moveUnit(u,Math.atan2(t.y-u.y,t.x-u.x),420,adt);if(d<40||u.dash.t<=0){u.dash=null;fire(u,t,{silent:true,mul:1.2});FX.push({x:u.x,y:u.y-66,txt:"音速追撃",c:"cyan",t:0.6});}}
     u.x=Math.max(12,Math.min(WW-12,u.x));u.y=Math.max(62,Math.min(WH-6,u.y));return;}
   if(u.ai){
     const cfg=allyCfg(u.cid),boss=EN.find(e=>e.boss&&e.hp>0),awake=EN.filter(e=>e.hp>0&&!e.idle);
@@ -1583,27 +1625,28 @@ function updateUnit(u,dt){
       else if(cfg.tgt==="assist")u.target=(P.target&&P.target.hp>0?P.target:null)||boss||nearP(awake)||null;
       else u.target=boss||nearP(awake)||null;}
     const fireCd=st.cd*(cfg.act==="sup"?1.45:cfg.act==="atk"?1:1.15);
+    if(OFM()&&ofAllyEvade(u,st,sp,adt,fireCd)){u.x=Math.max(12,Math.min(WW-12,u.x));u.y=Math.max(62,Math.min(WH-6,u.y));return;}
     if(cfg.pos==="follow"){
       // keep formation beside the leader: when the leader dodges, so do they
       const idx=ALLIES.indexOf(u),fx=P.x+(idx?36:-36),fy=P.y+16,d=Math.hypot(fx-u.x,fy-u.y);
-      if(d>4)moveUnit(u,Math.atan2(fy-u.y,fx-u.x),Math.min(sp*1.6,d/dt),dt);
+      if(d>4&&adt>0)moveUnit(u,Math.atan2(fy-u.y,fx-u.x),Math.min(sp*1.6,d/adt),adt);
       if(u.target){const t=u.target,dt2=Math.hypot(t.x-u.x,(t.y-u.y)/0.55);if(dt2<=st.range*1.05&&u.cd<=0&&hollowSolid(t)){fire(u,t);u.cd=fireCd;}}
     }else{
       const close=EN.find(e=>Math.hypot(e.x-u.x,e.y-u.y)<34);
-      if(close){moveUnit(u,Math.atan2(u.y-close.y,u.x-close.x),sp*0.9,dt);}
+      if(close){moveUnit(u,Math.atan2(u.y-close.y,u.x-close.x),sp*0.9,adt);}
       else if(u.target){const t=u.target,d=Math.hypot(t.x-u.x,(t.y-u.y)/0.55);
-        if(d>st.range*0.9)moveUnit(u,Math.atan2(t.y-u.y,t.x-u.x),sp*0.85,dt);
+        if(d>st.range*0.9)moveUnit(u,Math.atan2(t.y-u.y,t.x-u.x),sp*0.85,adt);
         else if(u.cd<=0&&hollowSolid(t)){fire(u,t);u.cd=fireCd;}}
-      else{const d=Math.hypot(P.x-u.x,P.y-u.y);if(d>60)moveUnit(u,Math.atan2(P.y-u.y,P.x-u.x),sp*0.8,dt);}
+      else{const d=Math.hypot(P.x-u.x,P.y-u.y);if(d>60)moveUnit(u,Math.atan2(P.y-u.y,P.x-u.x),sp*0.8,adt);}
     }
   }else{
     if(S.auto&&!u.target&&!u.dest&&!hasDb("stun")){const n=nearestEnemy(u);if(n)u.target=n;} // オート攻撃: pick the nearest enemy when idle
     if(hasDb("stun")){}
     else if(u.target){const t=u.target,d=Math.hypot(t.x-u.x,(t.y-u.y)/0.55);
-      if(d>st.range)moveUnit(u,Math.atan2(t.y-u.y,t.x-u.x)+(hasDb("confuse")?Math.PI:0),sp,dt);
+      if(d>st.range)moveUnit(u,Math.atan2(t.y-u.y,t.x-u.x)+(hasDb("confuse")?Math.PI:0),sp,adt);
       else if(u.cd<=0&&hollowSolid(t)){fire(u,t);u.cd=st.cd;}
     }else if(u.dest){const d=Math.hypot(u.dest.x-u.x,u.dest.y-u.y);
-      if(d<3)u.dest=null;else{const a=Math.atan2(u.dest.y-u.y,u.dest.x-u.x);u.ang=a;u.mv=true;const m=Math.min(d,sp*dt);u.x+=Math.cos(a)*m;u.y+=Math.sin(a)*m;}}
+      if(d<3)u.dest=null;else{const a=Math.atan2(u.dest.y-u.y,u.dest.x-u.x);u.ang=a;u.mv=true;const m=Math.min(d,sp*adt);u.x+=Math.cos(a)*m;u.y+=Math.sin(a)*m;}}
   }
   u.x=Math.max(12,Math.min(WW-12,u.x));u.y=Math.max(62,Math.min(WH-6,u.y));
 }
@@ -1617,48 +1660,54 @@ function updateDive(dt){
     if(G.syncT<0.9)return;
   }
   if(G.state==="clear"){G.clearT-=dt;for(const u of alive())if(u.anim&&u.anim.k==="joy")u.anim.t+=0;if(G.clearT<=0){G.state="choice";RUN?runAfterClear():floorChoice();}}
-  if(G.state==="advance"){G.advT-=dt;P.x+=250*dt;P.ang=0;P.mv=true;P.target=null;P.dest=null;for(const u of [P,...ALLIES])if(u.anim)u.anim.t+=dt;if(G.advT<=0)runSegment();return;}
+  if(G.state==="advance"){G.advT-=dt;P.x+=250*dt;P.ang=0;P.mv=true;P.target=null;P.dest=null;for(const u of [P,...ALLIES])if(u.anim)u.anim.t+=dt;if(G.advT<=0&&!OFM())runSegment();return;}
+  if(G.state==="rest"){ofRest(dt);return;} // 龍脈溢界: between waves
   if(RUN&&RUN.kind==="rush"&&G.state==="fight")RUN.t+=dt;
+  if(OFM()&&(G.state==="fight"||G.state==="clear"))RUN.t+=dt; // clear time on real time (灰時演算 does not stretch it)
+  if(G.ofSlow){G.ofSlow.t-=dt;if(G.ofSlow.t<=0)G.ofSlow=null;}
   if(G.wipeIn>0)G.wipeIn-=dt;
   if(G.tstop>0)G.tstop-=dt;if(G.critAll>0)G.critAll-=dt;if(G.slowF){G.slowF.t-=dt;if(G.slowF.t<=0)G.slowF=null;}if(G.flash){G.flash.t-=dt;if(G.flash.t<=0)G.flash=null;}
   if(G.pbuf){for(const b of G.pbuf)b.t-=dt;G.pbuf=G.pbuf.filter(b=>b.t>0);}
-  if(G.beams){for(const b of G.beams){if(b.ch>0){b.ch-=dt;if(b.ch<=0){const st=statsOf(b.u.cid,b.u);beamHit(b.u,b.a,900,26,st.atk*15,"gold");sfx("syncHit");}}else b.life-=dt;}G.beams=G.beams.filter(b=>b.ch>0||b.life>0);}
-  if(G.strikes){for(const k of G.strikes){k.t-=dt;if(k.t<=0){for(const e of EN)if(e.hp>0&&Math.hypot(e.x-k.x,(e.y-k.y)/0.6)<k.r+e.r)skHit(e,k.dmg,k.u,"cyan");WAVES.push({x:k.x,y:k.y,t:0,c:"63,224,255",r:k.r});}}G.strikes=G.strikes.filter(k=>k.t>0);}
+  if(G.beams){for(const b of G.beams){if(b.ch>0){b.ch-=dt*ofUk(b.u);if(b.ch<=0){const st=statsOf(b.u.cid,b.u);beamHit(b.u,b.a,900,26,st.atk*15,"gold");sfx("syncHit");}}else b.life-=dt;}G.beams=G.beams.filter(b=>b.ch>0||b.life>0);}
+  if(G.strikes){for(const k of G.strikes){k.t-=dt*ofUk(k.u);if(k.t<=0){for(const e of EN)if(e.hp>0&&Math.hypot(e.x-k.x,(e.y-k.y)/0.6)<k.r+e.r)skHit(e,k.dmg,k.u,"cyan");WAVES.push({x:k.x,y:k.y,t:0,c:"63,224,255",r:k.r});}}G.strikes=G.strikes.filter(k=>k.t>0);}
   if(G.loot&&G.loot.length){if(G.state==="fight"){G.loot=G.loot.filter(l=>{if(Math.hypot(l.x-P.x,(l.y-P.y)/0.7)<22){takeLoot(l,true);return false;}return true;});}
     else if(G.state==="clear"){for(const l of G.loot)takeLoot(l,false);FX.push({scr:1,x:W/2,y:H/2-10,txt:`残りの粒子を回収（素材のみ）`,c:"muted",t:1.6});G.loot=[];}}
   if(G.state==="dying"){if(P.anim)P.anim.t+=dt;G.dieT-=dt;if(G.dieT<=0)showDeath();return;}
-  if(G.state==="dead"||G.state==="choice"){for(const u of [P,...ALLIES])if(u.anim)u.anim.t+=dt;return;}
+  if(G.state==="dead"||G.state==="choice"||G.state==="ofReady"){for(const u of [P,...ALLIES])if(u.anim)u.anim.t+=dt;return;} // ofReady: CDs frozen before 星骸龍
   for(const k in P.db){P.db[k]-=dt;if(P.db[k]<=0)delete P.db[k];}
-  if(hasDb("poison")&&G.state==="fight"){P.hp-=statsOf(P.cid).hp*0.04*dt;if(P.hp<=0){P.hp=0;die();return;}}
+  if(hasDb("poison")&&G.state==="fight"){P.hp-=statsOf(P.cid).hp*0.04*dt*(P.ofCut>0?1-OFC().teleCut:1);if(P.hp<=0){P.hp=0;die();return;}}
   // Record per-frame movement for predictive shots (including AI allies and dash movement).
   for(const u of [P,...ALLIES]){
-    const px=u.x,py=u.y;updateUnit(u,dt);
+    const px=u.x,py=u.y;u.tk=ofUk(u);updateUnit(u,dt);
     u.vx_=dt>0?(u.x-px)/dt:0;u.vy_=dt>0?(u.y-py)/dt:0;
   }
   if(G.state==="fight"&&(G.spawnLeft>0||G.queue.length||(G.boss&&!G.bossSpawned))){G.spawnT-=dt;if(G.spawnT<=0){spawn();G.spawnT=G.boss?2.6:rnd(G.interval[0],G.interval[1]);}}
   if(G.banner>0)G.banner-=dt;
   updateHazards(dt);
+  if(OFM())ofUpdate(dt);
   const targets=alive();
   for(const w of WAVES)w.t+=dt;WAVES=WAVES.filter(w=>w.t<0.5);for(const l of LINES)l.t-=dt;LINES=LINES.filter(l=>l.t>0);
   for(const e of EN){
     const px=e.x,py=e.y;e.slow=Math.max(0,e.slow-dt);e.stun=Math.max(0,e.stun-dt);
     if(e.ail){for(const k in e.ail){const a=e.ail[k];a.t-=dt;if(k==="poison"){e.hp-=a.dps*a.n*dt;a.tick=(a.tick||0)+dt;if(a.tick>0.6){a.tick=0;FX.push({x:e.x+6,y:e.y-e.r-2,txt:fmt(Math.max(1,a.dps*a.n*0.6)),c:"pink",t:0.5});}}if(a.t<=0)delete e.ail[k];}}
-    let f=e.stun>0?0:e.slow>0?0.45:1;if(G.tstop>0)f=0;else if(G.slowF&&G.slowF.t>0&&Math.hypot(e.x-G.slowF.u.x,e.y-G.slowF.u.y)<G.slowF.r)f*=0.4;
+    let f=e.stun>0?0:e.slow>0?0.45:1,edt=dt;
+    if(OFM())edt=dt*ofTimeK(e.x,e.y,0.4); // 龍脈溢界: enemy clock = slowest of stop / 灰時演算 / slow field (not multiplied)
+    else if(G.tstop>0)f=0;else if(G.slowF&&G.slowF.t>0&&Math.hypot(e.x-G.slowF.u.x,e.y-G.slowF.u.y)<G.slowF.r)f*=0.4;
     if(e.vuln>0)e.vuln-=dt;
     let tu=targets[0],bd=1e9;for(const u of targets){const d=Math.hypot(u.x-e.x,u.y-e.y);if(d<bd){bd=d;tu=u;}}
     if(e.idle){if(bd<230||e.hp<e.mhp||G.boss){e.idle=false;FX.push({x:e.x,y:e.y-e.r*2-8,txt:"！",c:"danger",t:0.6});}
       else{e.wa+=rnd(-1.5,1.5)*dt;e.x+=Math.cos(e.wa)*e.spd*0.25*f*dt;e.y+=Math.sin(e.wa)*e.spd*0.18*f*dt;
         if(e.x<30||e.x>WW-30||e.y<90||e.y>WH-20)e.wa=Math.atan2(WH/2-e.y,WW/2-e.x);e.x=clampX(e.x);e.y=clampY(e.y);e.vx_=(e.x-px)/dt;e.vy_=(e.y-py)/dt;continue;}}
-    enemyAct(e,dt,tu,f);
-    if(e.kx){e.x+=e.kx*dt;e.y+=e.ky*dt;e.kx*=0.85;e.ky*=0.85;if(Math.abs(e.kx)+Math.abs(e.ky)<5)e.kx=e.ky=0;}
+    enemyAct(e,edt,tu,f);
+    if(e.kx){e.x+=e.kx*edt;e.y+=e.ky*edt;e.kx*=0.85;e.ky*=0.85;if(Math.abs(e.kx)+Math.abs(e.ky)<5)e.kx=e.ky=0;}
     e.vx_=(e.x-px)/dt;e.vy_=(e.y-py)/dt;
-    if(hollowSolid(e)&&e.stun<=0&&e.ai!=="suicide")for(const u of targets){if(Math.hypot(u.x-e.x,u.y-e.y)<e.r+9)hurtUnit(u,e.dmg*(e.buffT>0?1+(e.buffAtk||0):1),e);}
+    if(hollowSolid(e)&&e.stun<=0&&e.ai!=="suicide"&&!(e.ofAtk>0))for(const u of targets){if(Math.hypot(u.x-e.x,u.y-e.y)<e.r+9){hurtUnit(u,e.dmg*(e.buffT>0?1+(e.buffAtk||0):1),e);if(e.ofAtk!==undefined){e.ofAtk=OFC().copy.atkCd;break;}}} // copies: one contact hit per 1.5s
     if(G.state!=="fight")break;
   }
-  for(const s of SHOTS){
+  for(const s of SHOTS){const sdt=dt*ofUk(s.u); // shots of slowed sisters fly slowed too
     if(s.homing&&s.tgt&&s.tgt.hp>0){const want=Math.atan2(s.tgt.y-s.y,s.tgt.x-s.x),cur=Math.atan2(s.vy,s.vx);let d=want-cur;while(d>Math.PI)d-=Math.PI*2;while(d<-Math.PI)d+=Math.PI*2;
-      const na=cur+Math.max(-6*dt,Math.min(6*dt,d)),sp=Math.hypot(s.vx,s.vy);s.vx=Math.cos(na)*sp;s.vy=Math.sin(na)*sp;}
-    s.x+=s.vx*dt;s.y+=s.vy*dt;s.life-=dt;
+      const na=cur+Math.max(-6*sdt,Math.min(6*sdt,d)),sp=Math.hypot(s.vx,s.vy);s.vx=Math.cos(na)*sp;s.vy=Math.sin(na)*sp;}
+    s.x+=s.vx*sdt;s.y+=s.vy*sdt;s.life-=sdt;
     for(const e of EN){if(e.hp>0&&!s.hit.includes(e)&&hollowSolid(e)&&Math.hypot(s.x-e.x,s.y-e.y)<e.r+(s.own==="mimi"?7:4)){
       if(s.miss){s.life=0;FX.push({x:e.x,y:e.y-e.r-4,txt:"ミス",c:"muted",t:0.7});break;}
       hitEnemy(e,s);s.hit.push(e);if(s.pierce>0){s.pierce--;continue;}s.life=0;break;}}}
@@ -1668,6 +1717,7 @@ function updateDive(dt){
   EN=EN.filter(e=>e.hp>0);
   if(G.state==="fight"&&G.spawnLeft<=0&&!G.queue.length&&EN.length===0&&(!G.boss||G.bossSpawned)){
     G.state="clear";G.clearT=RUN?1.2:2.0;P.db={};sfx("clear");
+    if(OFM()){ESHOTS=[];TELE=[];G.ofAim=null;} // leftover shots and telegraphs vanish with the wave
     for(const u of [P,...ALLIES]){u.target=null;u.dest=null;if(!u.down)u.anim={k:"joy",t:0};}
     FX.push({scr:1,x:W/2,y:H/2-40,txt:G.boss?"ボス撃破！":"クリア！",c:"ok",t:1.6,big:1});
   }
@@ -1730,15 +1780,21 @@ const SKILLS={
     cast(u){pBuff({id:"mi_over",cid:"mimi",t:8,atkP:80,aspd:50,pierce:2});G.flash={t:0.35,c:"63,224,255"};}},
 };
 function beamHit(u,a,len,w,dmg,c){const ca=Math.cos(a),sa=Math.sin(a);for(const e of EN){if(e.hp<=0||!hollowSolid(e))continue;const dx=e.x-u.x,dy=e.y-u.y,along=dx*ca+dy*sa,perp=Math.abs(-dx*sa+dy*ca);if(along>0&&along<len&&perp<w+e.r)skHit(e,dmg,u,c);}}
-const skillsOf=cid=>[INNATE[cid],...[...nodeSum(cid).sk].sort((a,b)=>(SKILLS[a]?.ult?1:0)-(SKILLS[b]?.ult?1:0))].filter(k=>SKILLS[k]);
-function castSkill(u,k){const d=SKILLS[k];if(!d)return false;d.cast(u);u.skcd[k]=d.cd;
+// in 龍脈溢界 the dedicated skills are appended (trees and saved builds are untouched)
+const skillsOf=cid=>{const l=[INNATE[cid],...[...nodeSum(cid).sk].sort((a,b)=>(SKILLS[a]?.ult?1:0)-(SKILLS[b]?.ult?1:0))].filter(k=>SKILLS[k]);return OFM()?l.concat(OF_SK.filter(k=>SKILLS[k]&&SKILLS[k].cid===cid)):l;};
+function castSkill(u,k){const d=SKILLS[k];if(!d||!u)return false;
+  if(MODE!=="dive"||G.state!=="fight"||u.down||(u===P&&hasDb("stun"))||(u.skcd&&u.skcd[k]>0)||(d.of&&!OFM()))return false; // re-checked here, not only in the UI
+  u.skcd=u.skcd||{};if(d.cast(u)===false)return false;u.skcd[k]=d.cd;
   FX.push({x:u.x,y:u.y-74,txt:(d.ult?"奥義 ":"")+d.nm,c:d.ult?"gold":"cyan",t:1.1,big:d.ult?0:undefined});sfx(d.ult?"sync":"door");return true;}
 // AI: when to fire a skill on its own
 function skillWanted(u,k){const d=SKILLS[k],near=nearEn(u.x,u.y,d.type==="atk"?(k==="mi_spin"?95:360):420);
   if(!near.length)return false;if(d.ult)return near.some(e=>e.boss)||near.length>=3||P.hp<statsOf(P.cid,P).hp*0.4;return true;}
 function updateSkills(u,dt){
   u.skcd=u.skcd||{};const list=skillsOf(u.cid),cfg=u.ai?allyCfg(u.cid):null;
-  for(const k of list){const d=SKILLS[k];if(u.skcd[k]===undefined)u.skcd[k]=d.cd*0.35;
+  for(const k of list){const d=SKILLS[k];
+    if(d.of){if(u.skcd[k]===undefined)u.skcd[k]=0;u.skcd[k]=Math.max(0,u.skcd[k]-dt); // dedicated: ready on entry, normal time, no support 1.45×
+      if(u.skcd[k]>0||G.state!=="fight"||!ofAutoOn(k))continue;if(ofWanted(u,k)&&castSkill(u,k))break;continue;}
+    if(u.skcd[k]===undefined)u.skcd[k]=d.cd*0.35;
     u.skcd[k]=Math.max(0,u.skcd[k]-dt*(cfg&&cfg.act==="sup"&&d.type==="sup"?1.45:1));
     if(u.skcd[k]>0||G.state!=="fight")continue;
     if(cfg&&cfg.act==="atk"&&d.type==="sup")continue;
@@ -1807,6 +1863,7 @@ function runSegment(){
 }
 function runAfterClear(){
   if(RUN.kind==="rush")return rushNext(false);
+  if(RUN.kind==="overflow")return ofAfterWave();
   const C=MODES.run,seg=RUN.seg;RUN.cleared=seg;
   if(seg%(C.forkEvery||5)!==0)return runAdvance();
   gainShards(C.shards.perFork||1);
@@ -1827,7 +1884,7 @@ function runRetreat(){
   if(!RUN)return;const r=RUN;let lost=0;
   if(G.state==="fight"&&EN.length>0){for(const k in S.bag){const b=S.bag[k],h=Math.floor(b.n/4);if(!h)continue;lost+=h;b.v*=(b.n-h)/b.n;b.n-=h;}}
   const rec=runRecord();returnHome();
-  const txt=r.kind==="run"?`ノイズ・ラン：${r.cleared}区画で撤退${rec?"（自己ベスト！）":""}`:`ボスラッシュ：${r.cleared}体撃破で撤退`;
+  const txt=r.kind==="run"?`ノイズ・ラン：${r.cleared}区画で撤退${rec?"（自己ベスト！）":""}`:r.kind==="overflow"?`龍脈溢界：第${r.wave}波で撤退（龍鱗片+${r.frags}は獲得済み）`:`ボスラッシュ：${r.cleared}体撃破で撤退`;
   toast(`${txt}${lost?`・戦闘中の撤退で素材${lost}個を落とした`:""}・欠片+${r.shards}`);log(txt);
 }
 function rushList(){return ZONES.map((z,i)=>i).filter(i=>bossBeaten(i)&&ENEMIES[ZONES[i].bossId]);}
@@ -1852,14 +1909,400 @@ function rushComplete(){
   const r=RUN,C=MODES.rush,h=heatPts(r.heat);gainShards(C.clearBonus||3);
   const o=S.rushBest,better=!o||r.list.length>o.n||(r.list.length===o.n&&(r.t<o.t||h>o.heat&&r.t<=o.t*1.05));
   if(better)S.rushBest={n:r.list.length,t:r.t,heat:h};
+  const ids=r.list.map(i=>ZONES[i].bossId),ofNew=!S.overflowUnlocked&&MODES.overflow.unlock.every(id=>ids.includes(id));if(ofNew)S.overflowUnlocked=true; // never revoked
   G.state="choice";save(true);
-  overlay("ボスラッシュ 制覇！",`${r.list.length}体を撃破。タイム ${fmtTime(r.t)}${better?"（自己ベスト！）":`（ベスト ${fmtTime(o.t)}）`}${h?`・侵食度${h}`:""}。共鳴の欠片 +${r.shards}。ヨーデル管理所の「共鳴研究」で使える。`,
+  overlay("ボスラッシュ 制覇！",`${r.list.length}体を撃破。タイム ${fmtTime(r.t)}${better?"（自己ベスト！）":`（ベスト ${fmtTime(o.t)}）`}${h?`・侵食度${h}`:""}。共鳴の欠片 +${r.shards}。ヨーデル管理所の「共鳴研究」で使える。${ofNew?"――龍脈の記録容量が限界を超えた。歪みゲートに『龍脈溢界』が開放された！":""}`,
     [["街へ帰還","primary",()=>returnHome()]]);
 }
 function returnHome(){
   const n=Object.values(S.bag).reduce((a,b)=>a+b.n,0);enterTown(true);
   toast(n>0?`街に戻った。素材${n}個を家の倉庫にしまった`:"街に戻った");save(true);
 }
+
+/* ===== 龍脈溢界 (RUN.kind "overflow") ===== */
+// A dedicated 640×360 arena, separate from ZONES: 5 waves of 3 boss copies, then 星骸龍. Copies share one telegraph scheduler;
+// telegraphs (予兆) are fixed shapes resolved once, dealing % of max HP through ofTeleHit (not hazardHit). Numbers: data/modes.json "overflow".
+const OFM=()=>!!(RUN&&RUN.kind==="overflow");
+const OFC=()=>MODES.overflow||OF_DEF;
+const OF_AR={x0:12,y0:62,x1:628,y1:354}; // movable area (= unit clamp); the HUD band above y=62 is excluded
+const OF_TNM={circle:"円",grid:"マス目",fan:"扇",donut:"ドーナツ",line:"直線",all:"龍脈決壊"};
+const OF_SK=["of_lu_null","of_lu_gray","of_ht_cut","of_ht_guard","of_ht_regen","of_ht_full","of_mi_evade","of_mi_dash"];
+let TELE=[],TFX=[],TELE_ID=1;
+const ofMaxStage=()=>Math.min(OFC().stageMax,(S.ofBest?S.ofBest.top:-1)+1);
+const ofAutoOn=k=>!(S.ofAuto&&S.ofAuto[k]===false);
+// 灰時演算: everyone except the caster acts at 25% (enemy-side time also respects クロノ・ストップ / 時間遅延フィールド: the slowest wins, never multiplied)
+const ofUk=u=>G.ofSlow&&G.ofSlow.t>0&&u&&u.cid!==G.ofSlow.by.cid?0.25:1;
+function ofTimeK(x,y,fieldK){if(G.tstop>0)return 0;let k=1;if(G.ofSlow&&G.ofSlow.t>0)k=0.25;if(G.slowF&&G.slowF.t>0&&Math.hypot(x-G.slowF.u.x,y-G.slowF.u.y)<G.slowF.r)k=Math.min(k,fieldK);return k;}
+const ofTeleK=()=>G.tstop>0?0:G.ofSlow&&G.ofSlow.t>0?0.25:1;
+// runtime enemy definitions: originals in ENEMIES stay untouched (normal dives / rush keep using them)
+function ofCopyDef(id){const key="of_"+id;if(ENEMIES[key])return key;const d=ENEMIES[id];if(!d)return null;
+  ENEMIES[key]={...d,id:key,artId:d.id,name:"記録コピー・"+d.name,boss:false,aiType:"of_copy",dropTable:[],params:{},missionOnly:false,ofBase:id,desc:"龍脈から溢れた記録。"+(d.desc||"")};return key;}
+function ofBossDef(){const key="of_seigai";if(ENEMIES[key])return key;const d=ENEMIES[OFC().boss.id];if(!d)return null;
+  ENEMIES[key]={...d,id:key,artId:d.id,name:"星骸龍",sub:"龍脈オーバーフロー",boss:true,aiType:"of_boss",dropTable:[],missionOnly:false,ofBase:d.id};return key;}
+const ofZoneFloor=id=>{const zi=ZONES.findIndex(z=>z.bossId===id);return zi<0?OFC().boss.floor:zi*10+10;};
+// strength = original data × its zone's last floor scaleFor(...,true) (boss HP basis kept) × copy ratio × 再溢出; the result fights as a normal enemy
+function ofMakeEnemy(baseId,x,y,boss,idx){
+  const C=OFC(),d0=ENEMIES[baseId],key=boss?ofBossDef():ofCopyDef(baseId),d=ENEMIES[key],f=boss?C.boss.floor:ofZoneFloor(baseId),sc=scaleFor(f,ZONES,true),st=RUN.stage||0;
+  const hpM=(boss?C.boss.hp:C.copy.hp)*Math.pow(C.stageHp,st),atkM=(boss?C.boss.atk:C.copy.atk)*Math.pow(C.stageAtk,st);
+  const e={x,y,t:key,def:d,p:d.params||{},ai:d.aiType,boss:!!boss,sd:Math.random()*1000,col:d.color||"#ff7ac8",hue:hueOf(d.color),slow:0,stun:0,vx_:0,vy_:0,
+    r:(d0.r||12)*(boss?1:C.copy.r),hp:d0.hp*sc.hp*hpM,mhp:d0.hp*sc.hp*hpM,dmg:d0.atk*sc.atk*atkM,spd:d0.moveSpeed,cd:rnd(0.6,1.6),ct:2.5,charge:0,wind:0,gen:0,
+    wa:Math.random()*7,off:Math.random()*3,buffT:0,fuse:0,kids:0,ofF:f,ofBase:baseId,ofIdx:idx};
+  if(boss)e.moves=((d.params||{}).moves||[]).map(m=>({...m,t:rnd(1.5,m.cd||4)}));else e.ofAtk=rnd(0.4,1.2);
+  return e;}
+// copies: walk + contact (1.5s interval, see updateDive) + shared telegraphs. 星骸龍: its own shots/teleport at fixed intervals (no BOSS_PHASE roar/scaling)
+function ofAct(e,dt,tu,dist,a,f,sp,mv){
+  if(e.ofAtk>0)e.ofAtk-=dt;
+  if(dist>e.r+6)mv(a,sp);else mv(a+Math.PI/2,sp*0.3);
+  if(e.boss&&e.moves)for(const m of e.moves){m.t-=dt*f;if(m.t>0)continue;m.t=m.cd||4;
+    if(m.type==="ring"){const n=m.count||10,o=G.t;for(let i=0;i<n;i++)eshoot(e,o+i/n*Math.PI*2,m.speed||110,{mul:0.7});}
+    else if(m.type==="volley"){const n=m.count||3,b=aimAt(e,tu,m.speed||200,m.lead===true);for(let i=0;i<n;i++)eshoot(e,b+(i-(n-1)/2)*0.16,m.speed||200);}
+    else if(m.type==="teleport"){burst(e.x,e.y,e.hue,20);let nx,ny,g=0;do{nx=clampX(rnd(80,WW-80));ny=clampY(rnd(110,WH-50));}while(Math.hypot(nx-P.x,ny-P.y)<140&&g++<10);e.x=nx;e.y=ny;burst(e.x,e.y,e.hue,20);}
+    break;}
+  e.x=clampX(e.x);e.y=clampY(e.y);}
+
+/* --- telegraphs: one shape description used by both the drawing (telePath) and the foot test (teleIn); edges count as danger --- */
+function rayLen(x,y,a){const c=Math.cos(a),s=Math.sin(a);let t=1e9;
+  if(c>1e-9)t=Math.min(t,(OF_AR.x1-x)/c);if(c<-1e-9)t=Math.min(t,(OF_AR.x0-x)/c);if(s>1e-9)t=Math.min(t,(OF_AR.y1-y)/s);if(s<-1e-9)t=Math.min(t,(OF_AR.y0-y)/s);return Math.max(0,t);}
+function teleIn(tl,x,y){
+  switch(tl.shape){
+    case "circle":return Math.hypot(x-tl.x,y-tl.y)<=tl.r;
+    case "donut":{const d=Math.hypot(x-tl.x,y-tl.y);return d>=tl.ri&&d<=tl.ro;}
+    case "fan":{const d=Math.hypot(x-tl.x,y-tl.y);if(d>tl.r)return false;if(d<1e-6)return true;let da=Math.atan2(y-tl.y,x-tl.x)-tl.ang;while(da>Math.PI)da-=2*Math.PI;while(da<-Math.PI)da+=2*Math.PI;return Math.abs(da)<=tl.half;}
+    case "line":{const dx=x-tl.x,dy=y-tl.y,c=Math.cos(tl.ang),s=Math.sin(tl.ang),al=dx*c+dy*s,pp=-dx*s+dy*c;return al>=0&&al<=tl.len&&Math.abs(pp)<=tl.w/2;}
+    case "grid":return tl.cells.some(k=>x>=k.x0&&x<=k.x1&&y>=k.y0&&y<=k.y1);
+    case "all":return true;}
+  return false;}
+function telePath(tl){ctx.beginPath();
+  switch(tl.shape){
+    case "circle":ctx.arc(tl.x,tl.y,tl.r,0,Math.PI*2);break;
+    case "donut":ctx.arc(tl.x,tl.y,tl.ro,0,Math.PI*2);ctx.moveTo(tl.x+tl.ri,tl.y);ctx.arc(tl.x,tl.y,tl.ri,0,Math.PI*2,true);break;
+    case "fan":ctx.moveTo(tl.x,tl.y);ctx.arc(tl.x,tl.y,tl.r,tl.ang-tl.half,tl.ang+tl.half);ctx.closePath();break;
+    case "line":{const c=Math.cos(tl.ang),s=Math.sin(tl.ang),h=tl.w/2,L=tl.len;ctx.moveTo(tl.x-s*h,tl.y+c*h);ctx.lineTo(tl.x+c*L-s*h,tl.y+s*L+c*h);ctx.lineTo(tl.x+c*L+s*h,tl.y+s*L-c*h);ctx.lineTo(tl.x+s*h,tl.y-c*h);ctx.closePath();break;}
+    case "grid":for(const k of tl.cells)ctx.rect(k.x0,k.y0,k.x1-k.x0,k.y1-k.y0);break;
+    case "all":ctx.rect(OF_AR.x0,OF_AR.y0,OF_AR.x1-OF_AR.x0,OF_AR.y1-OF_AR.y0);break;}}
+// grid: 4×3 cells over the movable area; fixed = checkerboard fallback (every cell touches a safe cell)
+function ofGridCells(tl,C,fixed){const cw=(OF_AR.x1-OF_AR.x0)/C.cols,ch=(OF_AR.y1-OF_AR.y0)/C.rows,ids=[...Array(C.cols*C.rows).keys()];let sel;
+  if(fixed){const par=Math.random()<0.5?0:1;sel=ids.filter(i=>(i%C.cols+Math.floor(i/C.cols))%2===par);}
+  else{for(let i=ids.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[ids[i],ids[j]]=[ids[j],ids[i]];}sel=ids.slice(0,C.danger);}
+  tl.cols=C.cols;tl.rows=C.rows;tl.dset=new Set(sel);
+  tl.cells=sel.map(i=>{const cx=i%C.cols,cy=Math.floor(i/C.cols);return{x0:OF_AR.x0+cx*cw,y0:OF_AR.y0+cy*ch,x1:OF_AR.x0+(cx+1)*cw,y1:OF_AR.y0+(cy+1)*ch};});}
+function ofGridNear(tl,u){const cw=(OF_AR.x1-OF_AR.x0)/tl.cols,ch=(OF_AR.y1-OF_AR.y0)/tl.rows,cx=Math.min(tl.cols-1,Math.max(0,Math.floor((u.x-OF_AR.x0)/cw))),cy=Math.min(tl.rows-1,Math.max(0,Math.floor((u.y-OF_AR.y0)/ch)));
+  return [[0,0],[1,0],[-1,0],[0,1],[0,-1]].some(([a,b])=>{const x=cx+a,y=cy+b;return x>=0&&y>=0&&x<tl.cols&&y<tl.rows&&!tl.dset.has(y*tl.cols+x);});}
+const OF_PTS=(()=>{const a=[];for(let x=OF_AR.x0+8;x<=OF_AR.x1-8;x+=16)for(let y=OF_AR.y0+8;y<=OF_AR.y1-8;y+=16)a.push([x,y]);return a;})();
+// nearest safe floor point for a unit and whether normal walking reaches it before the telegraph resolves
+function ofSafeFor(u,tl){const sp=110*statsOf(u.cid,u).move;let best=null,bd=1e9;
+  for(const [x,y] of OF_PTS){if(teleIn(tl,x,y))continue;const d=Math.hypot(x-u.x,y-u.y);if(d<bd){bd=d;best={x,y,d};}}
+  if(best)best.ok=best.d<=sp*tl.t*0.8;return best;}
+const ofTeleOk=tl=>tl.all||alive().every(u=>{const s=ofSafeFor(u,tl);return s&&s.ok;});
+function ofMakeTele(shape,src,tgt){
+  const C=OFC().tele[shape],tl={id:TELE_ID++,shape,src,srcNm:src?src.def.name:"",t:C.t,T:C.t,dmg:C.dmg,all:shape==="all",hit:new Set(),cancel:!!(src&&!src.boss)};tl.gid=tl.id;
+  const tx=tgt?tgt.x:P.x,ty=tgt?tgt.y:P.y;
+  if(shape==="circle"){tl.r=C.r;tl.x=tx;tl.y=ty;}
+  else if(shape==="donut"){tl.ri=C.ri;tl.ro=C.ro;tl.x=src.x;tl.y=src.y;}
+  else if(shape==="fan"){tl.r=C.r;tl.half=C.deg/2*Math.PI/180;tl.x=src.x;tl.y=src.y;tl.ang=Math.atan2(ty-src.y,tx-src.x);}
+  else if(shape==="line"){tl.w=C.w;tl.x=src.x;tl.y=src.y;tl.ang=Math.atan2(ty-src.y,tx-src.x);tl.len=rayLen(tl.x,tl.y,tl.ang);}
+  else if(shape==="grid")ofGridCells(tl,C,false);
+  return tl;}
+// every survivor must have a reachable safe spot (grid: own cell or a neighbour); otherwise re-roll, then fall back to a fixed safe layout
+function ofSpawnTele(shape,src){
+  const tg=()=>!P.down&&Math.random()<0.5?P:pick(alive());
+  for(let i=0;i<14;i++){const tl=ofMakeTele(shape,src,tg());if(shape==="grid"&&!alive().every(u=>ofGridNear(tl,u)))continue;if(ofTeleOk(tl))return tl;}
+  let tl;if(shape==="grid"){tl=ofMakeTele("grid",src,null);ofGridCells(tl,OFC().tele.grid,true);}else tl=ofMakeTele("circle",src,{x:src.x,y:src.y});
+  tl.fixed=true;return tl;}
+// scheduler: copies take turns (never 3 free casters); 星骸龍 runs per-HP loops, switching only at a loop boundary; 龍脈決壊 ≥45s apart (enemy time)
+function ofSched(edt){
+  const O=G.of,C=OFC();if(!O||TELE.length)return;
+  O.wait-=edt;if(O.wait>0)return;
+  const foes=EN.filter(e=>e.hp>0);if(!foes.length)return;
+  let shape,src;
+  if(G.boss){src=foes.find(e=>e.boss);if(!src)return;
+    if(O.i===0){const r=src.hp/src.mhp;O.ph=r>0.5?0:r>0.2?1:2;}
+    const loop=C.bossLoops[O.ph];shape=loop[O.i];
+    if(shape==="all"&&O.et-O.lastAll<C.allMin){O.wait=0.25;return;}
+    O.i=(O.i+1)%loop.length;
+  }else{const order=foes.sort((a,b)=>a.ofIdx-b.ofIdx);src=order.find(e=>e.ofIdx>O.last)||order[0];O.last=src.ofIdx;
+    const pool=C.copyShapes[src.ofBase]||["circle"];src.ofSh=src.ofSh||0;shape=pool[src.ofSh++%pool.length];}
+  const tl=ofSpawnTele(shape,src);TELE.push(tl);sfx("debuff");
+  if(tl.all){O.lastAll=O.et;O.allN++;G.ofAllN=O.allN;FX.push({scr:1,x:W/2,y:H/2-30,txt:"逃げ場なし――防御スキルでしのげ！",c:"danger",t:2.6,big:0});}
+}
+function ofUpdate(dt){
+  for(const f of TFX)f.t-=dt;if(TFX.length)TFX=TFX.filter(f=>f.t>0); // 0.3s resolve flash (the hit itself was the single check at resolution)
+  if(G.state!=="fight"||!G.of)return;
+  const C=OFC(),edt=dt*ofTeleK();G.of.et+=edt;
+  for(const tl of TELE){
+    if(tl.cancel&&tl.src&&tl.src.hp<=0){tl.dead=true;G.of.wait=C.copyGap;FX.push({x:tl.src.x,y:tl.src.y-30,txt:"予兆が消えた",c:"muted",t:0.9});continue;}
+    tl.t-=edt;if(tl.t<=0){tl.dead=true;ofResolve(tl);G.of.wait=G.boss?(tl.all?C.allGap:C.bossGap):C.copyGap;}
+    if(G.state!=="fight")break;}
+  TELE=TELE.filter(t=>!t.dead);
+  if(G.state==="fight")ofSched(edt);}
+function ofResolve(tl){TFX.push({tl,t:0.3});sfx(tl.all?"explode":"hurt");WAVES.push({x:tl.x||W/2,y:tl.y||H/2,t:0,c:"255,120,50",r:tl.all?320:90});
+  for(const u of alive()){if(tl.hit.has(u))continue;if(teleIn(tl,u.x,u.y)){tl.hit.add(u);ofTeleHit(u,tl);}if(G.state!=="fight")break;}} // one hit per group, per unit
+// telegraph damage: % of max HP, ignores defence / random dodge / blind / the post-hit 0.8s window. 完全回避, 一撃無効, 60%カット, barrier, HP10保護 apply.
+function ofTeleHit(u,tl){
+  if(u.down||G.state!=="fight")return;
+  const st=statsOf(u.cid,u);
+  if(u.ofEvade>0){if(tl.all){u.ofEvade=0;FX.push({x:u.x,y:u.y-70,txt:"虚像歩法：全体攻撃を回避（終了）",c:"cyan",t:1.1});}else FX.push({x:u.x,y:u.y-56,txt:"回避",c:"cyan",t:0.7});return;}
+  if(u.ofDash&&!tl.all)return; // 流星貫走 in motion (never vs 全体)
+  if(u.ofNull>0){u.ofNull=0;FX.push({x:u.x,y:u.y-56,txt:"一撃無効",c:"gold",t:0.9});return;}
+  let d=st.hp*tl.dmg;if(u.ofCut>0)d*=1-OFC().teleCut;
+  if(u.shield>0){const ab=Math.min(u.shield,d);u.shield-=ab;d-=ab;if(ab>0)FX.push({x:u.x+14,y:u.y-46,txt:"バリア",c:"cyan",t:0.5});}
+  ofLoseHp(u,d,st);}
+function ofLoseHp(u,d,st){
+  if(u.ofGuard>0&&d>0&&u.hp-d<=0){u.ofGuard=0;u.hp=Math.min(10,st.hp);FX.push({x:u.x,y:u.y-70,txt:"命脈保持",c:"ok",t:1});}else u.hp-=d;
+  u.shieldT=0;u.inv=Math.max(u.inv,0.5);u.anim={k:"dmg",t:0};sfx("hurt",u===P?1:0.5);
+  if(d>0)FX.push({x:u.x,y:u.y-56,txt:"-"+fmt(Math.max(1,d)),c:"danger",t:0.8});
+  if(u.hp<=0){u.hp=0;if(u===P)die();else{u.down=true;u.anim={k:"die",t:0};u.target=null;u.ofDash=null;log(`${CHARS[u.cid].name}が倒れた`);}}}
+
+/* --- 専用スキル8種 (only while RUN.kind==="overflow"; added to skillsOf there, never to the trees) --- */
+Object.assign(SKILLS,{
+  of_lu_null:{nm:"未来遮断",ab:"遮断",cid:"luarie",type:"of",of:1,cd:45,desc:"生存中の全員に、12秒以内の次の一撃を各自1回だけ無効にする守り",
+    cast(u){for(const v of partyU())v.ofNull=12;WAVES.push({x:u.x,y:u.y,t:0,c:"246,196,69",r:160});}},
+  of_lu_gray:{nm:"灰時演算",ab:"灰時",cid:"luarie",type:"of",of:1,cd:90,desc:"10秒間、自分以外の戦場（敵・敵弾・予兆・味方）を25%の速さにする",
+    cast(u){G.ofSlow={t:10,by:u};G.flash={t:0.35,c:"210,210,210"};}},
+  of_ht_cut:{nm:"位相防壁",ab:"防壁",cid:"ht",type:"of",of:1,cd:45,desc:"8秒間、生存中の全員の受けるダメージ60%カット",
+    cast(u){for(const v of partyU())v.ofCut=8;WAVES.push({x:u.x,y:u.y,t:0,c:"63,224,255",r:160});}},
+  of_ht_guard:{nm:"命脈保持",ab:"命脈",cid:"ht",type:"of",of:1,cd:75,desc:"10秒間、生存中の全員が致死ダメージを1回だけHP10で耐える",
+    cast(u){for(const v of partyU())v.ofGuard=10;WAVES.push({x:u.x,y:u.y,t:0,c:"123,224,160",r:160});}},
+  of_ht_regen:{nm:"再生共鳴",ab:"再生",cid:"ht",type:"of",of:1,cd:30,desc:"12秒間、生存中の全員が毎秒最大HPの4%回復",
+    cast(u){for(const v of partyU())v.ofRegen=12;WAVES.push({x:u.x,y:u.y,t:0,c:"123,224,160",r:120});}},
+  of_ht_full:{nm:"フルリカバー",ab:"全快",cid:"ht",type:"of",of:1,cd:120,desc:"生存中の全員のHPを全回復（ダウン中の味方は起こせない）",
+    cast(u){for(const v of partyU()){v.hp=statsOf(v.cid,v).hp;FX.push({x:v.x,y:v.y-60,txt:"全回復",c:"ok",t:0.9});}sfx("heal");}},
+  of_mi_evade:{nm:"虚像歩法",ab:"虚像",cid:"mimi",type:"of",of:1,cd:45,desc:"5秒間、自分への攻撃と予兆を完全回避。全体攻撃を避けた瞬間に終了",
+    cast(u){u.ofEvade=5;}},
+  of_mi_dash:{nm:"流星貫走",ab:"流星",cid:"mimi",type:"of",of:1,cd:12,desc:"着地点を指定して最大280移動。経路上の敵に攻撃力300%（移動中は全体攻撃以外を受けない）",
+    cast(u){return ofStartDash(u);}},
+});
+function ofStartDash(u){const to=u.ofDashTo||ofAutoDash(u);u.ofDashTo=null;if(!to)return false;
+  let dx=to.x-u.x,dy=to.y-u.y;const d=Math.hypot(dx,dy);if(d>280){dx*=280/d;dy*=280/d;}
+  const x1=Math.max(OF_AR.x0,Math.min(OF_AR.x1,u.x+dx)),y1=Math.max(OF_AR.y0,Math.min(OF_AR.y1,u.y+dy));
+  u.ofDash={x0:u.x,y0:u.y,x1,y1,t:0,T:0.2,hit:new Set(),dmg:statsOf(u.cid,u).atk*3};u.target=null;u.dest=null;u.dash=null;
+  LINES.push({x1:u.x,y1:u.y-26,x2:x1,y2:y1-26,t:0.35,c:"#3fe0ff",w:4});return true;}
+function segDist(px,py,x0,y0,x1,y1){const vx=x1-x0,vy=y1-y0,l=vx*vx+vy*vy,t=l?Math.max(0,Math.min(1,((px-x0)*vx+(py-y0)*vy)/l)):0;return Math.hypot(px-x0-vx*t,py-y0-vy*t);}
+function ofDashStep(u,adt){const D=u.ofDash;D.t+=adt;const k=Math.min(1,D.t/D.T),nx=D.x0+(D.x1-D.x0)*k,ny=D.y0+(D.y1-D.y0)*k;
+  for(const e of EN)if(e.hp>0&&!D.hit.has(e)&&hollowSolid(e)&&segDist(e.x,e.y,D.x0,D.y0,nx,ny)<=e.r+14){D.hit.add(e);skHit(e,D.dmg,u,"cyan");} // each enemy once
+  u.ang=Math.atan2(D.y1-D.y0,D.x1-D.x0);u.x=nx;u.y=ny;u.mv=true;if(k>=1)u.ofDash=null;}
+// dash target for auto use: escape a shape telegraph, or (allies only, nothing telegraphed) run through the nearest enemy
+function ofAutoDash(u){const tl=TELE[0];
+  if(tl&&!tl.all){if(!teleIn(tl,u.x,u.y))return null;const s=ofSafeFor(u,tl);return s&&s.d<=280?{x:s.x,y:s.y}:null;}
+  if(!u.ai||tl)return null;
+  const e=EN.filter(o=>o.hp>0&&hollowSolid(o)).sort((a,b)=>Math.hypot(a.x-u.x,a.y-u.y)-Math.hypot(b.x-u.x,b.y-u.y))[0];if(!e)return null;
+  const d=Math.hypot(e.x-u.x,e.y-u.y);if(d>240)return null;const a=Math.atan2(e.y-u.y,e.x-u.x);return{x:u.x+Math.cos(a)*Math.min(280,d+50),y:u.y+Math.sin(a)*Math.min(280,d+50)};}
+// party-wide defence for 龍脈決壊: one shared reservation, so one-hit-null and 60% cut are never both spent on the same blast
+const ofProt=(v,t)=>v.ofNull>t||v.ofCut>t||v.ofGuard>t||v.ofEvade>t;
+function ofReserve(tl){
+  const own=k=>[P,...ALLIES].find(v=>v&&v.cid===SKILLS[k].cid),ready=k=>{const u=own(k);return !!u&&!u.down&&ofAutoOn(k)&&!((u.skcd||{})[k]>Math.max(0,tl.t-0.4));};
+  if(G.ofRes&&G.ofRes.id===tl.id&&G.ofRes.k&&ready(G.ofRes.k))return G.ofRes.k;
+  const order=(G.ofAllN||1)%2===1?["of_lu_null","of_ht_cut","of_ht_guard"]:["of_ht_cut","of_lu_null","of_ht_guard"];
+  const k=order.find(ready)||null;G.ofRes={id:tl.id,k};return k;}
+function ofWanted(u,k){
+  const tl=TELE[0],al=partyU();
+  if(k==="of_lu_null"||k==="of_ht_cut"||k==="of_ht_guard"){
+    if(tl&&tl.all){if(tl.t>2.6||al.every(v=>ofProt(v,tl.t)))return false;return ofReserve(tl)===k;}
+    return k==="of_ht_guard"&&!!tl&&al.some(v=>v.hp<statsOf(v.cid,v).hp*tl.dmg&&teleIn(tl,v.x,v.y)&&!ofProt(v,tl.t)&&!(ofSafeFor(v,tl)||{}).ok);}
+  if(k==="of_mi_evade"){if(!tl||ofProt(u,tl.t))return false;
+    if(tl.all)return tl.t<1.2;
+    return teleIn(tl,u.x,u.y)&&tl.t<0.6&&!(ofSafeFor(u,tl)||{}).ok&&!(!((u.skcd||{}).of_mi_dash>0)&&ofAutoDash(u));}
+  if(k==="of_mi_dash"){if(tl&&!tl.all){if(!teleIn(tl,u.x,u.y)||tl.t>(u.ai?1.4:0.9))return false;const s=ofSafeFor(u,tl);if(s&&s.ok&&u.ai&&tl.t>0.8)return false;}else if(tl)return false;return !!ofAutoDash(u);}
+  if(k==="of_ht_regen")return al.some(v=>v.hp<statsOf(v.cid,v).hp*0.7&&!(v.ofRegen>0));
+  if(k==="of_ht_full")return al.some(v=>v.hp<statsOf(v.cid,v).hp*0.35)||al.filter(v=>v.hp<statsOf(v.cid,v).hp*0.55).length>=2;
+  if(k==="of_lu_gray")return !!tl&&!tl.all&&tl.t>1.2&&al.some(v=>teleIn(tl,v.x,v.y)&&!(ofSafeFor(v,tl)||{}).ok);
+  return false;}
+// allies: getting off a telegraphed floor beats attacking; while one is up they hold still on safe floor (also in "follow" formation)
+function ofAllyEvade(u,st,sp,adt,fireCd){
+  const tl=TELE[0];if(!tl||tl.all)return false;
+  if(teleIn(tl,u.x,u.y)){
+    if(!u.ofSafe||u.ofSafe.id!==tl.id){const s=ofSafeFor(u,tl);u.ofSafe=s?{id:tl.id,x:s.x,y:s.y}:null;}
+    if(u.ofSafe&&adt>0){const d=Math.hypot(u.ofSafe.x-u.x,u.ofSafe.y-u.y);if(d>0.5)moveUnit(u,Math.atan2(u.ofSafe.y-u.y,u.ofSafe.x-u.x),Math.min(sp*1.15,d/adt),adt);}
+    return true;}
+  const t=u.target;if(t&&t.hp>0){const d=Math.hypot(t.x-u.x,(t.y-u.y)/0.55);if(d<=st.range*1.05&&u.cd<=0&&hollowSolid(t)){fire(u,t);u.cd=fireCd;}}
+  return true;}
+// tap commands (any sister, whoever you control). 流星貫走: first tap = aim, tap the floor = go (CD spent then), tap the button again = cancel
+function ofCommand(cid,k){const u=[P,...ALLIES].find(v=>v&&v.cid===cid);if(!u)return;
+  if(k==="of_mi_dash"){if(G.ofAim){G.ofAim=null;FX.push({x:u.x,y:u.y-70,txt:"取消",c:"muted",t:0.6});return;}
+    if(u.down||(u.skcd||{})[k]>0){FX.push({x:u.x,y:u.y-70,txt:u.down?"ダウン中":`あと${Math.ceil(u.skcd[k])}秒`,c:"muted",t:0.7});return;}
+    G.ofAim={cid};return;}
+  if(!castSkill(u,k))FX.push({x:u.x,y:u.y-70,txt:u.down?"ダウン中":(u.skcd||{})[k]>0?`あと${Math.ceil(u.skcd[k])}秒`:"いまは使えない",c:"muted",t:0.7});}
+function ofAimAt(x,y){const cid=G.ofAim.cid,u=[P,...ALLIES].find(v=>v&&v.cid===cid);G.ofAim=null;if(!u)return;
+  u.ofDashTo={x,y};if(!castSkill(u,"of_mi_dash")){u.ofDashTo=null;FX.push({x:u.x,y:u.y-70,txt:"いまは使えない",c:"muted",t:0.7});}}
+// command panel (canvas, top-right; the minimap never shows in this one-screen arena)
+const OFP={x:W-170,y:5,bw:32,bh:20,g:3,lw:26,rg:3};
+const ofRows=()=>CIDS.map(c=>({cid:c,u:[P,...ALLIES].find(v=>v&&v.cid===c),ks:OF_SK.filter(k=>SKILLS[k].cid===c)}));
+function ofPanelAt(sx,sy){const rows=ofRows();for(let i=0;i<rows.length;i++){const y=OFP.y+i*(OFP.bh+OFP.rg);if(sy<y-2||sy>y+OFP.bh+1)continue;
+  for(let j=0;j<rows[i].ks.length;j++){const x=OFP.x+OFP.lw+j*(OFP.bw+OFP.g);if(sx>=x-1&&sx<=x+OFP.bw+1)return{cid:rows[i].cid,k:rows[i].ks[j]};}}return null;}
+function drawOfPanel(){
+  ofRows().forEach((r,i)=>{const y=OFP.y+i*(OFP.bh+OFP.rg),dn=!r.u||r.u.down;
+    ctx.fillStyle="rgba(10,8,18,.72)";ctx.fillRect(OFP.x-3,y-1,OFP.lw+r.ks.length*(OFP.bw+OFP.g)+3,OFP.bh+2);
+    ctx.fillStyle=dn?"#5d5772":CHARS[r.cid].col;ctx.font="9px DotGothic16, monospace";ctx.textAlign="left";ctx.fillText({luarie:"ルア",ht:"えー",mimi:"ミミ"}[r.cid],OFP.x+1,y+13);
+    r.ks.forEach((k,j)=>{const d=SKILLS[k],x=OFP.x+OFP.lw+j*(OFP.bw+OFP.g),left=r.u&&r.u.skcd?r.u.skcd[k]||0:0,aim=G.ofAim&&k==="of_mi_dash";
+      ctx.fillStyle=aim?"rgba(63,224,255,.45)":"rgba(63,224,255,.16)";ctx.fillRect(x,y,OFP.bw,OFP.bh);
+      if(left>0){ctx.fillStyle="rgba(0,0,0,.62)";ctx.fillRect(x,y,OFP.bw,OFP.bh*Math.min(1,left/d.cd));}
+      ctx.strokeStyle=dn?"rgba(255,255,255,.15)":left>0?"rgba(255,255,255,.3)":"#3fe0ff";ctx.lineWidth=aim?2:1;ctx.strokeRect(x+.5,y+.5,OFP.bw-1,OFP.bh-1);ctx.lineWidth=1;
+      ctx.textAlign="center";ctx.font="9px DotGothic16, monospace";ctx.fillStyle=dn||left>0?"#8a83a0":"#fff";ctx.fillText(d.ab,x+OFP.bw/2,y+(left>0?10:13));
+      if(left>0&&!dn){ctx.font="8px sans-serif";ctx.fillStyle="#cfc8e6";ctx.fillText(Math.ceil(left),x+OFP.bw/2,y+18);}
+      if(ofAutoOn(k)){ctx.fillStyle="#f6c445";ctx.fillRect(x+OFP.bw-4,y+1,3,3);}
+      ctx.textAlign="left";});});}
+function drawTele(){
+  if(!TELE.length&&!TFX.length)return;
+  ctx.save();ctx.beginPath();ctx.rect(OF_AR.x0,OF_AR.y0,OF_AR.x1-OF_AR.x0,OF_AR.y1-OF_AR.y0);ctx.clip();
+  for(const tl of TELE){const k=1-tl.t/tl.T;
+    telePath(tl);ctx.fillStyle=`rgba(255,96,32,${0.16+0.2*k})`;ctx.fill("evenodd");
+    ctx.save();telePath(tl);ctx.clip("evenodd");ctx.strokeStyle="rgba(255,226,170,.55)";ctx.lineWidth=2;ctx.beginPath();const off=(G.t*20)%14;
+    for(let x=-WH+off;x<WW+14;x+=14){ctx.moveTo(x,0);ctx.lineTo(x+WH,WH);}ctx.stroke();ctx.restore(); // hatching: readable without colour (grey screen)
+    telePath(tl);ctx.strokeStyle="rgba(255,70,20,.98)";ctx.lineWidth=2.5;if(tl.all)ctx.setLineDash([10,6]);ctx.stroke();ctx.setLineDash([]);
+    ctx.strokeStyle="rgba(255,255,255,.75)";ctx.lineWidth=1;ctx.stroke();ctx.lineWidth=1;}
+  for(const f of TFX){telePath(f.tl);ctx.fillStyle=`rgba(255,236,200,${Math.max(0,f.t/0.3)*0.75})`;ctx.fill("evenodd");}
+  ctx.restore();}
+function drawOfHud(){
+  const tl=TELE[0];
+  if(tl){const y=G.boss?66:30,w=220,x=W/2-w/2,k=Math.max(0,tl.t/tl.T);
+    ctx.fillStyle="rgba(14,12,21,.8)";ctx.fillRect(x-6,y-11,w+12,20);ctx.fillStyle="#2e2942";ctx.fillRect(x,y+3,w,4);ctx.fillStyle="#ff6a2a";ctx.fillRect(x,y+3,w*k,4);
+    ctx.font="10px DotGothic16, monospace";ctx.textAlign="center";ctx.fillStyle=tl.all?"#ff5a5a":"#ffd7a8";
+    ctx.fillText(tl.all?`龍脈決壊 ― 逃げ場なし（防御スキル） ${tl.t.toFixed(1)}`:`${tl.srcNm.replace("記録コピー・","")}：${OF_TNM[tl.shape]} ${tl.t.toFixed(1)}`,W/2,y);ctx.textAlign="left";}
+  if(G.state==="rest"){ctx.font="13px DotGothic16, monospace";ctx.textAlign="center";ctx.fillStyle="#7be0a0";ctx.fillText(`休息 ― 次の波まで ${Math.ceil(G.restT)}`,W/2,H/2-40);ctx.textAlign="left";}
+  if(G.ofSlow&&G.ofSlow.t>0){ctx.font="11px DotGothic16, monospace";ctx.textAlign="center";ctx.fillStyle="#e8e8e8";ctx.fillText(`― 灰時演算 ${G.ofSlow.t.toFixed(1)} ―`,W/2,G.boss?88:52);ctx.textAlign="left";}
+  if(G.ofAim){ctx.font="10px DotGothic16, monospace";ctx.textAlign="center";ctx.fillStyle="#3fe0ff";ctx.fillText("流星貫走：着地点をタップ（ボタンをもう一度で取消）",W/2,H-50);ctx.textAlign="left";}
+  drawOfPanel();}
+// buff markers above each sister: 遮=一撃無効 壁=60%カット 命=HP10保護 再=再生 虚=完全回避
+function drawOfMarks(u){if(u.down)return;const m=[];if(u.ofNull>0)m.push(["遮","#f6c445"]);if(u.ofCut>0)m.push(["壁","#3fe0ff"]);if(u.ofGuard>0)m.push(["命","#7be0a0"]);if(u.ofRegen>0)m.push(["再","#7be0a0"]);if(u.ofEvade>0)m.push(["虚","#c58bf0"]);
+  if(u.ofEvade>0){ctx.strokeStyle=`rgba(197,139,240,${0.5+0.3*Math.sin(G.t*10)})`;ctx.lineWidth=1.5;ctx.beginPath();ctx.ellipse(u.x,u.y-28,19,35,0,0,7);ctx.stroke();ctx.lineWidth=1;}
+  ctx.font="8px DotGothic16, monospace";ctx.textAlign="center";m.forEach(([t,c],i)=>{const x=u.x-(m.length-1)*5+i*10;ctx.fillStyle="rgba(10,8,18,.75)";ctx.fillRect(x-4.5,u.y-82,9,10);ctx.fillStyle=c;ctx.fillText(t,x,u.y-74);});ctx.textAlign="left";}
+
+/* --- flow: start → 6 waves (5s rest between, HP/CD carried) → 星骸龍 → result --- */
+function ofStartRun(stage){
+  if(!S.overflowUnlocked)return;
+  const C=OFC();stage=Math.max(0,Math.min(ofMaxStage(),Math.floor(+stage||0)));
+  RUN={kind:"overflow",stage,wave:0,t:0,heat:{},hpM:1,atkM:1,rewM:1,shards:0,frags:0,gear:0,cores:0,auto:0,paid:false,done:false};
+  MODE="dive";OPEN=null;SND.syncUntil=0;FLOOR=C.boss.floor;WW=W;WH=H;HAZ=[];
+  P=mkUnit(S.char,WW/2,WH-60,false);ALLIES=CIDS.filter(c=>c!==S.char).map((c,i)=>mkUnit(c,P.x+(i?44:-44),P.y+6,true)); // full HP, every skill ready
+  FX=[];PARTS=[];MARK=null;G={t:0,sync:0};
+  ofWave(1);syncModeUI();syncStage();markDirty();
+  log(`龍脈溢界に挑んだ（再溢出段階${stage}）`);
+}
+function ofWave(n){
+  const C=OFC(),[id,cnt]=C.waves[n-1],boss=n===C.waves.length,sync=G.sync||0,t=G.t||0;
+  RUN.wave=n;EN=[];ESHOTS=[];TELE=[];TFX=[];SHOTS=[];WAVES=[];LINES=[];HAZ=[];
+  G={state:"fight",t,boss,bossSpawned:true,bossId:boss?ofBossDef():null,spawnLeft:0,spawnT:99,queue:[],clearT:0,sync,syncing:false,zone:zoneOf(FLOOR),maxAlive:9,interval:[1,1],banner:boss?3.2:0,loot:[],
+    of:{wait:C.copyFirst,et:0,last:-1,ph:0,i:0,lastAll:-1e9,allN:0},ofSlow:null,ofAim:null};
+  for(let i=0;i<cnt;i++){const x=cnt===1?WW/2:WW*(0.25+0.25*i),y=boss?140:112+(i%2)*24,e=ofMakeEnemy(id,x,y,boss,i);if(!e.def)continue;EN.push(e);burst(e.x,e.y,e.hue,14);}
+  for(const u of [P,...ALLIES]){u.target=null;u.dest=null;u.ofSafe=null;}
+  if(boss)sfx("boss");else FX.push({scr:1,x:W/2,y:100,txt:`第${n}波：${ENEMIES[EN[0]?EN[0].t:id].name}×${cnt}`,c:"cyan",t:2.2,big:0});
+  markDirty();}
+function ofAfterWave(){
+  const C=OFC();if(RUN.wave>=C.waves.length)return ofComplete();
+  ofFrag(C.reward.waveFrag);
+  for(const u of [P,...ALLIES]){const mx=statsOf(u.cid,u).hp;if(u.down){u.down=false;u.anim=null;u.hp=mx*C.restHeal;}else u.hp=Math.min(mx,u.hp+mx*C.restHeal);u.target=null;u.dest=null;}
+  P.db={};G.ofAim=null;G.state="rest";G.restT=C.rest;
+  FX.push({scr:1,x:W/2,y:H/2-64,txt:"波を退けた ― 休息（HP25%回復・ダウンから復帰）",c:"ok",t:2.2,big:0});markDirty();}
+// rest: cooldowns keep running on normal time; nothing else moves
+function ofRest(dt){G.restT-=dt;RUN.t+=dt;
+  for(const u of [P,...ALLIES]){if(u.anim){u.anim.t+=dt;if(u.anim.t>=ANIM[u.anim.k].dur)u.anim=null;}if(u.skcd)for(const k in u.skcd)u.skcd[k]=Math.max(0,u.skcd[k]-dt);
+    for(const f of ["ofNull","ofCut","ofGuard","ofEvade","ofRegen"])if(u[f]>0)u[f]-=dt;}
+  if(G.restT<=0){if(RUN.wave+1===OFC().waves.length)ofReadyBoss();else ofWave(RUN.wave+1);}}
+// before 星骸龍: a start button; cooldowns are frozen here so waiting gives no free preparation
+function ofReadyBoss(){G.state="ofReady";const r=RUN;
+  overlay("星骸龍の記録を検出","龍脈オーバーフローの個体が実体化しようとしている。準備ができたら挑もう（待っている間、スキルの再使用時間は進まない）。",
+    [["星骸龍に挑む","primary",()=>{if(RUN!==r||G.state!=="ofReady")return;$("ov").hidden=true;ofWave(OFC().waves.length);}],["撤退して帰還","",()=>{if(RUN===r)runRetreat();}]]);}
+function ofFrag(n){for(let i=0;i<n;i++){const k=pick(Object.keys(FRAG_T));S.dragonFragments[k]=(S.dragonFragments[k]||0)+1;}if(n>0&&RUN){RUN.frags+=n;FX.push({scr:1,x:W/2,y:H/2-96,txt:`龍鱗片 +${n}`,c:"cyan",t:1.6,big:0});}markDirty();}
+function ofCore(n){if(n<=0)return;const k="dragon_vein_core";if(MATS[k]){const m=S.mats[k]||(S.mats[k]={n:0,v:0});m.n+=n;m.v+=MATS[k].base*n;}if(RUN)RUN.cores+=n;FX.push({scr:1,x:W/2,y:H/2-118,txt:`龍脈核 +${n}`,c:"gold",t:1.8,big:0});markDirty();}
+function ofAddSockets(it){const C=OFC().socket,r=Math.random(),n=r<C.n[0]?1:r<C.n[0]+C.n[1]?2:3;
+  it.source="overflow";it.name="龍脈"+it.name;it.sockets=Array.from({length:n},()=>({kind:Math.random()<C.ability?"ability":"stat",effectId:"",invested:0}));
+  const s=it.sockets[0];s.effectId=pick(s.kind==="ability"?OF_ABIL:OF_STAT);s.invested=pick(C.first);return it;}
+function ofYield(it){const y={};for(const s of it.sockets||[])if(s.effectId&&OFX[s.effectId]&&s.invested>0){const f=OFX[s.effectId].fr;y[f]=(y[f]||0)+Math.ceil(s.invested/10);}
+  if(it.sp&&SP_FRAG[it.sp])for(const [f,n] of Object.entries(SP_FRAG[it.sp]))y[f]=(y[f]||0)+n;return y;}
+const yieldN=y=>Object.values(y).reduce((a,b)=>a+b,0);
+const yieldTxt=y=>Object.keys(FRAG_T).filter(k=>y[k]).map(k=>`${FRAG_T[k]}×${y[k]}`).join("・")||"なし";
+function addFrags(y){for(const k in y)S.dragonFragments[k]=(S.dragonFragments[k]||0)+y[k];}
+// 龍脈産装備: never auto-sold; with a full bag it is dismantled into fragments on the spot
+function ofGear(boss){const it=ofAddSockets(makeItem(50,boss));if(RUN)RUN.gear++;
+  if(S.inv.length>=INV_MAX){const y=ofYield(it);addFrags(y);if(RUN)RUN.auto++;log(`もちものがいっぱい：${it.name}を分解（龍鱗片 ${yieldTxt(y)}）`);markDirty();return;}
+  gainItem(it);}
+// kills here bypass killEnemy's drop tables / Z.clearReward: copies never pay out as the real bosses
+function ofKill(e){
+  const C=OFC(),R=C.reward,d0=ENEMIES[e.ofBase]||e.def,k=e.lastHit&&!e.lastHit.down?e.lastHit:P,ks=statsOf(k.cid,k),boss=e.boss,xm=Math.pow(1.14,(e.ofF||50)-1),mul=boss?1:C.copy.reward;
+  burst(e.x,e.y,e.hue,boss?40:14);sfx(boss?"bossKill":"kill");
+  shareXp(Math.ceil((d0.expReward||3)*xm*mul));const coin=Math.round((d0.moneyReward||0)*xm*mul);if(coin>0){addMoney(coin);FX.push({x:e.x,y:e.y-30,txt:"+¥"+fmt(coin),c:"gold",t:1});}
+  G.sync=Math.min(100,G.sync+(boss?20:4)*statsOf(P.cid).syncM);
+  if(ks.sp.has("pinkNoise")){k.streak=Math.min(10,(k.streak||0)+1);k.streakT=3;}
+  if(ks.sp.has("killHaste")||ks.gsp.killHaste||ks.ofx.killHaste>0)k.haste=3;
+  if(boss){if(!RUN.paid){RUN.paid=true;for(let i=0;i<R.bossGear;i++)ofGear(true);ofCore(R.bossCore);ofFrag(R.bossFrag);}}
+  else{ofFrag(R.copyFrag);if(Math.random()<C.copy.gear*statsOf(S.char).drop/0.06)ofGear(false);}
+  progress("kill",e);markDirty();}
+function ofComplete(){
+  const r=RUN,C=OFC(),R=C.reward;if(!r||r.done)return;r.done=true;G.state="choice"; // paid exactly once
+  const first=!(S.ofBest.clears>0);
+  gainShards(R.clearShards);addMoney(R.clearMoney);
+  if(r.stage>0)ofFrag(r.stage);ofCore((first?R.firstCore:0)+(r.stage>=R.coreFromStage?1:0));
+  const b=S.ofBest,better=!b.t||r.t<b.t;b.clears++;if(better)b.t=r.t;b.top=Math.max(b.top,r.stage);
+  save(true);markDirty();
+  const next=Math.min(C.stageMax,r.stage+1);
+  overlay("龍脈溢界 制覇！",`星骸龍を鎮めた。龍脈は、再び溢れ出そうとしている。 ― 再溢出段階${r.stage} ・ タイム ${fmtTime(r.t)}${better?"（自己ベスト！）":`（ベスト ${fmtTime(b.t)}）`} ・ 龍鱗片 +${r.frags} ・ 龍脈核 +${r.cores} ・ 装備 ${r.gear}個 ・ 共鳴の欠片 +${r.shards} ・ ¥${fmt(R.clearMoney)}${first?" ・ 初回制覇ボーナス 龍脈核+"+R.firstCore:""}${r.auto?` ・ もちもの満杯のため装備${r.auto}個を龍鱗片に分解した`:" ・ もちものが満杯のときは、龍脈産の装備は売らずに龍鱗片へ分解される"}`,
+    [["街へ帰還","primary",()=>{if(RUN===r)returnHome();}],[`再溢出に挑む（段階${next}）`,"",()=>{if(RUN===r)ofStartRun(next);}]]);}
+function ofZoneInfo(){const C=OFC(),fr=S.dragonFragments;
+  $("zinfo").innerHTML=`<div class="zrow"><span>再溢出段階 <b style="color:var(--ink)">${RUN.stage}</b></span><span>龍鱗片 +${RUN.frags} ・ 装備 ${RUN.gear} ・ 龍脈核 +${RUN.cores}</span></div>
+    <div class="zlist">${C.waves.map(([id,n],i)=>`<span class="zen" style="${i+1===RUN.wave?"color:var(--ink);font-weight:700":i+1<RUN.wave?"opacity:.45":""}">${i+1}. ${i+1===C.waves.length?"星骸龍":(ENEMIES[id]||{}).name}${n>1?"×"+n:""}</span>`).join("")}</div>
+    <div class="note">色が変わった床（斜線・赤橙の縁）から出る。逃げ場のない「龍脈決壊」は右上の指令パネルで防御スキル。所持龍鱗片：${Object.keys(FRAG_T).map(k=>FRAG_T[k]+fr[k]).join("・")}</div>`;}
+
+/* --- 龍脈溢界 UI: gate tab, auto/manual toggles, slot gear (そうび) --- */
+let OF_STAGE=0,OF_CONFIRM=null;
+const fragTxt=()=>Object.keys(FRAG_T).map(k=>FRAG_T[k]+" "+(S.dragonFragments[k]||0)).join("・");
+function ofGateHtml(){
+  if(!S.overflowUnlocked)return `<div class="note">🔒 ボスラッシュで5体のボスをすべて倒すと開放</div>`;
+  const b=S.ofBest,mx=ofMaxStage();OF_STAGE=Math.max(0,Math.min(OF_STAGE,mx));
+  return `<p class="note">新御霊市の地下を巡るヨーデル粒子――龍脈。その記録容量が、ボスラッシュによって限界を超えた。溢れ出す強敵のコピーを分解し、龍脈オーバーフローの個体『星骸龍』を鎮めよう。</p>
+    <p class="note">強敵のコピーが群れとなって溢れ出す。予兆を見て安置へ移動し、逃げ場のない攻撃は3姉妹の防御スキルでしのごう。スロット付き装備と龍鱗片が手に入る。</p>
+    <div class="item" style="cursor:default"><span class="name">龍脈溢界</span><span class="own" style="font-size:.8rem">${b.t?fmtTime(b.t):"―"}</span>
+      <span class="desc">全6ウェーブ（記録コピー5種×3体 → 星骸龍）・常時3人参加<br>最高再溢出段階：${b.top>=0?b.top:"―"} ・ 制覇回数：${b.clears} ・ 最速クリア：${b.t?fmtTime(b.t):"まだない"}</span>
+      <span class="desc row" style="grid-column:1/-1">${Array.from({length:mx+1},(_,d)=>`<button class="btn sm${d===OF_STAGE?" primary":""}" data-ofstage="${d}" aria-pressed="${d===OF_STAGE}">段階${d}</button>`).join("")}</span>
+      <span class="desc row" style="grid-column:1/-1"><button class="btn primary" data-ofgo="1">龍脈溢界に挑む</button></span></div>
+    <p class="note">再溢出段階d：敵のHP×1.15^d・攻撃×1.08^d（予兆の秒数と割合ダメージは変わらない）。クリア時に龍鱗片+d、段階3以上は龍脈核+1。クリアするたびに次の段階を選べる。</p>
+    <p class="note">もちものが満杯（${INV_MAX}個）のとき、龍脈産の装備は売らずにその場で分解し、龍鱗片として受け取る。</p>
+    <h2 style="margin-top:10px">専用スキル（龍脈溢界の中だけ・右上の指令パネル）</h2><div class="list">${OF_SK.map(k=>{const d=SKILLS[k];return `<div class="note"><b style="color:${CHARS[d.cid].col}">${CHARS[d.cid].name}／${d.nm}</b>（${d.cd}秒）：${d.desc}</div>`;}).join("")}</div>
+    <p class="note" style="margin-top:6px">龍鱗片：${fragTxt()} ・ 龍脈核 ${stock("dragon_vein_core")}個。装備のスロットは「そうび」で育てる。</p>`;}
+function renderOfTog(){const el=$("oftog");const on=MODE==="dive"&&OFM();el.hidden=!on;if(!on){el.innerHTML="";return;}
+  el.innerHTML=`<div class="note">専用スキルの自動／手動（手動のスキルは右上の指令パネルをタップ）</div><div class="row">${OF_SK.map(k=>{const d=SKILLS[k],a=ofAutoOn(k);
+    return `<button class="btn sm" data-ofauto="${k}" aria-pressed="${a}" style="color:${CHARS[d.cid].col}">${d.nm}：${a?"自動":"手動"}</button>`;}).join("")}</div>`;}
+// slot section of the gear detail
+function ofSockHtml(it,ow){
+  const socks=it.sockets||[],y=ofYield(it),canDis=S.overflowUnlocked&&yieldN(y)>0,MAX=OFC().socket.max;
+  if(!socks.length&&!canDis)return"";
+  const town=MODE==="town",cid=ow||VIEW,sum=ofxSum(cid),fr=S.dragonFragments;
+  let h=`<div class="zinfo"><div class="zrow"><b style="color:var(--ink)">龍鱗スロット ${socks.length}/3</b><span>龍鱗片 ${fragTxt()} ・ 龍脈核 ${stock("dragon_vein_core")}</span></div>`;
+  if(!town)h+=`<div class="note">付与・抽選・分解は街にいる間だけできる。</div>`;
+  const dis=town?"":" disabled";
+  socks.forEach((s,i)=>{const d=OFX[s.effectId];
+    h+=`<div class="ofsock" data-si="${i}" style="border-top:1px dashed var(--line);padding-top:6px"><div class="note"><b style="color:${s.kind==="ability"?"var(--r-e)":"var(--cyan)"}">${s.kind==="ability"?"能力用":"ステータス用"}</b> `;
+    if(d){const raw=sum.raw[s.effectId];h+=`<b style="color:var(--ink)">${d.nm} ${fmtOfx(s.effectId,sockVal(s))}</b>（投入 ${s.invested}/${MAX} ・ 龍鱗片「${FRAG_T[d.fr]}」）<br><small>${CHARS[cid].name}の装備合計 ${fmtOfx(s.effectId,raw)} ／ 上限 ${fmtOfx(s.effectId,d.cap)}${raw>d.cap?` → 実効 ${fmtOfx(s.effectId,d.cap)}`:""}</small>`;}
+    else h+=s.kind==="ability"?"空き（龍脈核1個で能力を抽選。成長量・成功率は抽選しない）":"空き（効果を選んで龍鱗片を付ける）";
+    h+=`</div><div class="row" style="margin-top:4px">`;
+    const k=s.effectId||(s.kind==="stat"?"atkP":null);
+    if(k&&s.invested<MAX){const room=MAX-s.invested,have=fr[OFX[k].fr]||0;
+      if(!d)h+=`<select data-ofsel="1">${OF_STAT.map(x=>`<option value="${x}">${OFX[x].nm}（${FRAG_T[OFX[x].fr]}）</option>`).join("")}</select>`;
+      h+=`<input type="number" min="1" max="${room}" value="${Math.max(1,Math.min(10,room,have||1))}" style="width:4.5em" aria-label="投入数"><button class="btn sm" data-ofinv="1"${dis}>龍鱗片を付ける</button>`;}
+    if(s.kind==="ability")h+=`<button class="btn sm" data-ofroll="1"${dis}>${d?"能力を再抽選":"能力を抽選する"}（龍脈核1）</button>`;
+    if(d)h+=`<button class="btn sm" data-ofclr="1"${dis}>効果を外す（返還 ${s.invested>0?Math.ceil(s.invested/10):0}）</button>`;
+    h+=`</div></div>`;});
+  if(OF_CONFIRM&&OF_CONFIRM.id===it.id){const c=OF_CONFIRM;
+    if(c.act==="roll"){const s=socks[c.si],d=s&&OFX[s.effectId];if(d)h+=`<div class="talkbox"><p>再抽選すると「${d.nm} ${fmtOfx(s.effectId,sockVal(s))}」（投入${s.invested}）は消え、龍鱗片「${FRAG_T[d.fr]}」×${s.invested>0?Math.ceil(s.invested/10):0} が戻る。龍脈核を1個使い、今の能力は候補から外れる。</p></div>`;}
+    else h+=`<div class="talkbox"><p>「${esc(it.name)}」を分解して 龍鱗片 ${yieldTxt(y)} を受け取る。装備は消える。</p></div>`;
+    h+=`<div class="row"><button class="btn sm primary" data-ofyes="1"${dis}>確定する</button><button class="btn sm" data-ofno="1">やめる</button></div>`;}
+  if(canDis)h+=`<button class="btn sm danger" data-ofdis="1"${ow||!town?" disabled":""}>分解する（龍鱗片 ${yieldTxt(y)}）${ow?"：装備中は分解できない":""}</button>`;
+  return h+`</div>`;}
+function ofSockItem(id,si){if(MODE!=="town"||!S.overflowUnlocked)return null;const it=itemById(id);return it&&it.sockets&&it.sockets[si]?it:null;}
+function ofInvest(id,si,eff,n){const it=ofSockItem(id,si);if(!it)return;const s=it.sockets[si],MAX=OFC().socket.max;
+  if(!s.effectId&&(s.kind!=="stat"||!OFX[eff]||OFX[eff].kind!=="stat")){toast("効果を選んでください");return;}
+  const k=s.effectId||eff,fr=OFX[k].fr,room=MAX-s.invested,have=S.dragonFragments[fr]||0;n=Math.floor(+n);
+  if(!(n>=1)){toast("投入数を入れてください");return;}if(n>room){toast(`このスロットはあと${room}個まで`);return;}if(n>have){toast(`龍鱗片「${FRAG_T[fr]}」が足りない（${have}個）`);return;}
+  S.dragonFragments[fr]=have-n;s.effectId=k;s.invested+=n;bumpStats();markDirty();save(true);toast(`${OFX[k].nm} ${fmtOfx(k,sockVal(s))}（投入${s.invested}）`);}
+// roll: the core and the result are committed together and saved at once (closing the screen cannot re-roll)
+function ofRoll(id,si){const it=ofSockItem(id,si);if(!it)return;const s=it.sockets[si];if(s.kind!=="ability")return;
+  if(stock("dragon_vein_core")<1){toast("龍脈核が足りない");return;}
+  const old=s.effectId,ref=old&&s.invested>0?Math.ceil(s.invested/10):0,fr=old?OFX[old].fr:null;
+  takeMat("dragon_vein_core",1);if(ref)S.dragonFragments[fr]+=ref;s.effectId=pick(OF_ABIL.filter(k=>k!==old));s.invested=0;
+  bumpStats();markDirty();save(true);sfx("lvup");toast(`能力「${OFX[s.effectId].nm}」が付いた${ref?`（龍鱗片「${FRAG_T[fr]}」×${ref}が戻った）`:""}`);}
+function ofClear(id,si){const it=ofSockItem(id,si);if(!it)return;const s=it.sockets[si];if(!s.effectId)return;const fr=OFX[s.effectId].fr,ref=s.invested>0?Math.ceil(s.invested/10):0;
+  S.dragonFragments[fr]+=ref;s.effectId="";s.invested=0;bumpStats();markDirty();save(true);toast(`効果を外した（龍鱗片「${FRAG_T[fr]}」×${ref}が戻った）`);}
+function ofDismantle(id){const it=itemById(id);if(!it||MODE!=="town"||!S.overflowUnlocked||ownerOf(it.id))return;const y=ofYield(it);if(yieldN(y)<=0)return;
+  S.inv=S.inv.filter(x=>x!==it);addFrags(y);if(selItem===id)selItem=null;bumpStats();markDirty();save(true);toast(`${it.name}を分解：龍鱗片 ${yieldTxt(y)}`);} // removal + fragments saved together
 
 /* ================= dive drawing ================= */
 function genDeco(seed){const r=srand(seed),a=[],n=Math.round(11*WW*WH/(W*H));for(let i=0;i<n;i++){a.push({x:20+r()*(WW-40),y:80+r()*(WH-96),k:Math.floor(r()*3),s:r()});}return a.filter(d=>Math.hypot(d.x-WW/2,d.y-WH/2-40)>70&&d.x>70);}
@@ -1997,7 +2440,7 @@ function drawEnemy(e){
   if((e.wind>0)&&e.ca!==undefined){ctx.strokeStyle="rgba(255,60,90,.45)";ctx.lineWidth=e.r;ctx.beginPath();ctx.moveTo(x,y);ctx.lineTo(x+Math.cos(e.ca)*170,y+Math.sin(e.ca)*170);ctx.stroke();ctx.lineWidth=1;}
   if(e.fuse>0){ctx.strokeStyle="rgba(255,140,60,.7)";ctx.beginPath();ctx.ellipse(x,y,e.p.radius||48,(e.p.radius||48)*0.7,0,0,7);ctx.stroke();}
   ctx.save();if(!solid)ctx.globalAlpha=0.22;
-  const image=enemySprite(e.def.id)||enemySprite(e.def.spriteId);
+  const image=enemySprite(e.def.artId||e.def.id)||enemySprite(e.def.spriteId); // artId: 龍脈溢界 copies reuse the original art
   let top;
   if(image){
     // Source foot anchor (32,56); keep the entity's world-space feet at (x,y).
@@ -2037,6 +2480,7 @@ function drawUnitBody(u){
 function drawUnit(u){
   drawUnitBody(u);
   if(MODE==="dive"&&!u.down&&u.shield>1){ctx.strokeStyle="rgba(63,224,255,.45)";ctx.lineWidth=1.5;ctx.beginPath();ctx.ellipse(u.x,u.y-28,17,33,0,0,7);ctx.stroke();ctx.lineWidth=1;}
+  if(OFM())drawOfMarks(u);
   if(u.streak){ctx.font="9px DotGothic16, monospace";ctx.fillStyle="#ff4fa8";ctx.textAlign="center";ctx.fillText("PINK×"+u.streak,u.x,u.y-70);ctx.textAlign="left";}
   if(u!==P||!P.db)return;const A=P.anim;if(A&&A.k==="die")return;
   const cx=Math.cos(P.ang),sy=Math.sin(P.ang);
@@ -2048,7 +2492,7 @@ function drawUnit(u){
   for(const k in P.db){if(k==="blind")continue;const o=OFF[i%OFF.length];drawIcon(k,P.x+o[0],P.y+o[1]+Math.sin(G.t*4+i)*1.2,16);i++;}
 }
 function drawDive(){
-  const R=BGS[zoneOf(FLOOR).backgroundId]||Object.values(BGS)[0],g0=distortion(),fi=floorIn(FLOOR);
+  const R=BGS[zoneOf(FLOOR).backgroundId]||Object.values(BGS)[0],g0=OFM()?0.1:distortion(),fi=floorIn(FLOOR),gray=OFM()&&G.ofSlow&&G.ofSlow.t>0;
   updateCam();ctx.fillStyle="#07060d";ctx.fillRect(0,0,W,H);ctx.save();applyCam();
   const vw=W/CAM.z,vh=H/CAM.z,vx0=CAM.x-vw/2,vy0=CAM.y-vh/2; // visible part of the world
   const g=ctx.createLinearGradient(0,0,0,70);g.addColorStop(0,R.sky[0]);g.addColorStop(1,R.sky[1]);ctx.fillStyle=g;ctx.fillRect(0,0,WW,70);
@@ -2064,6 +2508,7 @@ function drawDive(){
   ctx.strokeStyle=R.acc;ctx.globalAlpha=.35;ctx.lineWidth=2;ctx.strokeRect(2,63,WW-4,WH-65);ctx.globalAlpha=1;ctx.lineWidth=1;
   for(const b of GLITCH){if(((G.t*b.f+b.p)%1)<b.on*(0.4+g0)){ctx.fillStyle=`hsla(${hueOf(R.acc)+b.dh},80%,60%,${0.08+g0*0.2})`;ctx.fillRect(vx0+b.x/W*vw+(Math.random()-.5)*6*g0,vy0+b.y/H*vh,b.w,b.h);}}
   drawHazards();
+  if(OFM()&&!gray)drawTele();
   for(const l of G.loot||[]){const by=Math.sin(G.t*3+l.ph)*3,yy=l.y-12+by;shadow(l.x,l.y,7);ctx.save();ctx.shadowColor=R.acc2;ctx.shadowBlur=12;ctx.fillStyle=R.acc2;
     ctx.beginPath();ctx.moveTo(l.x,yy-9);ctx.lineTo(l.x+6,yy);ctx.lineTo(l.x,yy+9);ctx.lineTo(l.x-6,yy);ctx.closePath();ctx.fill();ctx.restore();
     ctx.fillStyle="#fff";ctx.globalAlpha=.8;ctx.fillRect(l.x-1,yy-5,2,4);ctx.globalAlpha=1;}
@@ -2089,6 +2534,10 @@ function drawDive(){
   for(const k of G.strikes||[]){if(k.t>0.3)continue;const a=1-k.t/0.3;ctx.strokeStyle=`rgba(191,246,255,${a})`;ctx.lineWidth=3;ctx.beginPath();ctx.moveTo(k.x,k.y-26-260*(1-a));ctx.lineTo(k.x,k.y-26-260*(1-a)+40);ctx.stroke();ctx.strokeStyle=`rgba(63,224,255,${a*0.6})`;ctx.beginPath();ctx.ellipse(k.x,k.y,k.r*a,k.r*a*0.5,0,0,7);ctx.stroke();}
   ctx.lineWidth=1;
   for(const l of LINES){ctx.strokeStyle=l.c;ctx.globalAlpha=Math.min(1,l.t*4);ctx.lineWidth=l.w||2;ctx.beginPath();ctx.moveTo(l.x1,l.y1);ctx.lineTo(l.x2,l.y2);ctx.stroke();}ctx.globalAlpha=1;ctx.lineWidth=1;
+  if(gray){ // 灰時演算: background, enemies and the other sisters go grey; the caster and the telegraphs keep their colours
+    ctx.save();ctx.globalCompositeOperation="saturation";ctx.fillStyle="#808080";ctx.fillRect(vx0,vy0,vw,vh);ctx.restore();ctx.fillStyle="rgba(20,20,28,.18)";ctx.fillRect(vx0,vy0,vw,vh);
+    drawTele();const lu=[P,...ALLIES].find(u=>u&&u.cid===G.ofSlow.by.cid);if(lu)drawUnit(lu);}
+  if(OFM()&&G.ofAim){const m=[P,...ALLIES].find(u=>u&&u.cid===G.ofAim.cid);if(m){ctx.strokeStyle="rgba(63,224,255,.7)";ctx.setLineDash([5,5]);ctx.lineWidth=1.5;ctx.beginPath();ctx.arc(m.x,m.y,280,0,7);ctx.stroke();ctx.setLineDash([]);ctx.lineWidth=1;}}
   if(R.rain){ctx.strokeStyle="rgba(170,230,200,.16)";ctx.beginPath();for(const r of RAIN){const y=(r.y+G.t*r.s)%H,x=(r.x+y*0.18)%W,X=vx0+x/W*vw,Y=vy0+y/H*vh;ctx.moveTo(X,Y);ctx.lineTo(X+r.l*0.18,Y+r.l);}ctx.stroke();}
   if(R.fog){ctx.fillStyle=`rgba(200,210,160,${0.06+Math.sin(G.t*0.7)*0.03})`;ctx.fillRect(vx0,vy0,vw,vh);}
   if(hasDb("blind")){const gg=ctx.createRadialGradient(P.x,P.y-28,26,P.x,P.y-28,82);gg.addColorStop(0,"rgba(6,5,12,0)");gg.addColorStop(1,"rgba(6,5,12,.96)");ctx.fillStyle=gg;ctx.fillRect(vx0,vy0,vw,vh);}
@@ -2098,7 +2547,7 @@ function drawDive(){
   if(Math.random()<g0*0.3){for(let i=0;i<Math.floor(g0*10);i++){ctx.fillStyle=pick(["rgba(255,79,168,.35)","rgba(63,224,255,.35)","rgba(255,255,255,.25)"]);ctx.fillRect(Math.random()*W,Math.random()*H,4+Math.random()*30,2+Math.random()*4);}}
   ctx.fillStyle="rgba(0,0,0,.08)";for(let y=0;y<H;y+=3)ctx.fillRect(0,y,W,1);
   // danger / boss variants of the zone backdrop
-  if(fi>=7&&!G.boss){ctx.fillStyle=`rgba(255,40,80,${0.04+(fi-7)*0.015})`;ctx.fillRect(0,0,W,H);}
+  if(fi>=7&&!G.boss&&!OFM()){ctx.fillStyle=`rgba(255,40,80,${0.04+(fi-7)*0.015})`;ctx.fillRect(0,0,W,H);}
   if(G.boss){const vg=ctx.createRadialGradient(W/2,H/2,H*0.3,W/2,H/2,H*0.85);vg.addColorStop(0,"rgba(120,0,30,0)");vg.addColorStop(1,`rgba(160,0,40,${0.35+Math.sin(G.t*3)*0.08})`);ctx.fillStyle=vg;ctx.fillRect(0,0,W,H);}
   if(G.syncing)drawSyncFx();
   if(G.tstop>0){ctx.save();ctx.globalCompositeOperation="saturation";ctx.fillStyle=`rgba(128,128,128,${Math.min(1,G.tstop)})`;ctx.fillRect(0,0,W,H);ctx.restore();ctx.fillStyle="rgba(150,180,255,.08)";ctx.fillRect(0,0,W,H);
@@ -2106,14 +2555,15 @@ function drawDive(){
   if(G.flash){ctx.fillStyle=`rgba(${G.flash.c},${G.flash.t*0.7})`;ctx.fillRect(0,0,W,H);}
   drawSkillBar();
   {const b=EN.find(e=>e.boss);if(b){ctx.fillStyle="rgba(14,12,21,.75)";ctx.fillRect(W/2-150,26,300,18);ctx.fillStyle="#2e2942";ctx.fillRect(W/2-140,38,280,4);ctx.fillStyle=b.phase>1?"#ff2050":"#ff3b6b";ctx.fillRect(W/2-140,38,280*Math.max(0,b.hp/b.mhp),4);ctx.fillStyle="#f6c445";for(const pt of [0.5,0.2])ctx.fillRect(W/2-140+280*pt-0.5,36,1,8);
-    ctx.font="10px DotGothic16, monospace";ctx.textAlign="center";ctx.fillStyle="#ece8f4";ctx.fillText(b.def.name,W/2,35);ctx.textAlign="left";}}
+    ctx.font="10px DotGothic16, monospace";ctx.textAlign="center";ctx.fillStyle="#ece8f4";ctx.fillText(b.def.name,W/2,35);
+    if(b.def.sub){ctx.font="8px DotGothic16, monospace";ctx.fillStyle="#9fd3ff";ctx.fillText(b.def.sub,W/2,52);}ctx.textAlign="left";}}
   if(G.state==="advance"){const k=1-G.advT/1.0;if(k>0.45){ctx.fillStyle="#07060d";ctx.fillRect(0,0,W*Math.min(1,(k-0.45)/0.5),H);}
     ctx.font="13px DotGothic16, monospace";ctx.textAlign="right";ctx.fillStyle="#3fe0ff";ctx.fillText("▶ 次の区画へ",W-14,H/2);ctx.textAlign="left";}
   if(G.wipeIn>0){ctx.fillStyle="#07060d";const k=G.wipeIn/0.45;ctx.fillRect(W*(1-k),0,W*k,H);}
   if(G.banner>0){const a=Math.min(1,G.banner,3.2-G.banner+0.2);ctx.save();ctx.globalAlpha=a;ctx.fillStyle="rgba(10,0,6,.6)";ctx.fillRect(0,H/2-46,W,92);
     ctx.fillStyle="#ff3b6b";for(let i=-1;i<W/20+1;i++){const x=i*20+(G.t*60)%20;ctx.beginPath();ctx.moveTo(x,H/2-46);ctx.lineTo(x+10,H/2-46);ctx.lineTo(x,H/2-38);ctx.lineTo(x-10,H/2-38);ctx.fill();ctx.beginPath();ctx.moveTo(x,H/2+38);ctx.lineTo(x+10,H/2+38);ctx.lineTo(x,H/2+46);ctx.lineTo(x-10,H/2+46);ctx.fill();}
     ctx.textAlign="center";ctx.fillStyle="#ff3b6b";ctx.font="14px DotGothic16, monospace";ctx.fillText("WARNING ― ボス出現",W/2,H/2-14);ctx.fillStyle="#fff";ctx.font="26px DotGothic16, monospace";ctx.fillText(ENEMIES[G.bossId||zoneOf(FLOOR).bossId].name,W/2,H/2+18);
-    ctx.font="11px DotGothic16, monospace";ctx.fillStyle="#f6c445";ctx.fillText(G.bossId&&ENEMIES[G.bossId].variant?"変異個体 ― 3人で迎え撃つ":"3人で迎え撃つ",W/2,H/2+33);ctx.textAlign="left";ctx.restore();}
+    ctx.font="11px DotGothic16, monospace";ctx.fillStyle="#f6c445";ctx.fillText(G.bossId&&ENEMIES[G.bossId].sub?ENEMIES[G.bossId].sub:G.bossId&&ENEMIES[G.bossId].variant?"変異個体 ― 3人で迎え撃つ":"3人で迎え撃つ",W/2,H/2+33);ctx.textAlign="left";ctx.restore();}
   // HUD
   {let hx=10;ctx.font="700 9px sans-serif";for(const k in P.db){ctx.fillStyle="rgba(255,255,255,.85)";ctx.beginPath();ctx.roundRect?ctx.roundRect(hx-1,22,27,16,4):ctx.rect(hx-1,22,27,16);ctx.fill();drawIcon(k,hx+6,30,12);ctx.fillStyle="#1a1520";ctx.fillText(Math.ceil(P.db[k])+"",hx+13,34);hx+=30;}}
   const st=statsOf(P.cid);ctx.fillStyle="#2e2942";ctx.fillRect(10,10,120,8);ctx.fillStyle=C.ok;ctx.fillRect(10,10,120*P.hp/st.hp,8);
@@ -2121,18 +2571,19 @@ function drawDive(){
   let ay=44;for(const a of ALLIES){const sa=statsOf(a.cid);ctx.fillStyle="#2e2942";ctx.fillRect(10,ay,70,5);ctx.fillStyle=a.down?C.danger:CHARS[a.cid].col;ctx.fillRect(10,ay,70*Math.max(0,a.hp)/sa.hp,5);
     ctx.fillStyle=C.muted;ctx.font="9px sans-serif";ctx.fillText(CHARS[a.cid].name+(a.down?"（ダウン）":""),84,ay+5);ay+=10;}
   drawMinimap();
+  if(OFM())drawOfHud();
   for(const pass of [0,1]){ctx.save();if(!pass)applyCam();ctx.textAlign="center";for(const f of FX){if(!!f.scr!==!!pass)continue;ctx.globalAlpha=Math.min(1,f.t*2);ctx.fillStyle=C[f.c]||C.ink;ctx.font=f.big?"26px DotGothic16, monospace":f.big===0?"13px DotGothic16, monospace":"700 12px sans-serif";ctx.fillText(f.txt,f.x,f.y-14);}ctx.globalAlpha=1;ctx.textAlign="left";ctx.restore();}
 }
 // skill icons (bottom-left). Tap to cast; they also fire automatically when 自動スキル is on.
 const SKBAR={x:8,y:H-42,s:34,g:5};
-function drawSkillBar(){const list=skillsOf(P.cid),cd=P.skcd||{};
+function drawSkillBar(){const list=skillsOf(P.cid).filter(k=>!SKILLS[k].of),cd=P.skcd||{};
   list.forEach((k,i)=>{const d=SKILLS[k],x=SKBAR.x+i*(SKBAR.s+SKBAR.g),y=SKBAR.y,s=SKBAR.s,left=cd[k]||0,r=left/d.cd;
     ctx.fillStyle="rgba(10,8,18,.8)";ctx.fillRect(x,y,s,s);ctx.fillStyle=d.ult?"rgba(246,196,69,.25)":"rgba(63,224,255,.18)";ctx.fillRect(x,y,s,s);
     if(left>0){ctx.fillStyle="rgba(0,0,0,.6)";ctx.fillRect(x,y,s,s*r);}
     ctx.strokeStyle=left>0?"rgba(255,255,255,.25)":d.ult?"#f6c445":"#3fe0ff";ctx.lineWidth=left>0?1:1.5;ctx.strokeRect(x+.5,y+.5,s-1,s-1);ctx.lineWidth=1;
     ctx.font="11px DotGothic16, monospace";ctx.textAlign="center";ctx.fillStyle=left>0?"#8a83a0":"#ffffff";ctx.fillText(d.nm.replace(/[・ー]/g,"").slice(0,2),x+s/2,y+s/2+2);
     if(left>0){ctx.font="9px sans-serif";ctx.fillStyle="#cfc8e6";ctx.fillText(Math.ceil(left),x+s/2,y+s-3);}ctx.textAlign="left";});}
-function skillAtScreen(sx,sy){const list=skillsOf(P.cid);for(let i=0;i<list.length;i++){const x=SKBAR.x+i*(SKBAR.s+SKBAR.g);if(sx>=x-3&&sx<=x+SKBAR.s+3&&sy>=SKBAR.y-3&&sy<=SKBAR.y+SKBAR.s+3)return list[i];}return null;}
+function skillAtScreen(sx,sy){const list=skillsOf(P.cid).filter(k=>!SKILLS[k].of);for(let i=0;i<list.length;i++){const x=SKBAR.x+i*(SKBAR.s+SKBAR.g);if(sx>=x-3&&sx<=x+SKBAR.s+3&&sy>=SKBAR.y-3&&sy<=SKBAR.y+SKBAR.s+3)return list[i];}return null;}
 function drawMinimap(){
   if(WW<=W*1.05&&WH<=H*1.05)return;
   const mw=88,mh=Math.round(mw*(WH-62)/WW),x0=W-mw-8,y0=8,sx=x=>x0+x/WW*mw,sy=y=>y0+(y-62)/(WH-62)*mh;
@@ -2207,6 +2658,7 @@ const markDirty=()=>{dirty=true;bumpStats();};
 function syncModeUI(){
   $("townUI").hidden=MODE!=="town";$("diveUI").hidden=MODE!=="dive";const sc=document.querySelector(".sidecol");if(sc)sc.scrollTop=0;
   $("help").textContent=MODE==="town"?"建物をタップすると歩いて入ります。施設に入ると、店内の様子が街の上に表示されます。歪みゲートから特殊空間へ潜り、ノイズを倒して素材を集めよう。持ち帰った素材は倉庫に貯まり、怪しい店で売ったり、依頼の納品に使える。":
+    OFM()?"龍脈溢界：敵をタップで攻撃、床をタップで移動。赤橙の斜線の床は数秒後に大攻撃が来る予兆。色が変わっていない床が安置。右上の指令パネルで3人の専用スキルをいつでも使える（金の点＝自動で使う）。":
     "敵をタップで攻撃（指をすべらせると狙いを次々変更）。何もない所をタップで移動。マップは画面より広い（右上の地図に敵●と粒子◆）。左下のアイコンでスキル（自動でも使う）。各エリアの10層目にボス（3人で戦う）。やられると持ち帰り中の素材を半分なくす。";
 }
 function renderHud(){
@@ -2216,7 +2668,8 @@ function renderHud(){
   const ps=perSec();$("rateTop").textContent=livePaused()?"ライブ休止中（ボス戦）":ps>0?`+${ps<100?ps.toFixed(1).replace(/\.0$/,""):fmt(ps)}/秒`:"";
   if(MODE==="town"){$("loc").innerHTML=OPEN?`<b>${FACS.find(f=>f.id===OPEN).full}</b>`:"<b>新御霊市・下層 3番街</b>";$("locR").textContent=`最深 第${S.best}層`;}
   else{const Z=zoneOf(FLOOR),left=G.state==="fight"?` ・ のこり ${G.spawnLeft+G.queue.length+EN.length+(G.boss&&!G.bossSpawned?1:0)}`:"",hp=RUN?heatPts(RUN.heat):0;
-    if(RUN&&RUN.kind==="run"){$("loc").innerHTML=`<b>ノイズ・ラン</b> ${Z.name}`;$("locR").textContent=`区画${RUN.seg}${G.boss?"・ボス":""}${hp?` ・ 侵食${hp}`:""}${left}`;}
+    if(OFM()){$("loc").innerHTML=`<b>龍脈溢界</b> 再溢出段階${RUN.stage}`;$("locR").textContent=`第${RUN.wave}/${OFC().waves.length}波 ・ ${fmtTime(RUN.t)}${G.state==="fight"?` ・ のこり ${EN.length}`:""}`;}
+    else if(RUN&&RUN.kind==="run"){$("loc").innerHTML=`<b>ノイズ・ラン</b> ${Z.name}`;$("locR").textContent=`区画${RUN.seg}${G.boss?"・ボス":""}${hp?` ・ 侵食${hp}`:""}${left}`;}
     else if(RUN){$("loc").innerHTML=`<b>ボスラッシュ</b>`;$("locR").textContent=`${Math.min(RUN.list.length,RUN.idx+1)}/${RUN.list.length}体目 ・ ${fmtTime(RUN.t)}${hp?` ・ 侵食${hp}`:""}`;}
     else{$("loc").innerHTML=`<b>${Z.name}</b>`;$("locR").textContent=`第${FLOOR}層（${floorIn(FLOOR)}/10）${G.boss?"・ボス":""}${left}`;}
     renderZoneInfo();$("bRetreat").hidden=!RUN;
@@ -2274,7 +2727,7 @@ function renderFac(){
     if(JUKE)h+=`<button class="btn sm" data-juke="" style="margin-top:6px">お店の曲に戻す</button>`;
   }else if(OPEN==="gate"){
     const rl=rushList();
-    h+=`<div class="gtabs" role="tablist">${[["normal","通常探索"],["run","ノイズ・ラン"],["rush","ボスラッシュ"]].map(([k,nm])=>`<button role="tab" data-gtab="${k}" aria-selected="${GATE_TAB===k}">${nm}</button>`).join("")}</div>`;
+    h+=`<div class="gtabs" role="tablist">${[["normal","通常探索"],["run","ノイズ・ラン"],["rush","ボスラッシュ"],["overflow","龍脈溢界"]].map(([k,nm])=>`<button role="tab" data-gtab="${k}" aria-selected="${GATE_TAB===k}">${nm}</button>`).join("")}</div>`;
     if(GATE_TAB==="run"){
       const C=MODES.run;
       h+=`<p class="note">区画を進み続けるモード。そのエリアの敵がランダムに出て、奥ほど強く・報酬も多くなる。金色の<b>レア個体</b>、まれに<b>変異ボス</b>、${C.bossEvery||10}区画ごとにエリアボス。${C.forkEvery||5}区画ごとの分かれ道で次の道を選ぶか撤退できる。HPは区画をまたいで持ち越し。共鳴の欠片が手に入る。</p>`;
@@ -2285,6 +2738,7 @@ function renderFac(){
           <span class="desc">自己ベスト：${b?`${b.seg}区画${b.heat?`（侵食度${b.heat}）`:""}`:"まだない"}</span>
           <span class="desc row" style="grid-column:1/-1"><button class="btn sm primary" data-run="${zi}">ノイズ・ランに出る</button></span></div>`;});
       h+=`</div>`;
+    }else if(GATE_TAB==="overflow"){h+=ofGateHtml();
     }else if(GATE_TAB==="rush"){
       const o=S.rushBest;
       h+=`<p class="note">倒したことのあるエリアボスと連戦するタイムアタック。3人で戦い、HPはボスの間に少しだけ回復。倒した数に応じて共鳴の欠片。</p>`;
@@ -2308,7 +2762,7 @@ function renderFac(){
   }
   el.innerHTML=h;
 }
-function renderZoneInfo(){
+function renderZoneInfo(){if(OFM())return ofZoneInfo();
   const Z=zoneOf(FLOOR),lv=S.ch[S.char].lv,cnt={};for(const e of EN){const k=(e.elite?"★":"")+e.t;cnt[k]=(cnt[k]||0)+1;}
   const mats=[...new Set(Z.enemyPool.flatMap(p=>(ENEMIES[p.id]&&ENEMIES[p.id].dropTable||[]).map(d=>d.id)).filter(id=>id!=="gear"&&MATS[id]))];
   const boss=ENEMIES[Z.bossId],b=EN.find(e=>e.boss);
@@ -2340,6 +2794,8 @@ $("fac").addEventListener("click",e=>{
   if(d.heat){S.heat=S.heat||{};if(S.heat[d.heat])delete S.heat[d.heat];else S.heat[d.heat]=true;markDirty();save(true);}
   if(d.run!==undefined){startRun(+d.run);}
   if(d.rush){startRush();}
+  if(d.ofstage!==undefined){OF_STAGE=+d.ofstage;markDirty();}
+  if(d.ofgo){ofStartRun(Math.min(OF_STAGE,ofMaxStage()));}
   if(d.res){const r=MODES.resonance.find(x=>x.id===d.res),c=r&&resCost(r);if(r&&resLv(r.id)<r.max&&S.shards>=c){S.shards-=c;S.res[r.id]=resLv(r.id)+1;sfx("lvup");toast(`${r.name} Lv${S.res[r.id]}`);bumpStats();markDirty();save(true);}}
   if(d.char){if(d.char!==S.char)TALK=null;S.char=d.char;VIEW=d.char;P.cid=d.char;markDirty();save(true);} // the house shows the other 2 sisters, so the talk starts over
   if(d.sell){const k=d.sell,n=Math.min(+d.n,stock(d.sell)),v=sellMat(k,n);if(v>0)toast(`${MATS[k].nm}×${n}を ¥${fmt(v)} で売った`);markDirty();save(true);}
@@ -2357,7 +2813,7 @@ $("fac").addEventListener("click",e=>{
 function viewSwitch(id){const el=$(id);el.innerHTML=CIDS.map(c=>`<button data-view="${c}" aria-pressed="${c===VIEW}">${CHARS[c].name} Lv${S.ch[c].lv}${spFree(c)>0?` ・SP${spFree(c)}`:""}</button>`).join("");}
 document.addEventListener("click",e=>{const b=e.target.closest("[data-view]");if(b){VIEW=b.dataset.view;selItem=null;markDirty();}});
 function renderPanels(){
-  dirty=false;renderFac();viewSwitch("vsw1");viewSwitch("vsw2");
+  dirty=false;renderFac();viewSwitch("vsw1");viewSwitch("vsw2");renderOfTog();
   const c=S.ch[VIEW];
   if(TV.cid!==VIEW){TV.sel=null;}
   $("spFree").textContent=spFree(VIEW);$("spInfo").textContent=`獲得 ${spEarned(VIEW)}/${CFG.SP_CAP} ・ 使用 ${spSpent(VIEW)} ・ ノード ${TREES[VIEW].count}個`;
@@ -2370,7 +2826,8 @@ function renderPanels(){
   const order={l:0,e:1,r:2,c:3};
   [...S.inv].sort((a,b)=>order[a.rar]-order[b.rar]||b.lvl-a.lvl).forEach(it=>{
     const ow=ownerOf(it.id),b=document.createElement("button");b.className=`gi rc-${it.rar}${ow?" eq":""}${selItem===it.id?" sel":""}`;
-    b.innerHTML=`<div class="t">${it.sp?"★":""}${esc(it.name)}${it.plus?" +"+it.plus:""}</div><div class="s">${SLOTS[it.slot].nm} ・ Lv${it.lvl}${ow?" ・ "+CHARS[ow].name+"が装備中":""}</div>`;
+    const sk=it.sockets&&it.sockets.length?" "+it.sockets.map(x=>x.effectId?"◆":"◇").join(""):"";
+    b.innerHTML=`<div class="t">${it.sp?"★":""}${esc(it.name)}${it.plus?" +"+it.plus:""}${sk}</div><div class="s">${SLOTS[it.slot].nm} ・ Lv${it.lvl}${ow?" ・ "+CHARS[ow].name+"が装備中":""}</div>`;
     b.onclick=()=>{selItem=it.id;markDirty();};inv.appendChild(b);});
   if(!document.activeElement||!document.activeElement.closest||!document.activeElement.closest("#allyset"))
     $("allyset").innerHTML=CIDS.map(c=>{const cfg=allyCfg(c),me=c===S.char;return `<div class="ally-row${me?" me":""}"><b>${CHARS[c].name}</b>${me?'<span class="note">いま主人公（サポートのときに使う設定）</span>':""}
@@ -2378,8 +2835,9 @@ function renderPanels(){
       <div class="note">スキル：${skillsOf(c).map(k=>(SKILLS[k].ult?"★":"")+SKILLS[k].nm).join("・")}</div></div>`;}).join("");
   {const ks=Object.keys(MATS).filter(k=>stock(k)>0);$("matlist").innerHTML=ks.length?ks.map(k=>`<span>${MATS[k].nm} <b>×${stock(k)}</b></span>`).join(""):'<span>まだ何もない。特殊空間から持ち帰ると貯まる。</span>';}
   if(!S.inv.length)inv.innerHTML=`<p class="note">まだ何もない。特殊空間でノイズを倒すと装備が手に入る。</p>`;
-  const det=$("detail"),it=itemById(selItem);
-  if(!it){det.hidden=true;selItem=null;}else{
+  const det=$("detail"),it=itemById(selItem),ae=document.activeElement;
+  if(it&&ae&&/INPUT|SELECT/.test(ae.tagName)&&ae.closest("#detail")&&det.dataset.item===String(it.id)){} // typing an amount: keep the panel as is
+  else if(!it){det.hidden=true;selItem=null;}else{det.dataset.item=it.id;
     det.hidden=false;det.className="detail rc-"+it.rar;const ow=ownerOf(it.id),mine=ow===VIEW;
     const cur=itemById(c.eq[it.slot]);
     const lines=Object.keys(it.st).map(k=>{const v=ist(it,k),cvv=cur&&cur!==it?ist(cur,k):null,pct=k==="crit"||k==="gain";
@@ -2391,6 +2849,7 @@ function renderPanels(){
     $("equip").onclick=()=>{for(const k of CIDS)if(S.ch[k].eq[it.slot]===it.id)S.ch[k].eq[it.slot]=null;c.eq[it.slot]=it.id;markDirty();};
     $("enh").onclick=()=>{const cc=enhCost(it);if(S.n<cc||it.plus>=10)return;S.n-=cc;it.plus++;toast(`${it.name} +${it.plus} に強化`);markDirty();};
     $("sell").onclick=()=>{addMoney(sellValue(it));S.inv=S.inv.filter(x=>x!==it);selItem=null;markDirty();};
+    det.insertAdjacentHTML("beforeend",ofSockHtml(it,ow));
   }
   renderHud();
 }
@@ -2538,6 +2997,9 @@ function finishLoad(){LEGACY_NOTE="";
 const MISTYPES=["kill","reach","collect","boss","special","deliver"];
 function sanMis(m){if(!m||!MISTYPES.includes(m.type))return null;return{id:+m.id||0,type:m.type,prog:Math.max(0,+m.prog||0),need:Math.max(1,+m.need||1),free:!!m.free,cl:String(m.cl||"").slice(0,20),
   txt:String(m.txt||"").slice(0,60),sub:m.sub?String(m.sub).slice(0,80):undefined,rew:Math.max(0,+m.rew||0),bonus:!!m.bonus,floor:+m.floor||0,minF:+m.minF||0,et:SPECIAL[m.et]?m.et:undefined,mat:MATS[m.mat]?m.mat:undefined};}
+// sockets: max 3; unknown effect / kind mismatch / invested outside 0..30 → that socket's effect is cleared, the item itself is kept
+function sanSock(a){if(!Array.isArray(a))return[];return a.filter(x=>x&&(x.kind==="ability"||x.kind==="stat")).slice(0,3).map(x=>{const n=+x.invested,ok=OFX[x.effectId]&&OFX[x.effectId].kind===x.kind&&Number.isInteger(n)&&n>=0&&n<=MODES.overflow.socket.max;
+  return{kind:x.kind,effectId:ok?x.effectId:"",invested:ok?n:0};});}
 function sanitize(o){
   const s=fresh();if(!o||typeof o!=="object")return s;
   s.n=Math.max(0,+o.n||0);s.total=Math.max(0,+o.total||0);s.best=Math.max(1,Math.floor(+o.best||1));s.uid=Math.max(1,Math.floor(+o.uid||1));s.mid=Math.max(1,Math.floor(+o.mid||1));
@@ -2547,8 +3009,14 @@ function sanitize(o){
   s.heat={};for(const d of MODES.heat)if((o.heat||{})[d.id])s.heat[d.id]=true;
   s.runBest={};for(const [k,v] of Object.entries(o.runBest||{}))if(v&&+v.seg>0)s.runBest[k]={seg:Math.floor(+v.seg),heat:Math.floor(+v.heat||0)};
   s.rushBest=o.rushBest&&+o.rushBest.n>0&&+o.rushBest.t>0?{n:Math.floor(+o.rushBest.n),t:+o.rushBest.t,heat:Math.floor(+o.rushBest.heat||0)}:null;s.intro=!!o.intro;
+  // 龍脈溢界: permanent unlock flag (old saves: a recorded rush of 5+ bosses counts; floor progress alone never does)
+  s.overflowUnlocked=o.overflowUnlocked===true||!!(s.rushBest&&s.rushBest.n>=5);
+  {const b=o.ofBest||{},top=Math.floor(+b.top);s.ofBest={top:Number.isFinite(top)?Math.min(MODES.overflow.stageMax,Math.max(-1,top)):-1,clears:Math.max(0,Math.floor(+b.clears||0)),t:+b.t>0&&Number.isFinite(+b.t)?+b.t:0};}
+  for(const k in FRAG_T){const v=Math.floor(+(o.dragonFragments||{})[k]||0);s.dragonFragments[k]=Number.isFinite(v)?Math.max(0,v):0;}
+  for(const k of OF_SK)if((o.ofAuto||{})[k]===false)s.ofAuto[k]=false;
   for(const p of PRODUCERS)s.own[p.id]=Math.max(0,Math.floor(+(o.own||{})[p.id]||0));
-  if(Array.isArray(o.inv))s.inv=o.inv.filter(i=>i&&SLOTS[i.slot]&&RAR[i.rar]&&i.st).slice(0,INV_MAX).map(i=>({id:+i.id,slot:i.slot,rar:i.rar,name:String(i.name).slice(0,30),sp:GSP[i.sp]?i.sp:undefined,lvl:Math.max(1,+i.lvl||1),plus:Math.min(10,Math.max(0,+i.plus||0)),st:Object.fromEntries(Object.entries(i.st).filter(([k])=>STN[k]).map(([k,v])=>[k,+v||0]))}));
+  if(Array.isArray(o.inv))s.inv=o.inv.filter(i=>i&&SLOTS[i.slot]&&RAR[i.rar]&&i.st).slice(0,INV_MAX).map(i=>({id:+i.id,slot:i.slot,rar:i.rar,name:String(i.name).slice(0,30),sp:GSP[i.sp]?i.sp:undefined,lvl:Math.max(1,+i.lvl||1),plus:Math.min(10,Math.max(0,+i.plus||0)),st:Object.fromEntries(Object.entries(i.st).filter(([k])=>STN[k]).map(([k,v])=>[k,+v||0])),
+    source:i.source==="overflow"?"overflow":undefined,sockets:sanSock(i.sockets)}));
   if(o.ch){for(const c of CIDS)s.ch[c]=sanCh(o.ch[c],c);}
   else{ // old single-character save: carry level & gear over, refund skill points (the tree changed)
     const c=sanCh({lv:o.lv,xp:o.xp,eq:o.eq,sk:o.sk||{}},s.char);s.ch[s.char]=c;}
@@ -2591,7 +3059,11 @@ $("volSe").oninput=e=>{S.vol.se=+e.target.value;sndInit();sndVol();sfx("coin");}
 $("volBgm").onchange=$("volSe").onchange=()=>save(true);
 $("bAutoSk").onclick=()=>{S.autoSkill=!S.autoSkill;toast(S.autoSkill?"スキルを自動で使う":"スキルは左下のアイコンをタップして使う");renderToggles();save(true);};
 // one-button best gear
-function itemScore(it,cid){const b=CB[cid];return ist(it,"atk")*3*b.atk+ist(it,"hp")*0.6*b.hp+ist(it,"crit")*2.2*b.atk+ist(it,"gain")*0.35+(it.sp?6+it.lvl*0.4:0);}
+function itemScore(it,cid){const b=CB[cid];return ist(it,"atk")*3*b.atk+ist(it,"hp")*0.6*b.hp+ist(it,"crit")*2.2*b.atk+ist(it,"gain")*0.35+(it.sp?6+it.lvl*0.4:0)+sockScore(it,cid);}
+// 龍鱗スロット: count only unconditional effects (abilities are situational, so they are not over-rated)
+function sockScore(it,cid){if(!it.sockets||!it.sockets.length)return 0;const b=CB[cid],lv=S.ch[cid].lv,o={};for(const s of it.sockets)if(s.effectId&&OFX[s.effectId]&&OFX[s.effectId].kind==="stat")o[s.effectId]=Math.min(OFX[s.effectId].cap,(o[s.effectId]||0)+sockVal(s));
+  const ba=3+lv*0.6+it.lvl,bh=20+lv*4+it.lvl*2.5;
+  return (o.atkF||0)*3*b.atk+(o.hpF||0)*0.6*b.hp+(o.crit||0)*2.2*b.atk+(o.atkP||0)/100*ba*3*b.atk+(o.hpP||0)/100*bh*0.6*b.hp+(o.aspdP||0)*0.8+(o.rangeP||0)*0.3+(o.moveP||0)*0.3;}
 function bestEquip(cid,taken,free){const c=S.ch[cid];let changed=0;
   for(const sl in SLOTS){const cands=S.inv.filter(it=>it.slot===sl&&!taken.has(it.id)&&(free||!ownerOf(it.id)||ownerOf(it.id)===cid)).sort((a,b)=>itemScore(b,cid)-itemScore(a,cid));
     const best=cands[0];if(best&&c.eq[sl]!==best.id){c.eq[sl]=best.id;changed++;}if(c.eq[sl])taken.add(c.eq[sl]);}return changed;}
@@ -2602,6 +3074,15 @@ $("bBestAll").onclick=()=>{const before=CIDS.map(c=>JSON.stringify(S.ch[c].eq)).
   bumpStats();markDirty();save(true);toast(before===CIDS.map(c=>JSON.stringify(S.ch[c].eq)).join()?"3人とも、もう最強装備":`3人の装備を入れ替えた（${CHARS[S.char].name}を優先）`);};
 $("allyset").addEventListener("change",e=>{const sel=e.target.closest("select");if(!sel)return;S.ally=S.ally||{};const c=sel.dataset.cid;S.ally[c]={...allyCfg(c),[sel.dataset.k]:sel.value};save(true);});
 $("bRetreat").onclick=()=>{if(RUN)runRetreat();};
+$("oftog").addEventListener("click",e=>{const b=e.target.closest("[data-ofauto]");if(!b)return;const k=b.dataset.ofauto;S.ofAuto=S.ofAuto||{};if(ofAutoOn(k))S.ofAuto[k]=false;else delete S.ofAuto[k];markDirty();save(true);});
+$("detail").addEventListener("click",e=>{const b=e.target.closest("button");if(!b||b.disabled)return;const d=b.dataset,it=itemById(selItem);if(!it)return;
+  const row=b.closest(".ofsock"),si=row?+row.dataset.si:-1;
+  if(d.ofinv){const sel=row.querySelector("select"),num=row.querySelector("input");ofInvest(it.id,si,sel?sel.value:null,num?num.value:0);}
+  if(d.ofroll){if(it.sockets[si]&&it.sockets[si].effectId){OF_CONFIRM={act:"roll",id:it.id,si};markDirty();}else ofRoll(it.id,si);}
+  if(d.ofclr)ofClear(it.id,si);
+  if(d.ofdis){OF_CONFIRM={act:"dis",id:it.id};markDirty();}
+  if(d.ofyes){const c=OF_CONFIRM;OF_CONFIRM=null;if(c&&c.id===it.id){if(c.act==="roll")ofRoll(c.id,c.si);else ofDismantle(c.id);}markDirty();}
+  if(d.ofno){OF_CONFIRM=null;markDirty();}});
 $("bAuto").onclick=()=>{S.auto=!S.auto;toast(S.auto?"オート攻撃：近くの敵を自動で狙う":"オート攻撃をやめた");renderToggles();save(true);};
 $("bZoom").onclick=()=>{S.zoom=!S.zoom;renderToggles();save(true);};
 function renderToggles(){$("bAutoSk").setAttribute("aria-pressed",!!S.autoSkill);$("bAutoSk").textContent=S.autoSkill?"自動スキル ON":"自動スキル OFF";$("bAuto").setAttribute("aria-pressed",!!S.auto);$("bZoom").setAttribute("aria-pressed",!!S.zoom);

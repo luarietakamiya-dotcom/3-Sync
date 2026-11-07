@@ -29,6 +29,36 @@
     "shardsPerBoss": 2,
     "clearBonus": 3
   },
+  "overflow": {
+    "_doc": "龍脈溢界（5体ボスラッシュ制覇で開放）。waves=各波の[元ボスid,体数]（最後の波が星骸龍）。copy=記録コピーの本物比（本物＝元エリア10層目・ボス扱いHP）。boss=星骸龍（ryumyaku_overflowを第floor層ボス基準で×hp/×atk）。stage=再溢出段階dで敵HP×stageHp^d・攻撃×stageAtk^d。tele=予兆（t=秒、dmg=最大HP比）。teleCut=位相防壁の軽減。reward=報酬。socket=龍脈産装備のスロット（n=1/2/3個の確率、ability=能力用の確率、first=最初のスロットの投入数候補、max=1スロットの投入上限）。",
+    "unlock": ["king_yogurt", "junk_queen", "noise_dj", "exec_unit", "distortion_core"],
+    "waves": [["king_yogurt", 3], ["junk_queen", 3], ["noise_dj", 3], ["exec_unit", 3], ["distortion_core", 3], ["ryumyaku_overflow", 1]],
+    "rest": 5,
+    "restHeal": 0.25,
+    "copy": {"hp": 0.18, "atk": 0.55, "r": 0.75, "atkCd": 1.5, "reward": 0.1, "gear": 0.2},
+    "boss": {"id": "ryumyaku_overflow", "floor": 50, "hp": 1.3, "atk": 1.1},
+    "stageMax": 5,
+    "stageHp": 1.15,
+    "stageAtk": 1.08,
+    "tele": {
+      "circle": {"r": 64, "t": 3, "dmg": 0.45},
+      "grid": {"cols": 4, "rows": 3, "danger": 6, "t": 3.5, "dmg": 0.5},
+      "fan": {"r": 260, "deg": 90, "t": 3, "dmg": 0.55},
+      "donut": {"ri": 72, "ro": 220, "t": 3.5, "dmg": 0.55},
+      "line": {"w": 64, "t": 3, "dmg": 0.5},
+      "all": {"t": 5, "dmg": 1.1}
+    },
+    "teleCut": 0.6,
+    "copyFirst": 4,
+    "copyGap": 6,
+    "bossGap": 4,
+    "allGap": 8,
+    "allMin": 45,
+    "copyShapes": {"king_yogurt": ["circle"], "junk_queen": ["grid"], "noise_dj": ["donut"], "exec_unit": ["line", "fan"], "distortion_core": ["circle", "donut"]},
+    "bossLoops": [["circle", "line", "grid", "all"], ["donut", "fan", "grid", "all"], ["circle", "donut", "line", "grid", "all"]],
+    "reward": {"copyFrag": 1, "waveFrag": 1, "bossGear": 2, "bossCore": 2, "bossFrag": 5, "clearShards": 5, "clearMoney": 90000, "firstCore": 3, "coreFromStage": 3},
+    "socket": {"n": [0.6, 0.3, 0.1], "ability": 0.4, "first": [10, 20], "max": 30}
+  },
   "heat": [
     {"id": "hp", "name": "硬化", "desc": "敵のHP +60%", "pt": 2, "reward": 0.25},
     {"id": "atk", "name": "凶暴化", "desc": "敵の攻撃 +40%", "pt": 2, "reward": 0.25},
