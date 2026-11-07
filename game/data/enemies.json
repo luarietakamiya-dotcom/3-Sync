@@ -40,7 +40,7 @@
     {"id":"jammer","name":"ジャマー端末","family":"machine","tier":3,"hp":14,"atk":3,"moveSpeed":20,"attackRange":95,"attackCooldown":3,"expReward":6,"moneyReward":3,
      "dropTable":[{"id":"shard","chance":0.6},{"id":"admin_tag","chance":0.2},{"id":"gear","chance":0.04}],
      "aiType":"debuffer","statusResist":{"all":0.1},"spriteId":"terminal","r":12,"color":"#7be0a0","params":{"debuff":"miss","chance":0.5,"aura":true},"desc":"周囲に妨害電波を出し、焦りを付ける"},
-    {"id":"warp_slime","name":"ワープスライム","family":"slime","tier":3,"hp":12,"atk":5,"moveSpeed":30,"attackRange":10,"attackCooldown":0.8,"expReward":6,"moneyReward":2,
+    {"id":"hakutaku_index","name":"白澤インデックス","family":"beast","tier":3,"hp":24,"atk":4,"moveSpeed":20,"attackRange":10,"attackCooldown":0.8,"expReward":9,"moneyReward":4,"dropTable":[{"id":"shard","chance":0.7,"min":1,"max":1},{"id":"admin_tag","chance":0.25,"min":1,"max":1},{"id":"gear","chance":0.05,"min":1,"max":1}],"aiType":"support_buffer","statusResist":{"all":0.2,"stun":0.2},"spriteId":"hakutaku_index","r":20,"color":"#E8E3C7","fly":false,"params":{"radius":125,"cd":6,"dur":3.5,"atk":0.3,"spd":0.25},"desc":"万象の索引を開き、近くの敵の攻撃力と移動速度を一時的に高める。"},{"id":"warp_slime","name":"ワープスライム","family":"slime","tier":3,"hp":12,"atk":5,"moveSpeed":30,"attackRange":10,"attackCooldown":0.8,"expReward":6,"moneyReward":2,
      "dropTable":[{"id":"shard","chance":0.6},{"id":"warp_fragment","chance":0.12},{"id":"gear","chance":0.04}],
      "aiType":"melee_rush","statusResist":{"all":0.1},"spriteId":"slime","r":12,"color":"#c58bf0","params":{"teleport":3.4},"desc":"ときどき瞬間移動してくる"},
     {"id":"beast_fragment","name":"歪獣フラグメント","family":"beast","tier":4,"hp":22,"atk":7,"moveSpeed":55,"attackRange":10,"attackCooldown":0.8,"expReward":8,"moneyReward":3,
