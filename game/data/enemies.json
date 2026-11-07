@@ -33,7 +33,7 @@
      "aiType":"melee_rush","statusResist":{"all":0},"spriteId":"runner","r":10,"color":"#f6c445","desc":"とにかく速い"},
     {"id":"watch_drone","name":"監視ドローン","family":"machine","tier":3,"hp":10,"atk":5,"moveSpeed":40,"attackRange":175,"attackCooldown":2.4,"expReward":6,"moneyReward":3,
      "dropTable":[{"id":"shard","chance":0.6},{"id":"admin_tag","chance":0.15},{"id":"gear","chance":0.04}],
-     "aiType":"ranged_keep","statusResist":{"all":0.1},"spriteId":"eye","r":10,"color":"#9fd3ff","fly":true,"params":{"shotSpeed":260,"lead":true},"desc":"遠くから狙い撃つ"},
+     "aiType":"ranged_keep","statusResist":{"all":0.1},"spriteId":"eye","r":10,"color":"#9fd3ff","fly":true,"params":{"shotSpeed":260,"lead":true},"desc":"遠くから狙い撃つ","anim":{"fps":6,"move":[0,1,2,1],"windup":[3],"attack":[4]}},
     {"id":"suppress_unit","name":"制圧ユニット","family":"machine","tier":3,"hp":30,"atk":8,"moveSpeed":22,"attackRange":10,"attackCooldown":0.8,"expReward":9,"moneyReward":4,
      "dropTable":[{"id":"crystal","chance":0.1},{"id":"admin_tag","chance":0.3},{"id":"gear","chance":0.06}],
      "aiType":"charger","statusResist":{"all":0.25},"spriteId":"tank","r":16,"color":"#5d7a99","params":{"chargeSpeed":3.2,"windup":0.8,"chargeTime":0.8,"cd":3.4,"armor":0.3},"desc":"硬い。正面からの突進に注意"},
