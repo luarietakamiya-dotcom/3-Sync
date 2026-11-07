@@ -1206,7 +1206,7 @@ function aimAt(e,tu,speed,lead=false){
 function explode(e){
   const R=e.p.radius||48;e.exploded=true;sfx("explode");e.hp=0;WAVES.push({x:e.x,y:e.y,t:0,c:"255,140,60"});
   for(const u of alive())if(Math.hypot(u.x-e.x,(u.y-e.y)/0.7)<R)hurtUnit(u,e.dmg,e);
-  for(const o of EN)if(o!==e&&o.hp>0&&Math.hypot(o.x-e.x,o.y-e.y)<R){o.hp-=o.mhp*0.25;}
+  for(const o of EN)if(o!==e&&o.hp>0&&Math.hypot(o.x-e.x,o.y-e.y)<R){o.hp-=o.mhp*0.25;flinchHit(o,o.mhp*0.25);}
   FX.push({x:e.x,y:e.y-20,txt:"ドカン",c:"gold",t:0.7});
 }
 // per-frame enemy behaviour, chosen by aiType from the data
@@ -1311,7 +1311,7 @@ function updateHazards(dt){
     else if(h.type==="falling"){h.t-=dt;if(h.t<=0){h.t=h.cd||4.5;h.marks.push({x:clampX(P.x+rnd(-30,30)),y:clampY(P.y+rnd(-14,14)),t:1.1});}
       for(const m of h.marks){m.t-=dt;if(m.t<=0){WAVES.push({x:m.x,y:m.y,t:0,c:"246,196,69",r:h.radius||30});
         for(const u of us)if(Math.hypot(u.x-m.x,(u.y-m.y)/0.5)<(h.radius||30))hurtUnit(u,statsOf(u.cid,u).hp*(h.dmg||0.12),m);
-        for(const e of EN)if(Math.hypot(e.x-m.x,(e.y-m.y)/0.5)<(h.radius||30)){e.hp-=e.mhp*0.3;e.stun=Math.max(e.stun,0.6);}}}
+        for(const e of EN)if(Math.hypot(e.x-m.x,(e.y-m.y)/0.5)<(h.radius||30)){e.hp-=e.mhp*0.3;flinchHit(e,e.mhp*0.3);e.stun=Math.max(e.stun,0.6);}}}
       h.marks=h.marks.filter(m=>m.t>0);}
     else if(h.type==="rift"){h.t-=dt;if(h.t<=0){h.t=h.cd||3.2;WAVES.push({x:h.x,y:h.y,t:0,c:"197,139,240",r:80});
       for(const u of us)if(Math.hypot(u.x-h.x,(u.y-h.y)/0.5)<80)hurtUnit(u,statsOf(u.cid,u).hp*(h.dmg||0.12),h);}}
@@ -1380,7 +1380,7 @@ function onDodge(u,st,from,perfect){
   if(st.gsp.evadeBolt){const t=EN.filter(e=>hollowSolid(e)).sort((a,b)=>Math.hypot(a.x-u.x,a.y-u.y)-Math.hypot(b.x-u.x,b.y-u.y)).slice(0,3);for(const e of t)fire(u,e,{silent:true,mul:0.6});}
 }
 function shockwave(u,st){WAVES.push({x:u.x,y:u.y,t:0});
-  for(const e of EN)if(e.hp>0&&hollowSolid(e)&&Math.hypot(e.x-u.x,e.y-u.y)<70){const d=st.atk*1.5;e.hp-=d;e.lastHit=u;const a=Math.atan2(e.y-u.y,e.x-u.x);e.kx=Math.cos(a)*260;e.ky=Math.sin(a)*260;FX.push({x:e.x,y:e.y-e.r-4,txt:fmt(d),c:"cyan",t:0.6});}}
+  for(const e of EN)if(e.hp>0&&hollowSolid(e)&&Math.hypot(e.x-u.x,e.y-u.y)<70){const d=st.atk*1.5;e.hp-=d;e.lastHit=u;flinchHit(e,d);const a=Math.atan2(e.y-u.y,e.x-u.x);e.kx=Math.cos(a)*260;e.ky=Math.sin(a)*260;FX.push({x:e.x,y:e.y-e.r-4,txt:fmt(d),c:"cyan",t:0.6});}}
 function die(){
   G.state="dying";G.dieT=1.4;sfx("down");P.anim={k:"die",t:0};P.target=null;P.dest=null;P.inv=0;
   let lost=0;for(const k in S.bag){const b=S.bag[k],h=Math.ceil(b.n/2);lost+=h;b.v*= (b.n-h)/Math.max(1,b.n);b.n-=h;if(b.n<=0)delete S.bag[k];}
@@ -1444,6 +1444,8 @@ function fire(u,tgt,opt={}){
   if(!opt.silent&&st.followUp&&Math.random()*100<st.followUp)u.fu={t:0.09,tgt};
 }
 const hollowSolid=e=>!(e.p&&e.p.phase)||((G.t+e.off)%3.2)<2.0;
+// boss flinch: a single hit of ≥6% max HP shows the anim "flinch" frame for 0.28s (cooldown 0.9s, never while roaring). Visual only; timers tick in updateDive
+function flinchHit(e,d){if(e.roar>0||e.flinchCd>0||!(e.def&&e.def.anim&&e.def.anim.flinch)||!(d>=e.mhp*0.06))return;e.flinch=0.28;e.flinchCd=0.9;}
 function hitEnemy(e,s){
   const st=statsOf(s.own,s.u);let d=s.dmg;
   const ailing=e.ail&&Object.keys(e.ail).length>0;
@@ -1453,15 +1455,15 @@ function hitEnemy(e,s){
   if(e.p&&e.p.armor)d*=1-e.p.armor;
   if(e.roar>0)d*=0.15; // boss roaring between phases
   if(e.vuln>0)d*=1+(e.vulnV||0.25);
-  e.hp-=d;e.lastHit=s.u;
+  e.hp-=d;e.lastHit=s.u;flinchHit(e,d);
   const kb=e.boss?40:s.own==="mimi"?240:150,k=Math.hypot(s.vx,s.vy);e.kx=s.vx/k*kb;e.ky=s.vy/k*kb;
   FX.push({x:e.x,y:e.y-e.r-4,txt:fmt(Math.max(1,d))+(s.crit?"!":""),c:s.crit?"gold":"ink",t:0.7});sfx(s.crit?"crit":"hit",s.fromP?1:0.5);
   if(s.own==="ht")e.slow=1.5;
   if(st.stCh>0&&!s.small){const ak=pick(st.pool);if(Math.random()*100<st.stCh*(1-resistOf(e,ak)))applyAil(e,ak,st,false);}
-  if(st.aoe>0&&!s.small)for(const o of EN){if(o!==e&&o.hp>0&&hollowSolid(o)&&Math.hypot(o.x-e.x,o.y-e.y)<st.aoe){o.hp-=d*0.4;o.lastHit=s.u;FX.push({x:o.x,y:o.y-o.r-4,txt:fmt(Math.max(1,d*0.4)),c:"cyan",t:0.6});}}
+  if(st.aoe>0&&!s.small)for(const o of EN){if(o!==e&&o.hp>0&&hollowSolid(o)&&Math.hypot(o.x-e.x,o.y-e.y)<st.aoe){o.hp-=d*0.4;o.lastHit=s.u;flinchHit(o,d*0.4);FX.push({x:o.x,y:o.y-o.r-4,txt:fmt(Math.max(1,d*0.4)),c:"cyan",t:0.6});}}
   if(s.crit&&!s.small){
     if(st.sp.has("critChain")){const o=EN.filter(o=>o!==e&&o.hp>0&&hollowSolid(o)&&Math.hypot(o.x-e.x,o.y-e.y)<100).sort((a,b)=>Math.hypot(a.x-e.x,a.y-e.y)-Math.hypot(b.x-e.x,b.y-e.y))[0];
-      if(o){o.hp-=d*0.5;o.lastHit=s.u;LINES.push({x1:e.x,y1:e.y-12,x2:o.x,y2:o.y-12,t:0.25,c:"#f6c445"});FX.push({x:o.x,y:o.y-o.r-4,txt:fmt(d*0.5),c:"gold",t:0.6});}}
+      if(o){o.hp-=d*0.5;o.lastHit=s.u;flinchHit(o,d*0.5);LINES.push({x1:e.x,y1:e.y-12,x2:o.x,y2:o.y-12,t:0.25,c:"#f6c445"});FX.push({x:o.x,y:o.y-o.r-4,txt:fmt(d*0.5),c:"gold",t:0.6});}}
     if(st.gsp.critSplit){const a0=Math.atan2(s.vy,s.vx);for(const da of[-1,1]){const a=a0+da;SHOTS.push({...s,vx:Math.cos(a)*300,vy:Math.sin(a)*300,dmg:d*0.4,crit:false,small:true,hit:[e],life:0.35,pierce:0,homing:false});}}
   }
   G.sync=Math.min(100,G.sync+(s.crit?2.2:1.1)*statsOf(P.cid).syncM*(s.fromP?1:0.5));
@@ -1655,7 +1657,7 @@ function updateDive(dt){
   for(const p of PARTS){p.x+=p.vx*dt;p.y+=p.vy*dt;p.vy-=40*dt;p.l-=dt;}PARTS=PARTS.filter(p=>p.l>0);
   if(G.syncing){G.syncT+=dt;
     if(G.syncT>=0.9&&!G.syncFired){G.syncFired=true;sfx("syncHit");const dmg=statsOf(P.cid).atk*18;
-      for(const e of EN){e.hp-=dmg*(e.boss?0.6:1);FX.push({x:e.x,y:e.y-e.r-6,txt:fmt(dmg*(e.boss?0.6:1)),c:"gold",t:0.9});}}
+      for(const e of EN){e.hp-=dmg*(e.boss?0.6:1);flinchHit(e,dmg*(e.boss?0.6:1));FX.push({x:e.x,y:e.y-e.r-6,txt:fmt(dmg*(e.boss?0.6:1)),c:"gold",t:0.9});}}
     if(G.syncT>=1.7)G.syncing=false;
     if(G.syncT<0.9)return;
   }
@@ -1700,6 +1702,7 @@ function updateDive(dt){
     if(OFM())edt=dt*ofTimeK(e.x,e.y,0.4); // 龍脈溢界: enemy clock = slowest of stop / 灰時演算 / slow field (not multiplied)
     else if(G.tstop>0)f=0;else if(G.slowF&&G.slowF.t>0&&Math.hypot(e.x-G.slowF.u.x,e.y-G.slowF.u.y)<G.slowF.r)f*=0.4;
     if(e.vuln>0)e.vuln-=dt;
+    if(e.flinch>0)e.flinch-=dt;if(e.flinchCd>0)e.flinchCd-=dt;
     let tu=targets[0],bd=1e9;for(const u of targets){const d=Math.hypot(u.x-e.x,u.y-e.y);if(d<bd){bd=d;tu=u;}}
     if(e.idle){if(bd<230||e.hp<e.mhp||G.boss){e.idle=false;FX.push({x:e.x,y:e.y-e.r*2-8,txt:"！",c:"danger",t:0.6});}
       else{e.wa+=rnd(-1.5,1.5)*dt;e.x+=Math.cos(e.wa)*e.spd*0.25*f*dt;e.y+=Math.sin(e.wa)*e.spd*0.18*f*dt;
@@ -1742,7 +1745,7 @@ const nearEn=(x,y,r)=>EN.filter(e=>e.hp>0&&!e.idle&&hollowSolid(e)&&Math.hypot(e
 const partyU=()=>[P,...ALLIES].filter(u=>u&&!u.down);
 function pBuff(b){G.pbuf=(G.pbuf||[]).filter(x=>x.id!==b.id);G.pbuf.push(b);}
 function skHit(e,dmg,u,c){if(e.hp<=0)return;let d=dmg;if(e.vuln>0)d*=1+(e.vulnV||0.25);if(e.p&&e.p.armor)d*=1-e.p.armor;if(e.roar>0)d*=0.15;
-  e.hp-=d;e.lastHit=u;if(e.idle)e.idle=false;FX.push({x:e.x,y:e.y-e.r-6,txt:fmt(Math.max(1,d)),c:c||"gold",t:0.8});}
+  e.hp-=d;e.lastHit=u;flinchHit(e,d);if(e.idle)e.idle=false;FX.push({x:e.x,y:e.y-e.r-6,txt:fmt(Math.max(1,d)),c:c||"gold",t:0.8});}
 const SKILLS={
   lu_slow:{nm:"時間遅延フィールド",cid:"luarie",type:"sup",cd:12,desc:"周りの敵と敵の弾を4秒間おそくする",
     cast(u){G.slowF={u,t:4,r:140};WAVES.push({x:u.x,y:u.y,t:0,c:"159,211,255",r:140});}},
@@ -2425,10 +2428,13 @@ function enemySprite(id){
 }
 // which frame of a PNG strip to show: enemies.json "anim" lists frames per state (sleep / windup / attack / jump / move) and fps; without it, all frames loop
 // windup = charge wind-up (e.wind>0); if omitted, the wind-up uses the attack frames as before
+// roar = boss phase roar (e.roar>0), flinch = big-hit stagger (e.flinch>0); both only when the key exists in anim
 function spriteFrame(e,t,frames){
   const a=e.def.anim;if(!a)return Math.floor(t*8+e.sd)%frames;
   let k="move";
   if(e.p.ambush&&!e.awake&&a.sleep)k="sleep";
+  else if(e.roar>0&&a.roar)k="roar";
+  else if(e.flinch>0&&a.flinch)k="flinch";
   else if(e.wind>0&&a.windup)k="windup";
   else if((e.fuse>0||e.wind>0||e.charge>0)&&a.attack)k="attack";
   else if(e.hopping>0&&a.jump)k="jump";
