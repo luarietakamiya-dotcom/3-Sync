@@ -27,7 +27,7 @@
      "dropBonus":{"gear":0.3,"mat":0.15},"bossId":"exec_unit","clearReward":{"money":25000,"items":[{"id":"core","n":2}]}},
     {"id":"front","name":"歪み前線","recommendedLevel":40,"backgroundId":"front","floors":10,
      "scaling":{"hp":36,"hpPerFloor":1.09,"atk":6.5,"atkPerFloor":1.05,"bossHp":7},
-     "enemyPool":[{"id":"warp_slime","weight":4},{"id":"beast_fragment","weight":4},{"id":"anomaly_core","weight":2,"minFloor":3},{"id":"jammer","weight":1},{"id":"suppress_unit","weight":1}],
+     "enemyPool":[{"id":"warp_slime","weight":4},{"id":"beast_fragment","weight":4},{"id":"anomaly_core","weight":2,"minFloor":3},{"id":"jammer","weight":1},{"id":"suppress_unit","weight":1},{"id":"kirin_clock","weight":1,"minFloor":4}],
      "spawnRules":{"base":9,"perFloor":1,"maxAlive":[7,10],"interval":[0.45,0.9],"bossAdds":4},
      "hazards":[{"type":"rift","count":2,"cd":3.2,"dmg":0.14},{"type":"noise","count":2,"radius":44,"debuff":"confuse","chance":0.2}],
      "dropBonus":{"gear":0.4,"mat":0.2},"bossId":"distortion_core","clearReward":{"money":90000,"items":[{"id":"core","n":3}]}}
