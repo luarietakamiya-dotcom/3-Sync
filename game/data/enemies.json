@@ -24,7 +24,7 @@
      "aiType":"summoner","statusResist":{"all":0.1},"spriteId":"porter","r":14,"color":"#b58cff","params":{"summonId":"pink_slime","count":2,"cd":5,"max":4},"desc":"背中の袋からスライムを出す。先に倒したい"},
     {"id":"feedback_bat","name":"フィードバックバット","family":"beast","tier":2,"hp":7,"atk":3,"moveSpeed":70,"attackRange":100,"attackCooldown":2.2,"expReward":4,"moneyReward":1,
      "dropTable":[{"id":"shard","chance":0.6},{"id":"howl_coil","chance":0.15},{"id":"gear","chance":0.03}],
-     "aiType":"debuffer","statusResist":{"all":0},"spriteId":"bat","r":9,"color":"#ff4fa8","fly":true,"params":{"debuff":"confuse","chance":0.35,"shotSpeed":170},"desc":"ハウリング音波で混乱させる"},
+     "aiType":"debuffer","statusResist":{"all":0},"spriteId":"bat","r":9,"color":"#ff4fa8","fly":true,"params":{"debuff":"confuse","chance":0.35,"shotSpeed":170},"desc":"ハウリング音波で混乱させる","anim":{"fps":8,"move":[0,1,2,1],"windup":[3],"attack":[4]}},
     {"id":"subwoofer","name":"サブウーファー","family":"machine","tier":2,"hp":18,"atk":4,"moveSpeed":18,"attackRange":10,"attackCooldown":0.8,"expReward":6,"moneyReward":3,
      "dropTable":[{"id":"shard","chance":0.7},{"id":"howl_coil","chance":0.22},{"id":"gear","chance":0.05}],
      "aiType":"support_buffer","statusResist":{"all":0.15},"spriteId":"speaker","r":14,"color":"#7a6cff","params":{"radius":110,"cd":5,"dur":4,"atk":0.35,"spd":0.35},"desc":"重低音で周りの敵を強化する"},
