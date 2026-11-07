@@ -48,7 +48,7 @@
      "aiType":"charger","statusResist":{"all":0.15},"spriteId":"beast","r":13,"color":"#ff6b6b","params":{"chargeSpeed":4,"windup":0.4,"chargeTime":0.6,"cd":2.2},"desc":"短い溜めで何度も突進する"},
     {"id":"anomaly_core","name":"異常核","family":"noise","tier":4,"hp":20,"atk":4,"moveSpeed":14,"attackRange":10,"attackCooldown":0.8,"expReward":9,"moneyReward":4,
      "dropTable":[{"id":"core","chance":0.06},{"id":"warp_fragment","chance":0.3},{"id":"gear","chance":0.06}],
-     "aiType":"summoner","statusResist":{"all":0.2},"spriteId":"core","r":12,"color":"#ffffff","fly":true,"params":{"summonId":"beast_fragment","count":1,"cd":6,"max":3},"desc":"歪獣を呼び出し続ける"},
+     "aiType":"summoner","statusResist":{"all":0.2},"spriteId":"core","r":12,"color":"#ffffff","fly":true,"params":{"summonId":"beast_fragment","count":1,"cd":6,"max":3},"desc":"歪獣を呼び出し続ける","anim":{"fps":5,"move":[0,1,2,1],"windup":[3],"attack":[4]}},
 
     {"id":"nora","name":"ノラグリッチ","family":"noise","tier":1,"hp":6,"atk":2,"moveSpeed":92,"attackRange":10,"attackCooldown":0.8,"expReward":4,"moneyReward":1,
      "dropTable":[{"id":"odd","chance":0.6}],"aiType":"flee","statusResist":{"all":0},"spriteId":"cat","r":10,"color":"#ff4fa8",
