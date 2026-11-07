@@ -21,7 +21,7 @@
      "aiType":"charger","statusResist":{"all":0.1},"spriteId":"hound","r":12,"color":"#3fe0ff","params":{"chargeSpeed":3.6,"windup":0.5,"chargeTime":0.7,"cd":2.8},"desc":"身をかがめたら突進の合図"},
     {"id":"noise_porter","name":"ノイズポーター","family":"noise","tier":2,"hp":16,"atk":3,"moveSpeed":24,"attackRange":10,"attackCooldown":0.8,"expReward":6,"moneyReward":3,
      "dropTable":[{"id":"shard","chance":0.8},{"id":"lucky_circuit","chance":0.2},{"id":"gear","chance":0.05}],
-     "aiType":"summoner","statusResist":{"all":0.1},"spriteId":"porter","r":14,"color":"#b58cff","params":{"summonId":"pink_slime","count":2,"cd":5,"max":4},"desc":"背中の袋からスライムを出す。先に倒したい"},
+     "aiType":"summoner","statusResist":{"all":0.1},"spriteId":"porter","r":14,"color":"#b58cff","params":{"summonId":"pink_slime","count":2,"cd":5,"max":4},"desc":"背中の袋からスライムを出す。先に倒したい","anim":{"fps":6,"move":[0,1,2,1],"windup":[3],"attack":[4]}},
     {"id":"feedback_bat","name":"フィードバックバット","family":"beast","tier":2,"hp":7,"atk":3,"moveSpeed":70,"attackRange":100,"attackCooldown":2.2,"expReward":4,"moneyReward":1,
      "dropTable":[{"id":"shard","chance":0.6},{"id":"howl_coil","chance":0.15},{"id":"gear","chance":0.03}],
      "aiType":"debuffer","statusResist":{"all":0},"spriteId":"bat","r":9,"color":"#ff4fa8","fly":true,"params":{"debuff":"confuse","chance":0.35,"shotSpeed":170},"desc":"ハウリング音波で混乱させる"},
