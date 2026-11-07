@@ -30,7 +30,7 @@
      "aiType":"support_buffer","statusResist":{"all":0.15},"spriteId":"speaker","r":14,"color":"#7a6cff","params":{"radius":110,"cd":5,"dur":4,"atk":0.35,"spd":0.35},"desc":"重低音で周りの敵を強化する"},
     {"id":"beat_runner","name":"ビートランナー","family":"noise","tier":2,"hp":9,"atk":4,"moveSpeed":92,"attackRange":10,"attackCooldown":0.8,"expReward":4,"moneyReward":2,
      "dropTable":[{"id":"shard","chance":0.6},{"id":"howl_coil","chance":0.12},{"id":"gear","chance":0.03}],
-     "aiType":"melee_rush","statusResist":{"all":0},"spriteId":"runner","r":10,"color":"#f6c445","desc":"とにかく速い"},
+     "aiType":"melee_rush","statusResist":{"all":0},"spriteId":"runner","r":10,"color":"#f6c445","desc":"とにかく速い","anim":{"fps":10,"move":[0,1,2,1],"windup":[3],"attack":[4]}},
     {"id":"watch_drone","name":"監視ドローン","family":"machine","tier":3,"hp":10,"atk":5,"moveSpeed":40,"attackRange":175,"attackCooldown":2.4,"expReward":6,"moneyReward":3,
      "dropTable":[{"id":"shard","chance":0.6},{"id":"admin_tag","chance":0.15},{"id":"gear","chance":0.04}],
      "aiType":"ranged_keep","statusResist":{"all":0.1},"spriteId":"eye","r":10,"color":"#9fd3ff","fly":true,"params":{"shotSpeed":260,"lead":true},"desc":"遠くから狙い撃つ"},
