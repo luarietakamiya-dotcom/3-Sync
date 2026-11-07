@@ -63,7 +63,7 @@
     {"id":"king_yogurt","name":"キングヨーグルト","family":"slime","tier":5,"hp":75,"atk":6,"moveSpeed":30,"attackRange":10,"attackCooldown":0.8,"expReward":30,"moneyReward":40,"boss":true,
      "dropTable":[{"id":"yogurt_core","chance":1},{"id":"rusty_neon","chance":1,"min":2,"max":4},{"id":"crystal","chance":0.6},{"id":"gear","chance":1}],
      "aiType":"boss","statusResist":{"all":0.45,"stun":0.7},"spriteId":"boss_yogurt","r":30,"color":"#fff0f6",
-     "params":{"moves":[{"type":"summon","id":"pink_slime","count":3,"cd":7},{"type":"charge","cd":4.5,"speed":3.4,"windup":0.7,"time":0.8},{"type":"ring","cd":6,"count":10,"speed":110}]},"desc":"スライムを呼び、体当たりと乳酸弾をばらまく"},
+     "params":{"moves":[{"type":"summon","id":"pink_slime","count":3,"cd":7},{"type":"charge","cd":4.5,"speed":3.4,"windup":0.7,"time":0.8},{"type":"ring","cd":6,"count":10,"speed":110}]},"desc":"スライムを呼び、体当たりと乳酸弾をばらまく","anim":{"fps":4,"move":[0,1],"windup":[2],"attack":[3],"roar":[4],"flinch":[5]}},
     {"id":"junk_queen","name":"ジャンククイーン","family":"object","tier":5,"hp":95,"atk":7,"moveSpeed":26,"attackRange":10,"attackCooldown":0.8,"expReward":34,"moneyReward":60,"boss":true,
      "dropTable":[{"id":"junk_crown","chance":1},{"id":"lucky_circuit","chance":1,"min":2,"max":4},{"id":"crystal","chance":0.7},{"id":"gear","chance":1}],
      "aiType":"boss","statusResist":{"all":0.45,"stun":0.7},"spriteId":"boss_queen","r":28,"color":"#f6c445",
