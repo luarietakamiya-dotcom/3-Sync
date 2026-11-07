@@ -21,7 +21,7 @@
      "dropBonus":{"gear":0.2,"mat":0.1},"bossId":"noise_dj","clearReward":{"money":6000,"items":[{"id":"core","n":1}]}},
     {"id":"border","name":"管理区境界","recommendedLevel":30,"backgroundId":"border","floors":10,
      "scaling":{"hp":20,"hpPerFloor":1.09,"atk":5.2,"atkPerFloor":1.05,"bossHp":8},
-     "enemyPool":[{"id":"watch_drone","weight":4},{"id":"suppress_unit","weight":3},{"id":"jammer","weight":2,"minFloor":2},{"id":"beat_runner","weight":2}],
+     "enemyPool":[{"id":"watch_drone","weight":4},{"id":"suppress_unit","weight":3},{"id":"jammer","weight":2,"minFloor":2},{"id":"beat_runner","weight":2},{"id":"tengu_relay","weight":2,"minFloor":3}],
      "spawnRules":{"base":8,"perFloor":1,"maxAlive":[6,9],"interval":[0.5,1.0],"bossAdds":3},
      "hazards":[{"type":"electric","count":2,"on":1.2,"off":2.4,"dps":0.12,"w":90,"h":22},{"type":"noise","count":2,"radius":40,"debuff":"atkdown","chance":0.25}],
      "dropBonus":{"gear":0.3,"mat":0.15},"bossId":"exec_unit","clearReward":{"money":25000,"items":[{"id":"core","n":2}]}},
