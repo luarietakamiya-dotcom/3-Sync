@@ -55,7 +55,7 @@
      "missionOnly":true,"minFloor":2,"desc":"猫の形をしたバグ。逃げ回る"},
     {"id":"mirror","name":"複製ノイズ","family":"noise","tier":2,"hp":12,"atk":3,"moveSpeed":30,"attackRange":10,"attackCooldown":0.8,"expReward":4,"moneyReward":1,
      "dropTable":[{"id":"odd","chance":0.4}],"aiType":"melee_rush","statusResist":{"all":0},"spriteId":"mirror","r":13,"color":"#3fe0ff","params":{"split":2},
-     "missionOnly":true,"minFloor":4,"desc":"倒すと分裂する"},
+     "missionOnly":true,"minFloor":4,"desc":"倒すと分裂する","anim":{"fps":7,"move":[0,1,2,1],"windup":[3],"attack":[4]}},
     {"id":"hollow","name":"怨念ノイズ","family":"noise","tier":3,"hp":22,"atk":5,"moveSpeed":40,"attackRange":10,"attackCooldown":0.8,"expReward":6,"moneyReward":2,
      "dropTable":[{"id":"odd","chance":0.6}],"aiType":"melee_rush","statusResist":{"all":0.2},"spriteId":"ghost","r":12,"color":"#c8a8ff","fly":true,"params":{"phase":true},
      "missionOnly":true,"minFloor":7,"desc":"ときどき透けて、攻撃がすり抜ける"},
