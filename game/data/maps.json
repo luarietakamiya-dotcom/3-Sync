@@ -9,7 +9,7 @@
      "dropBonus":{"gear":0,"mat":0},"bossId":"king_yogurt","clearReward":{"money":300,"items":[{"id":"crystal","n":2}]}},
     {"id":"alley","name":"旧商店路地","recommendedLevel":10,"backgroundId":"alley","floors":10,
      "scaling":{"hp":4.5,"hpPerFloor":1.1,"atk":2.4,"atkPerFloor":1.05,"bossHp":10},
-     "enemyPool":[{"id":"sign_mimic","weight":4},{"id":"cable_hound","weight":4},{"id":"noise_porter","weight":2,"minFloor":3},{"id":"drum_mimic","weight":2},{"id":"high_jump_slime","weight":2}],
+     "enemyPool":[{"id":"sign_mimic","weight":4},{"id":"cable_hound","weight":4},{"id":"noise_porter","weight":2,"minFloor":3},{"id":"drum_mimic","weight":2},{"id":"high_jump_slime","weight":2},{"id":"kitsunebi_archive","weight":2,"minFloor":4}],
      "spawnRules":{"base":7,"perFloor":1,"maxAlive":[5,7],"interval":[0.6,1.2],"bossAdds":3},
      "hazards":[{"type":"falling","cd":4.5,"radius":30,"dmg":0.12}],
      "dropBonus":{"gear":0.1,"mat":0.05},"bossId":"junk_queen","clearReward":{"money":1500,"items":[{"id":"crystal","n":3}]}},
