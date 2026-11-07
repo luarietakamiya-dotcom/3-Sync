@@ -52,7 +52,7 @@
 
     {"id":"nora","name":"ノラグリッチ","family":"noise","tier":1,"hp":6,"atk":2,"moveSpeed":92,"attackRange":10,"attackCooldown":0.8,"expReward":4,"moneyReward":1,
      "dropTable":[{"id":"odd","chance":0.6}],"aiType":"flee","statusResist":{"all":0},"spriteId":"cat","r":10,"color":"#ff4fa8",
-     "missionOnly":true,"minFloor":2,"desc":"猫の形をしたバグ。逃げ回る"},
+     "missionOnly":true,"minFloor":2,"desc":"猫の形をしたバグ。逃げ回る","anim":{"fps":10,"move":[0,1,2,1],"windup":[3],"attack":[4]}},
     {"id":"mirror","name":"複製ノイズ","family":"noise","tier":2,"hp":12,"atk":3,"moveSpeed":30,"attackRange":10,"attackCooldown":0.8,"expReward":4,"moneyReward":1,
      "dropTable":[{"id":"odd","chance":0.4}],"aiType":"melee_rush","statusResist":{"all":0},"spriteId":"mirror","r":13,"color":"#3fe0ff","params":{"split":2},
      "missionOnly":true,"minFloor":4,"desc":"倒すと分裂する","anim":{"fps":7,"move":[0,1,2,1],"windup":[3],"attack":[4]}},
