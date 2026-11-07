@@ -75,7 +75,7 @@
     {"id":"exec_unit","name":"監理執行機","family":"machine","tier":5,"hp":145,"atk":9,"moveSpeed":26,"attackRange":10,"attackCooldown":0.8,"expReward":44,"moneyReward":130,"boss":true,
      "dropTable":[{"id":"exec_board","chance":1},{"id":"admin_tag","chance":1,"min":2,"max":4},{"id":"core","chance":0.3},{"id":"gear","chance":1}],
      "aiType":"boss","statusResist":{"all":0.55,"stun":0.8},"spriteId":"boss_exec","r":28,"color":"#9fd3ff",
-     "params":{"moves":[{"type":"charge","cd":4.5,"speed":3.6,"windup":0.8,"time":0.8},{"type":"volley","cd":2.5,"count":3,"speed":260,"lead":true},{"type":"debuffPulse","cd":9,"radius":160,"debuff":"blind","chance":0.6}]},"desc":"突進と狙撃、目つぶしの閃光で制圧してくる"},
+     "params":{"moves":[{"type":"charge","cd":4.5,"speed":3.6,"windup":0.8,"time":0.8},{"type":"volley","cd":2.5,"count":3,"speed":260,"lead":true},{"type":"debuffPulse","cd":9,"radius":160,"debuff":"blind","chance":0.6}]},"desc":"突進と狙撃、目つぶしの閃光で制圧してくる","anim":{"fps":4,"move":[0,1],"windup":[2],"attack":[3],"roar":[4],"flinch":[5]}},
     {"id":"distortion_core","name":"歪み中枢体","family":"noise","tier":5,"hp":175,"atk":9,"moveSpeed":20,"attackRange":10,"attackCooldown":0.8,"expReward":50,"moneyReward":180,"boss":true,
      "dropTable":[{"id":"core_crystal","chance":1},{"id":"warp_fragment","chance":1,"min":2,"max":4},{"id":"core","chance":0.5},{"id":"gear","chance":1}],
      "aiType":"boss","statusResist":{"all":0.55,"stun":0.8},"spriteId":"boss_core","r":30,"color":"#c58bf0","fly":true,
