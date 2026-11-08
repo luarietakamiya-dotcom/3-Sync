@@ -2578,21 +2578,20 @@ const ART_DRAW={
   },dy(x,y,t,d){const C=ART_C,wk=0.5+0.5*Math.sin(t*0.898),sel=Math.floor(t/2.4)%6; // window 90-100% over 7s; selection moves every 2.4s
     fR(`rgba(${C.warm},${0.035*wk})`,x-11,y-36,13,22);gL(C.teal,0.95,x+6+(sel%2)*3,y-31+Math.floor(sel/2)*3,2,1,1);}},
   // ---- live: black sound gear, pink displays up high, small gold lenses. Bodies are baked; cones, the light head, meters, displays and fans are live
-  live_speaker:{sh:(x,y)=>shadow(x+1,y,17),st(x,y,d){const C=ART_L,P2=Math.PI;
-    lvBoxes(C,[[x-18,y-6,30,6,5,3]]);lvBoxes(C,[[x-15,y-64,24,57,4,3]]); // wide stable plinth, cabinet
-    fR("#3A3046",x-13,y-61,18,6); // grille plate
-    const j=[[x+10,y-41,2,9],[x-12,y-13,18,3],[x-15,y-3,6,1],[x+4,y-3,6,1],[x+6,y-61,3,3]];for(let i=0;i<8;i++)for(let k=0;k<2;k++)j.push([x-12+i*2+k,y-60+k*2,1,1]);lvB(C.j,j); // handle recess, bass port, plinth slots, lamp housing, perforation
-    lvE(C.m,[[x-3,y-25,10,10],[x-3,y-46,6.5,6.5]]);lvE(C.j,[[x-3,y-25,8.5,8.5],[x-3,y-46,5.3,5.3]]); // fixing rings, surround gap
-    lvE("#1D1727",[[x-2.5,y-24.5,7.3,7.3],[x-2.6,y-45.6,4.4,4.4]]);lvE("#2A2136",[[x-2.2,y-24.2,4.2,4.2],[x-2.4,y-45.4,2.6,2.6]]); // cone (offset = depth), inner cone
-    lvArc("#4A3B57",[[x-2.5,y-24.5,6,6,P2*1.1,P2*1.45],[x-2.6,y-45.6,3.6,3.6,P2*1.1,P2*1.45],[x-2.5,y-24.5,7,7,P2*0.1,P2*0.45]]); // cone sheen, lit inner wall
-    lvArc(C.e,[[x-3,y-25,9.6,9.6,P2,P2*1.55],[x-3,y-46,6.1,6.1,P2,P2*1.55]]); // ring lit edges
-    const s=[];for(const[cx,cy,r]of[[x-3,y-25,6.7],[x-3,y-46,4.3]])for(const[sx,sy]of[[-1,-1],[1,-1],[-1,1],[1,1]])s.push([Math.round(cx+sx*r)-1,Math.round(cy+sy*r)-1,1,1]);
-    s.push([x-17,y-5,1,1],[x+10,y-5,1,1]);lvB(C.mt,s); // ring screws, plinth bolts
-    lvB(C.e,[[x+10,y-41,1,9],[x-12,y-10,18,1]]); // handle bar, port lip
-    fR(`rgba(${C.pk},.35)`,x+7,y-60,1,1);fR(`rgba(${C.gd},.5)`,x-4,y-4,2,1); // status lamp (dim base), gold badge lens
-  },dy(x,y,t,d){const o=0.5*Math.sin(t*3.927); // cone centres move ≤0.5px over 1.6s
-    lvE("#3B2F49",[[x-2.2,y-24.2+o,2.2,2.2],[x-2.4,y-45.4+o*0.6,1.4,1.4]]);fR("#6E5C7A",x-3,y-25+o,1,1);
-    gL(ART_L.pk,0.5+0.4*Math.sin(t*1.309),x+7,y-60,1,1,1);}}, // status lamp eases up and down (4.8s)
+  live_speaker:{sh:(x,y)=>shadow(x,y,17),st(x,y,d){const C=ART_L,P2=Math.PI,cx=x-2; // round drums stacked into a tower, held by two thin spines (no cabinet)
+    lvE(C.j,[[x,y-2,18,3.5]]);lvE(C.b,[[x+1,y-2.5,17,3]]);lvE(C.t,[[x,y-3.5,16,2.2]]);lvArc(C.e,[[x,y-3.5,16,2.2,P2*1.05,P2*1.6]]); // round plinth
+    lvB(C.f,[[x-17,y-63,2,60],[x+15,y-63,2,60]]);lvB(C.e,[[x-17,y-63,1,60]]);lvB(C.b,[[x+16,y-63,1,60]]); // spines
+    const cl=[[x-18,y-65,4,2],[x+14,y-65,4,2]];for(const[r,o]of LV_SPK)cl.push([x-15,y+o,cx-r-x+16,1],[cx+r+3,y+o-1,x+15-cx-r-3,1]);lvB(C.mt,cl); // spine caps, clamp arms to each drum
+    for(const[r,o]of LV_SPK){const cy=y+o; // one drum: back disc (depth up-right), lit rim, face ring, gap, cone, inner cone
+      lvE("#1E1828",[[cx+3,cy-2,r,r]]);lvSt(C.t,1.5,[[cx+3,cy-2,r-0.8,r-0.8,P2*1.2,P2*1.85]]);
+      lvE(C.m,[[cx,cy,r,r]]);lvE(C.j,[[cx,cy,r*0.85,r*0.85]]);lvE("#1D1727",[[cx+0.5,cy+0.5,r*0.73,r*0.73]]);lvE("#2A2136",[[cx+0.8,cy+0.8,r*0.42,r*0.42]]);
+      lvArc("#4A3B57",[[cx+0.5,cy+0.5,r*0.6,r*0.6,P2*1.1,P2*1.45],[cx+0.5,cy+0.5,r*0.7,r*0.7,P2*0.1,P2*0.45]]);lvArc(C.e,[[cx,cy,r-0.4,r-0.4,P2,P2*1.55]]);
+      const s=[];for(const[sx,sy]of[[-1,-1],[1,-1],[-1,1],[1,1]])s.push([Math.round(cx+sx*r*0.66)-1,Math.round(cy+sy*r*0.66)-1,1,1]);lvB(C.mt,s);}
+    lvB(C.mt,[[cx-3,y-33,7,2],[cx-2,y-53,5,1]]);lvB(C.mtT,[[cx-3,y-33,7,1],[x-17,y-65,3,1],[x+14,y-65,3,1]]); // couplers between drums
+    fR(`rgba(${C.pk},.35)`,x+15,y-64,1,1);fR(`rgba(${C.gd},.5)`,x-4,y-2,2,1); // status lamp (dim base), gold badge lens
+  },dy(x,y,t,d){const o=0.5*Math.sin(t*3.927),cx=x-2; // cone centres move ≤0.5px over 1.6s; the tower stays still
+    lvE("#3B2F49",LV_SPK.map(([r,c],i)=>[cx+0.8,y+c+0.8+o*(1-i*0.3),r*0.25,r*0.25]));fR("#6E5C7A",cx,y-18+o,1,1);
+    gL(ART_L.pk,0.5+0.4*Math.sin(t*1.309),x+15,y-64,1,1,1);}}, // status lamp eases up and down (4.8s)
   live_light:{sh:(x,y)=>shadow(x,y,16),st(x,y,d){const C=ART_L;
     lvBoxes(C,[[x-16,y-7,28,7,4,3]]); // heavy base
     lvB(C.f,[[x-4,y-15,6,8],[x-15,y-18,26,3],[x-15,y-40,3,22],[x+8,y-40,3,22]]); // column, yoke bar, twin arms
@@ -2615,14 +2614,16 @@ const ART_DRAW={
     lvB(C.mt,[[x+4,y-12,3,2],[x+12,y-16,1,1]]);fR(C.j,x+5,y-12,1,2); // clipped cable end, axle bolt
     fR(`rgba(${C.gd},.3)`,x+1,y-3,1,1);
   },dy(x,y,t,d){gL(ART_L.gd,0.25+0.6*(0.5-0.5*Math.cos(t*1.047)),x+1,y-3,1,1,1);}}, // terminal lamp brightens and settles over 6s; the turns never move
-  live_case:{sh:(x,y)=>shadow(x+2,y,21),st(x,y,d){const C=ART_L;
-    lvBoxes(C,[[x-21,y-24,40,22,5,4]]);
-    lvP(C.j,[[x+19,y-17,x+24,y-21,x+24,y-20,x+19,y-16]]); // lid seam on the side
-    lvB(C.j,[[x-21,y-17,40,1],[x-6,y-13,11,4],[x-19,y-2,5,2],[x+12,y-2,5,2],[x+4,y-23,10,4],[x-14,y-16,2,1],[x+10,y-16,2,1]]); // lid seam, handle recess, feet, display bay, keyholes
-    lvB(C.e,[[x-20,y-16,38,1],[x-17,y-12,7,1]]);fR(C.m,x-17,y-11,7,4); // moulded ridge, label plate
-    lvB(C.mt,[[x-21,y-24,4,1],[x-21,y-23,1,3],[x+15,y-24,4,1],[x+18,y-23,1,3],[x-21,y-3,4,1],[x-21,y-6,1,3],[x+15,y-3,4,1],[x+18,y-6,1,3],[x-15,y-19,4,4],[x+9,y-19,4,4],[x-5,y-12,9,1]]); // corner fittings, closed latches, handle
-    lvB(C.mtT,[[x-15,y-19,4,1],[x+9,y-19,4,1],[x-21,y-24,1,1],[x+15,y-24,1,1]]);fR(C.gl,x+5,y-22,8,2);
-  },dy(x,y,t,d){const s=Math.floor(t/4.8),c=(s+d.v)%3;gL(s%2?ART_L.pk:ART_L.gd,0.9,x+5+c*3,y-22,2,2,1);}}, // status cell steps every 4.8s
+  live_case:{sh:(x,y)=>shadow(x,y,20),st(x,y,d){const C=ART_L,P2=Math.PI,cy=y-15; // acoustic drum case: a lying cylinder on two low cradles (open below)
+    lvP(C.mt,[[x-15,y-6,x-9,y-6,x-8,y,x-16,y],[x+7,y-6,x+13,y-6,x+14,y,x+6,y]]);lvB(C.mtT,[[x-16,y-1,8,1],[x+6,y-1,8,1]]);lvB(C.j,[[x-15,y-6,6,1],[x+7,y-6,6,1]]); // cradles
+    lvE(C.b,[[x+18,cy,5,10]]);lvB(C.f,[[x-18,cy-10,36,20]]);lvE(C.f,[[x-18,cy,4,10]]); // far end face, barrel, near rounded end
+    lvB(C.t,[[x-18,cy-10,36,3]]);lvB("#332841",[[x-18,cy-7,36,2]]);lvB(C.b,[[x-18,cy+4,36,6]]);lvB(C.j,[[x-18,cy+9,36,1]]); // round shading: lit crown, mid, dark belly
+    lvSt(C.mt,3,[[x-15,cy,2.5,10,P2*0.5,P2*1.5],[x+14,cy,2.5,10,-P2*0.5,P2*0.5]]);lvArc(C.mtT,[[x-15,cy,3.5,10.5,P2*1.1,P2*1.45],[x+14,cy,1.5,10.5,P2*1.2,P2*1.5]]); // thick end rings
+    lvE(C.mt,[[x+19,cy,4.2,10.2]]);lvE(C.m,[[x+19.5,cy,3,8]]);lvE(C.j,[[x+20,cy,1,1.6]]);lvArc(C.mtT,[[x+19,cy,4.2,10.2,P2*1.1,P2*1.5]]); // drum head on the far end, vent
+    lvSt(C.mt,1.5,[[x-9,cy,3,10,-P2*0.5,P2*0.5],[x+7,cy,3,10,P2*0.5,P2*1.5]]);lvB(C.mtT,[[x-7,cy-1,2,3],[x+4,cy-1,2,3]]); // curved straps, buckles
+    lvSt(C.mt,1.5,[[x-1,cy-10,6,3.5,P2,P2*2]]);lvB(C.mtT,[[x-8,cy-11,2,2],[x+5,cy-11,2,2]]); // carry handle on the crown
+    lvB(C.j,[[x-3,cy-4,6,3]]);fR(C.gl,x-3,cy-4,6,2);lvB(C.e,[[x-18,cy-10,36,1]]); // status window, lit top line
+  },dy(x,y,t,d){const s=Math.floor(t/4.8),c=(s+d.v)%3;gL(s%2?ART_L.pk:ART_L.gd,0.9,x-3+c*2,y-19,2,2,1);}}, // status cell steps every 4.8s
   live_arch:{sh:(x,y)=>{shadow(x-36,y,10);shadow(x+32,y,10);},st(x,y,d){const C=ART_L,P2=Math.PI,cx=x-2,cy=y-50;
     lvBoxes(C,[[x-43,y-6,14,6,3,2],[x+25,y-6,14,6,3,2]]);lvBoxes(C,[[x-40,y-52,8,46,3,2],[x+28,y-52,8,46,3,2]]); // fixed bases, twin legs
     const st=(c,w,rx,ry,a0,a1)=>{X.strokeStyle=c;X.lineWidth=w;X.beginPath();X.ellipse(cx,cy,rx,ry,0,a0,a1);X.stroke();};
@@ -2634,61 +2635,72 @@ const ART_DRAW={
     fR(`rgba(${C.pk},.12)`,x-18,y-69,32,10);lvTxt(x-17,y-68,"LIVE",`rgba(${C.pk},.92)`,2);lvB(C.mtT,[[x-18,y-60,1,1],[x+13,y-60,1,1]]);
   },dy(x,y,t,d){const u=(t%6)/6,a=Math.PI*1.08+u*Math.PI*0.84;if(Math.abs(Math.cos(a))*34<19)return; // a short band runs along the beam once per 6s (hidden behind the plate)
     ctx.beginPath();ctx.ellipse(x-2,y-50,34,16,0,a-0.08,a+0.08);ctx.strokeStyle=`rgba(${ART_L.pk},.14)`;ctx.lineWidth=5;ctx.stroke();ctx.strokeStyle=`rgba(${ART_L.pk},.75)`;ctx.lineWidth=2;ctx.stroke();ctx.lineWidth=1;}},
-  live_ticket:{sh:(x,y)=>shadow(x+1,y,15),st(x,y,d){const C=ART_L;
-    lvBoxes(C,[[x-16,y-5,30,5,4,3]]);lvBoxes(C,[[x-14,y-43,26,38,4,3]]); // pedestal, body
-    const j=[[x-12,y-40,22,22],[x-7,y-15,10,2],[x-12,y-3,4,1],[x+6,y-3,4,1]];for(let i=0;i<6;i++)j.push([x+13,y-38+i*4,2,1]);lvB(C.j,j); // screen bezel, ticket slot, side exhaust grille
-    fR(C.gl,x-11,y-39,20,20);fR(`rgba(${C.pk},.05)`,x-11,y-39,20,20); // vertical screen
-    lvP(C.t,[[x-12,y-10,x+10,y-10,x+12,y-12,x-10,y-12]]);lvB(C.e,[[x-7,y-13,10,1],[x-12,y-10,22,1]]); // input ledge, slot lip
-    const k=[];for(let i=0;i<6;i++)k.push([x-8+i*3,y-11,1,1]);lvB(C.mtT,k); // keypad
-    fR(`rgba(${C.pk},.5)`,x-10,y-42,16,1);fR(`rgba(${C.gd},.7)`,x+5,y-15,1,1); // header strip, card reader lens
-  },dy(x,y,t,d){const u=t%6,sw=u<0.2?Math.abs(u-0.1)/0.1:1,L=LV_TK[(Math.floor(t/6)+d.v)%LV_TK.length],c=`rgba(${ART_L.pk},${0.95*sw})`; // wording swaps every 6s (0.2s)
-    fR(`rgba(${ART_L.pk},${0.05*sw})`,x-11,y-39,20,20);
-    if(L.length>1){X.fillStyle=c;X.beginPath();lvTxtP(x-1-lvTxtW(L[0],1)/2,y-35,L[0],1);lvTxtP(x-1-lvTxtW(L[1],1)/2,y-27,L[1],1);X.fill();}
-    else lvTxt(x-1-lvTxtW(L[0],1)/2,y-31,L[0],c,1);}},
-  live_mixer:{sh:(x,y)=>shadow(x+1,y,20),st(x,y,d){const C=ART_L;
-    lvBoxes(C,[[x-14,y-3,26,3,3,2]]); // foot plate
-    lvB(C.f,[[x-4,y-11,7,8],[x-22,y-18,40,7],[x-16,y-34,40,3]]);lvB(C.b,[[x+3,y-11,2,8],[x+24,y-34,1,3]]); // pedestal, front panel, meter bridge
-    lvP(C.b,[[x+18,y-11,x+18,y-18,x+24,y-31,x+24,y-16]]);lvP(C.t,[[x-22,y-18,x+18,y-18,x+24,y-31,x-16,y-31]]); // side, sloped top
-    const g=[[x+6,y-21,x+18,y-21,x+21,y-29,x+9,y-29]],cp=[],dm=[];for(let i=0;i<6;i++){const bx=x-19+i*4,by=y-20;g.push([bx,by,bx+1,by,bx+5,by-9,bx+4,by-9]); // meter well, fader grooves
-      const f=hh(i,d.v,3),fy=Math.round(by-1-f*7);cp.push([Math.round(bx+(by-fy)*0.46)-1,fy,3,1]);}
-    lvP(C.j,g);lvB(C.mt,cp); // fader caps
-    for(let i=0;i<4;i++)for(let k=0;k<4;k++)dm.push([x+8+i*3+Math.round(k*0.8),y-23-k*2,2,1]);lvB("#2A2136",dm); // unlit meter segments
-    const kn=[],jk=[[x-22,y-12,40,1]];for(let i=0;i<6;i++){kn.push([x-14+i*4,y-31,2,1]);}for(let i=0;i<7;i++)jk.push([x-19+i*5,y-16,2,2]);
-    lvB(C.mtT,kn);lvB(C.j,jk);lvB(C.e,[[x-22,y-18,40,1],[x-15,y-35,40,1]]); // knobs, jacks, lit edges
-    fR(`rgba(${C.gd},.55)`,x+13,y-15,1,1);fR(`rgba(${C.gd},.55)`,x+15,y-15,1,1);
-  },dy(x,y,t,d){const gd=[],pk=[];for(let i=0;i<4;i++){const n=1+Math.round(1.5+1.5*Math.sin(t*(1.7+i*0.45)+d.v*2+i*1.3)); // 4 meters follow a time function, never a full flash
-      for(let k=0;k<n;k++)(k===3?pk:gd).push([x+8+i*3+Math.round(k*0.8),y-23-k*2,2,1]);}
+  live_ticket:{sh:(x,y)=>shadow(x-2,y,14),st(x,y,d){const C=ART_L,P2=Math.PI,cx=x+2,cy=y-30; // show-guide disc on one curved post, set off-centre
+    lvE(C.b,[[x-8,y-2,7,2.5]]);lvE(C.t,[[x-9,y-2.5,6,1.6]]); // round foot
+    X.lineCap="round";X.strokeStyle=C.f;X.lineWidth=3;X.beginPath();X.moveTo(x-9,y-3);X.quadraticCurveTo(x-13,y-12,x-6,y-19);X.stroke();
+    X.strokeStyle=C.e;X.lineWidth=1;X.beginPath();X.moveTo(x-10.5,y-4);X.quadraticCurveTo(x-14.5,y-12,x-7.5,y-20);X.stroke();X.lineCap="butt"; // curved post, lit edge
+    lvE("#1E1828",[[cx+3,cy-2,14,14]]);lvSt(C.t,1.5,[[cx+3,cy-2,13.2,13.2,P2*1.2,P2*1.85]]); // disc depth
+    lvE(C.f,[[cx,cy,14,14]]);lvE(C.j,[[cx,cy,12.3,12.3]]);lvE(C.gl,[[cx,cy,11.5,11.5]]);lvArc(C.e,[[cx,cy,13.6,13.6,P2,P2*1.55]]); // rim, bezel, round screen
+    lvSt(`rgba(${C.pk},.5)`,1,[[cx,cy,12.9,12.9,P2*1.3,P2*1.7]]);lvB(C.mt,[[cx-13,cy-1,1,2],[cx+12,cy-1,1,2],[cx-5,cy+12,1,1]]); // header arc, rim bolts
+    lvB(C.f,[[cx-5,cy+12,10,5]]);lvB(C.t,[[cx-5,cy+12,10,1]]);lvB(C.b,[[cx+5,cy+12,1,5]]);lvB(C.j,[[cx-4,cy+15,7,1]]); // ticket mouth at the disc's lower edge
+    fR(`rgba(${C.gd},.7)`,cx+3,cy+13,1,1); // card reader lens
+  },dy(x,y,t,d){const u=t%6,sw=u<0.2?Math.abs(u-0.1)/0.1:1,L=LV_TK[(Math.floor(t/6)+d.v)%LV_TK.length],c=`rgba(${ART_L.pk},${0.95*sw})`,cx=x+2,cy=y-30; // wording swaps every 6s (0.2s)
+    lvE(`rgba(${ART_L.pk},${0.05*sw})`,[[cx,cy,11.5,11.5]]);
+    if(L.length>1){X.fillStyle=c;X.beginPath();lvTxtP(cx-lvTxtW(L[0],1)/2,cy-6,L[0],1);lvTxtP(cx-lvTxtW(L[1],1)/2,cy+1,L[1],1);X.fill();}
+    else lvTxt(cx-lvTxtW(L[0],1)/2,cy-3,L[0],c,1);}},
+  live_mixer:{sh:(x,y)=>shadow(x,y,19),st(x,y,d){const C=ART_L,P2=Math.PI,a0=LV_MX[0],a1=LV_MX[1],oy=y-6; // fan-shaped desk, meters on its arc, two splayed legs (open below)
+    lvP(C.f,[[x-6,y-9,x-3,y-9,x-11,y-2,x-14,y-2],[x+3,y-9,x+6,y-9,x+14,y-2,x+11,y-2]]);lvB(C.e,[[x-14,y-3,1,1],[x-12,y-5,1,1],[x-10,y-7,1,1]]);lvB(C.mt,[[x-16,y-2,6,2],[x+10,y-2,6,2]]); // legs, feet
+    lvSt("#2C2240",1,[[x,y-7,8,4,P2*0.15,P2*0.85]]); // cable loop inside the frame
+    lvSec(C.b,x,oy+3,9,6,21,15,a0,a1);lvSec("#30253D",x,oy,9,6,21,15,a0,a1); // desk thickness, top
+    lvSt(C.m,6,[[x,oy,24,18,a0+0.04,a1-0.04]]);lvArc(C.e,[[x,oy,27,21,a0+0.1,a1-0.1],[x,oy,21,15,a0,a1]]);lvArc(C.j,[[x,oy,21.5,15.5,a0+0.04,a1-0.04]]); // meter bridge on the arc
+    lvArc(C.t,[[x,oy,9,6,a0,a1]]); // front lip
+    const g=[],cp=[],dm=[],kn=[];for(let i=0;i<5;i++){const a=a0+0.3+i*(a1-a0-0.6)/4,c=Math.cos(a),s=Math.sin(a);g.push([x+c*11,oy+s*7.5,x+c*19,oy+s*13.5]); // fader grooves run radially
+      const f=0.25+hh(i,d.v,3)*0.6;cp.push([Math.round(x+c*(11+8*f))-1,Math.round(oy+s*(7.5+6*f)),3,1]);kn.push([Math.round(x+c*10)-0,Math.round(oy+s*6.8)-1,1,1]);}
+    X.strokeStyle=C.j;X.beginPath();for(const l of g){X.moveTo(l[0],l[1]);X.lineTo(l[2],l[3]);}X.stroke();lvB(C.mt,cp);lvB(C.mtT,kn);
+    for(const[px,py]of lvMxCells(x,oy))dm.push([px,py,2,1]);lvB("#2A2136",dm); // unlit meter cells
+    fR(`rgba(${C.gd},.55)`,x-1,y-10,1,1);fR(`rgba(${C.gd},.55)`,x+1,y-10,1,1);
+  },dy(x,y,t,d){const gd=[],pk=[],cs=lvMxCells(x,y-6);for(let i=0;i<6;i++){const n=Math.round(1.5+1.5*Math.sin(t*(1.7+i*0.45)+d.v*2+i*1.3)); // 6 meters follow a time function, never a full flash
+      for(let k=0;k<n;k++)(k===2?pk:gd).push([cs[i*3+k][0],cs[i*3+k][1],2,1]);}
     lvB(`rgba(${ART_L.gd},.85)`,gd);if(pk.length)lvB(`rgba(${ART_L.pk},.9)`,pk);}},
-  live_duct:{sh:(x,y)=>shadow(x,y,17),st(x,y,d){const C=ART_L,P2=Math.PI;
-    lvB(C.mt,[[x-14,y-2,5,2],[x+5,y-2,5,2]]); // saddles
-    lvCap(C.b,x-17,y-15,31,13);lvCap(C.f,x-17,y-15,29,12); // sealed tank
-    lvB(C.t,[[x-11,y-14,17,2],[x+13,y-13,5,1]]);lvB(C.b,[[x-11,y-6,17,2],[x+17,y-12,1,4]]);lvB(C.f,[[x-7,y-18,8,3],[x+12,y-12,5,4]]); // tank light / shade, neck, exhaust
-    lvB(C.j,[[x-4,y-14,1,10],[x+16,y-11,1,2],[x+1,y-11,7,4]]);fR(C.m,x+2,y-10,5,2);lvB(C.e,[[x-11,y-14,15,1],[x-7,y-18,1,3]]); // tank seam, outlet, label well
-    lvE(C.m,[[x-3,y-23,9,9]]);lvArc(C.e,[[x-3,y-23,8.6,8.6,P2,P2*1.55]]);lvE(C.j,[[x-3,y-23,7,7]]); // round intake
-    fR(`rgba(${C.pk},.45)`,x+3,y-10,1,1);
-  },dy(x,y,t,d){const cx=x-3,cy=y-23,a=t*1.571; // fan: one turn / 4s behind the fixed vanes
-    ctx.strokeStyle="#4A3C5C";ctx.lineWidth=2;ctx.beginPath();for(let k=0;k<3;k++){const b=a+k*2.094;ctx.moveTo(cx,cy);ctx.lineTo(cx+Math.cos(b)*6,cy+Math.sin(b)*6);}ctx.stroke();
-    ctx.strokeStyle=ART_L.mt;ctx.lineWidth=1;ctx.beginPath();for(let k=0;k<4;k++){const b=0.785+k*1.571;ctx.moveTo(cx+Math.cos(b)*2.5,cy+Math.sin(b)*2.5);ctx.lineTo(cx+Math.cos(b)*7,cy+Math.sin(b)*7);}ctx.stroke();
+  live_duct:{sh:(x,y)=>shadow(x,y,17),st(x,y,d){const C=ART_L,P2=Math.PI,fx=x-6,fy=y-17,bx=x+5,by=y-20; // short turbine drum on three legs; the sealed tank is its rounded tail
+    lvP(C.f,[[x+8,y-13,x+10,y-13,x+14,y-5,x+12,y-5]]);lvB(C.mt,[[x+11,y-5,5,1]]); // rear leg (behind, foot higher)
+    lvE(C.b,[[x+12,by+1,7,7.5]]);lvArc(C.t,[[x+12,by+1,6.5,7,P2*1.2,P2*1.8]]);lvArc(C.j,[[x+12,by+1,3,7.5,-P2*0.5,P2*0.5]]); // tank tail, its seam
+    lvE(C.f,[[bx,by,10,10]]);lvP(C.f,[[fx,fy-11,bx,by-10,bx,by+10,fx,fy+11]]);lvP(C.t,[[fx,fy-11,bx,by-10,bx,by-7,fx,fy-8]]);lvP(C.b,[[fx,fy+8,bx,by+7,bx,by+10,fx,fy+11]]);lvArc(C.b,[[bx,by,10,10,-P2*0.4,P2*0.5]]); // drum side: lit crown, belly
+    lvArc(C.j,[[x-1,y-18.5,10.5,10.5,-P2*0.45,P2*0.45],[x+3,y-19.5,10.2,10.2,-P2*0.45,P2*0.45]]); // band seams
+    lvP(C.f,[[x-12,y-9,x-10,y-9,x-14,y-1,x-16,y-1],[x-1,y-8,x+1,y-8,x+2,y-1,x,y-1]]);lvB(C.e,[[x-16,y-2,1,1],[x-14,y-5,1,1]]);lvB(C.mt,[[x-18,y-2,5,2],[x-1,y-2,5,2]]); // two front legs, pads
+    lvE(C.m,[[fx,fy,11,11]]);lvArc(C.e,[[fx,fy,10.6,10.6,P2,P2*1.55]]);lvE(C.j,[[fx,fy,9,9]]); // round intake
+    fR(`rgba(${C.pk},.45)`,x+14,y-25,1,1);
+  },dy(x,y,t,d){const cx=x-6,cy=y-17,a=t*1.571; // fan: one turn / 4s behind the fixed vanes
+    ctx.strokeStyle="#4A3C5C";ctx.lineWidth=2;ctx.beginPath();for(let k=0;k<3;k++){const b=a+k*2.094;ctx.moveTo(cx,cy);ctx.lineTo(cx+Math.cos(b)*7.5,cy+Math.sin(b)*7.5);}ctx.stroke();
+    ctx.strokeStyle=ART_L.mt;ctx.lineWidth=1;ctx.beginPath();for(let k=0;k<4;k++){const b=0.785+k*1.571;ctx.moveTo(cx+Math.cos(b)*2.5,cy+Math.sin(b)*2.5);ctx.lineTo(cx+Math.cos(b)*9,cy+Math.sin(b)*9);}ctx.stroke();
     fR(ART_L.mtT,cx-1,cy-1,2,2);}},
-  live_marquee:{sh:(x,y)=>{shadow(x-22,y,8);shadow(x+20,y,8);},st(x,y,d){const C=ART_L;
-    lvB(C.mt,[[x-27,y-3,9,3],[x+16,y-3,9,3]]);lvB(C.mtT,[[x-27,y-3,9,1],[x+16,y-3,9,1]]); // fixed feet
-    lvB(C.f,[[x-24,y-22,3,19],[x+19,y-22,3,19]]);lvB(C.e,[[x-24,y-22,1,19],[x+19,y-22,1,19]]);lvB(C.b,[[x-22,y-22,1,19],[x+21,y-22,1,19]]); // twin legs
-    lvBoxes(C,[[x-28,y-38,54,18,4,2]]); // sign box (its thickness shows as top and side)
-    lvB(C.j,[[x-26,y-36,50,14],[x-27,y-32,1,1],[x-27,y-26,1,1],[x+25,y-32,1,1],[x+25,y-26,1,1]]);fR(C.gl,x-25,y-35,48,12); // text window
-    lvB(C.mt,[[x-28,y-34,2,10],[x+24,y-34,2,10]]);fR(`rgba(${C.pk},.3)`,x-25,y-23,48,1); // end clamps, lower trim
-  },dy(x,y,t,d){const C=ART_L,u=t%6,sw=u<0.2?Math.abs(u-0.1)/0.1:1,txt=LV_MQ[(Math.floor(t/6)+d.v)%LV_MQ.length]; // wording every 6s, thin scan every 4s
-    fR(`rgba(${C.pk},${0.06*sw})`,x-25,y-35,48,12);
-    ctx.font="9px DotGothic16, monospace";ctx.textAlign="center";ctx.fillStyle=`rgba(${C.pk},${0.95*sw})`;ctx.fillText(txt,x-1,y-25);ctx.textAlign="left";
-    fR("rgba(255,196,228,.2)",x-25,y-35+Math.floor((t%4)/4*12),48,1);}},
+  live_marquee:{sh:(x,y)=>{shadow(x-23,y,7);shadow(x+22,y,7);},st(x,y,d){const C=ART_L,top=lvMqPts(x,y,-5,28),bot=lvMqPts(x,y,4,28); // a thin arched ribbon display on two slim legs
+    lvB(C.mt,[[x-27,y-3,7,3],[x+20,y-3,7,3]]);lvB(C.mtT,[[x-27,y-3,7,1],[x+20,y-3,7,1]]); // feet
+    lvB(C.f,[[x-25,y-24,2,21],[x+22,y-24,2,21]]);lvB(C.e,[[x-25,y-24,1,21],[x+22,y-24,1,21]]); // slim legs
+    const ribbon=(a,b,dx,dy)=>a.map((v,i)=>v+(i%2?dy:dx)).concat(b.slice().reverse().flatMap((v,i,r)=>i%2?[]:[r[i+1]+dx,v+dy]));
+    lvP(C.t,[ribbon(top,bot,2,-2)]);lvP(C.f,[ribbon(top,bot,0,0)]); // ribbon thickness, face
+    lvP(C.gl,[ribbon(lvMqPts(x,y,-3.5,26),lvMqPts(x,y,2.5,26),0,0)]); // display strip
+    lvP(`rgba(${C.pk},.3)`,[ribbon(lvMqPts(x,y,3,26),lvMqPts(x,y,4,26),0,0)]);lvP(C.e,[ribbon(top,lvMqPts(x,y,-4,28),0,0)]); // lower trim, lit top edge
+    lvB(C.mt,[[x-29,Math.round(top[1])-1,2,10],[x+27,Math.round(top[top.length-1])-1,2,10]]); // end clamps
+  },dy(x,y,t,d){const C=ART_L,u=t%6,sw=u<0.2?Math.abs(u-0.1)/0.1:1,txt=LV_MQ[(Math.floor(t/6)+d.v)%LV_MQ.length],yc=gx=>y-31+5*((gx-x)/28)**2; // wording every 6s, letters ride the arc; thin scan every 4s
+    lvP(`rgba(${C.pk},${0.06*sw})`,[lvMqPts(x,y,-3.5,26).concat(lvMqPts(x,y,2.5,26).reverse().flatMap((v,i,r)=>i%2?[]:[r[i+1],v]))]);
+    X.fillStyle=`rgba(${C.pk},${0.95*sw})`;X.beginPath();let gx=Math.round(x-1-lvTxtW(txt,1)/2);for(const ch of txt){const gw=LV_GL[ch]?LV_GL[ch].length/5:3;if(ch!==" ")lvTxtP(gx,Math.round(yc(gx+gw/2))-3,ch,1);gx+=gw+1;}X.fill();
+    const sx=Math.round(x-26+(t%4)/4*52);fR("rgba(255,196,228,.2)",sx,Math.round(yc(sx))-3,1,6);}},
 };
-// live helpers: boxes (all sides, then fronts, tops, lit edges, seams: 5 fills), batched rects / polygons / ellipses / arcs, a capsule, 3×5 pixel letters
+// live helpers: boxes (all sides, then fronts, tops, lit edges, seams: 5 fills), batched rects / polygons / ellipses / arcs, 3×5 pixel letters
 function lvBoxes(C,bs){const sd=[],tp=[];for(const[x0,yt,w,h,dx,dy]of bs){sd.push([x0+w,yt+h,x0+w,yt,x0+w+dx,yt-dy,x0+w+dx,yt+h-dy]);tp.push([x0,yt,x0+w,yt,x0+w+dx,yt-dy,x0+dx,yt-dy]);}
   lvP(C.b,sd);lvB(C.f,bs.map(b=>[b[0],b[1],b[2],b[3]]));lvP(C.t,tp);lvB(C.e,bs.flatMap(b=>[[b[0],b[1],b[2],1],[b[0],b[1],1,b[3]]]));lvB(C.j,bs.map(b=>[b[0],b[1]+b[3]-1,b[2],1]));}
 function lvB(c,a){X.fillStyle=c;X.beginPath();for(const r of a)X.rect(r[0],r[1],r[2],r[3]);X.fill();}
 function lvP(c,ps){X.fillStyle=c;X.beginPath();for(const a of ps){X.moveTo(a[0],a[1]);for(let i=2;i<a.length;i+=2)X.lineTo(a[i],a[i+1]);X.closePath();}X.fill();}
 function lvE(c,es){X.fillStyle=c;X.beginPath();for(const[cx,cy,rx,ry]of es){X.moveTo(cx+rx,cy);X.ellipse(cx,cy,rx,ry,0,0,Math.PI*2);}X.fill();}
 function lvArc(c,as){X.strokeStyle=c;X.lineWidth=1;X.beginPath();for(const[cx,cy,rx,ry,a0,a1]of as){X.moveTo(cx+Math.cos(a0)*rx,cy+Math.sin(a0)*ry);X.ellipse(cx,cy,rx,ry,0,a0,a1);}X.stroke();}
-function lvCap(c,x0,y0,w,h){const r=h/2;X.fillStyle=c;X.beginPath();X.moveTo(x0+r,y0);X.lineTo(x0+w-r,y0);X.arc(x0+w-r,y0+r,r,-Math.PI/2,Math.PI/2);X.lineTo(x0+r,y0+h);X.arc(x0+r,y0+r,r,Math.PI/2,Math.PI*1.5);X.fill();}
+function lvSt(c,w,as){X.strokeStyle=c;X.lineWidth=w;X.beginPath();for(const[cx,cy,rx,ry,a0,a1]of as){X.moveTo(cx+Math.cos(a0)*rx,cy+Math.sin(a0)*ry);X.ellipse(cx,cy,rx,ry,0,a0,a1);}X.stroke();X.lineWidth=1;} // arcs with a stroke width
+function lvSec(c,cx,cy,ix,iy,ox,oy,a0,a1){X.fillStyle=c;X.beginPath();X.ellipse(cx,cy,ox,oy,0,a0,a1);X.ellipse(cx,cy,ix,iy,0,a1,a0,true);X.closePath();X.fill();} // ring sector
+// marquee ribbon: points along the arched centre line (+off), x within ±hw, as a flat [x,y,...] list
+function lvMqPts(x,y,off,hw){const a=[];for(let gx=-hw;gx<=hw;gx+=2)a.push(x+gx,y-31+off+5*(gx/28)**2);return a;}
+// mixer meters: 6 radial bars × 3 cells on the arc bridge
+function lvMxCells(x,oy){const a=LV_MX[0],b=LV_MX[1],o=[];for(let i=0;i<6;i++){const g=a+0.22+i*(b-a-0.44)/5,c=Math.cos(g),s=Math.sin(g);for(let k=0;k<3;k++)o.push([Math.round(x+c*(22.5+k*2))-1,Math.round(oy+s*(16.5+k*2))]);}return o;}
+const LV_SPK=[[13,-18],[10,-42],[6.5,-59]],LV_MX=[Math.PI+0.35,Math.PI*2-0.35]; // speaker drums [radius, centre y]; mixer arc span
 const LV_GL={L:"100100100100111",I:"111010010010111",V:"101101101101010",E:"111100110100111",D:"110101101101110",J:"001001001101010",O:"010101101101010",N:"10011101101110011001",G:"011100101101011",H:"101101111101101",T:"111010010010010",S:"011100010001110",U:"101101101101111"};
 function lvTxtW(s,sc){let w=0;for(const ch of s)w+=(LV_GL[ch]?LV_GL[ch].length/5:3)+1;return w*sc-sc;} // glyphs are 3 wide (N is 4)
 function lvTxtP(x,y,s,sc){x=Math.round(x);let cx=0;for(let i=0;i<s.length;i++){const g=LV_GL[s[i]],gw=g?g.length/5:3;if(g)for(let b=0;b<g.length;b++)if(g[b]==="1")X.rect(x+(cx+b%gw)*sc,y+Math.floor(b/gw)*sc,sc,sc);cx+=gw+1;}}
@@ -2706,7 +2718,7 @@ const LV_HEAD={st(ox,oy){const C=ART_L,px=ox,py=oy-12; // pivot
   lvB(C.e,[[px-8,py-9,16,1],[px-8,py-9,1,15]]);lvB(C.mt,[[px-9,py-2,1,3],[px+8,py-2,1,3]]);}};
 // ---- per-frame scene parts
 let ART_LT=0,ART_ON=null,ART_VIS=[];
-function artVisible(d,vx0,vy0,vw,vh){const hw=Math.max(d.w/2+8,d.kind==="slum_lamp"?36:0);return d.x+hw>vx0&&d.x-hw<vx0+vw&&d.y+18>vy0&&d.y-d.h-8-(d.kind==="live_light"?60:0)<vy0+vh;} // drawn extent incl. glow, shadow, reflections and the lamp's floor light
+function artVisible(d,vx0,vy0,vw,vh){const hw=Math.max(d.w/2+8,d.kind==="slum_lamp"?36:0,d.light&&d.kind.startsWith("live_")?37:0);return d.x+hw>vx0&&d.x-hw<vx0+vw&&d.y+18>vy0&&d.y-d.h-8-(d.kind==="live_light"?60:0)<vy0+vh;} // drawn extent incl. glow, shadow, reflections and the lamp's floor light
 // a tall object hiding a character fades to 0.35 in 0.12s and comes back in 0.2s (shadow stays)
 function artFade(ds){const dt=Math.max(0,Math.min(0.1,G.t-ART_LT));ART_LT=G.t;const ch=[];
   for(const u of [P,...ALLIES])if(u&&!u.down)ch.push([u.x-14,u.y-62,u.x+14,u.y,u.y]);
@@ -2808,9 +2820,11 @@ function drawLiveFloor(A,vx0,vy0,vw,vh,seed,tb){const F=A.floor,PS=112,TOP=62;
   for(const g of glows){const near=Math.hypot(g[0]+g[2]/2-P.x,g[1]-P.y)<48?0.5:1,k=teleK(tb,g[0],g[1]-2,g[0]+g[2],g[1]+2)*lvElecK(g[0],g[1]-1,g[0]+g[2],g[1]+1);
     ctx.fillStyle=`rgba(${F.glow},${F.glowA*near*k})`;ctx.fillRect(g[0],g[1],g[2],1);}}
 function drawLiveGround(A,ds,vx0,vy0,vw,vh,seed,tb){const t=G.t,cx=vx0+vw/2,cy=vy0+vh/2,byC=(a,b)=>Math.hypot(a.x-cx,a.y-cy)-Math.hypot(b.x-cx,b.y-cy);
-  // dry diffuse reflections under lit objects (max 2, 1-2 bands within 6px, 0.025-0.045), on the shared 4.8s beat, phase per object
-  for(const d of ds.filter(d=>d.light).sort(byC).slice(0,A.refl)){const ph=Math.sin((t+d.ph)*1.309),nb=1+(d.v%2),k=teleK(tb,d.x-d.lw/2,d.y+3,d.x+d.lw/2,d.y+9)*lvElecK(d.x-d.lw/2,d.y+3,d.x+d.lw/2,d.y+9);
-    for(let i=0;i<nb;i++){const a=(i?0.028:0.04)*(1+0.1*ph)*k,w=d.lw*(1-i*0.25)*(1+0.04*ph);ctx.fillStyle=`rgba(${d.light},${a})`;ctx.fillRect(Math.round(d.x-w/2+(i?2:0)),d.y+3+i*4,Math.round(w),i?1:2);}}
+  // wide diffuse floor light under lit objects: max 2, one band each, 48-72 wide × 4-6 deep, on the shared 4.8s beat (phase per object); never a full-width line
+  for(const d of ds.filter(d=>d.light).sort(byC).slice(0,A.refl)){const ph=0.5+0.5*Math.sin((t+d.ph)*1.309),bw=48+Math.round(d.s*24),dp=4+d.v,x0=Math.round(d.x-bw/2),y0=d.y+3,
+      k=teleK(tb,x0,y0,x0+bw,y0+dp)*lvElecK(x0,y0,x0+bw,y0+dp),a=(0.024+0.016*ph)*k;
+    ctx.fillStyle=`rgba(${d.light},${a*0.5})`;ctx.fillRect(x0,y0,bw,dp); // soft full band
+    ctx.fillStyle=`rgba(${d.light},${a})`;ctx.fillRect(x0+Math.round(bw*0.2),y0+1,Math.round(bw*0.6),dp-2);} // brighter middle
   // low stage smoke (max 2 sheets, 160-200 × 24-32, 3-5px/s)
   const ns=Math.max(2,Math.round(WW*WH/(W*H)*1.2));let shown=0;
   for(let i=0;i<ns&&shown<A.fog;i++){const w=160+hh(i,1,seed)*40,h=24+hh(i,2,seed)*8,sp=3+hh(i,3,seed)*2,fy=100+hh(i,4,seed)*(WH-140),fx=((hh(i,5,seed)*(WW+w)+t*sp)%(WW+w))-w;
