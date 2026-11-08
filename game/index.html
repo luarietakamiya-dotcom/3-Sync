@@ -1942,7 +1942,7 @@ const OFC=()=>MODES.overflow||OF_DEF;
 const OF_AR={x0:12,y0:62,x1:628,y1:354}; // movable area (= unit clamp); the HUD band above y=62 is excluded
 // One attempt per page lifetime, including failures; retrying a run never reloads the art.
 const OF_BG_DIM=0.2;
-let OF_BG_PROMISE=null,OF_BG_CANVAS=null,OF_STARTING=false;
+let OF_BG_PROMISE=null,OF_BG_CANVAS=null,OF_BG_SETTLED=false,OF_STARTING=false;
 function ofPreloadBackground(){
   if(OF_BG_PROMISE)return OF_BG_PROMISE;
   OF_BG_PROMISE=new Promise(resolve=>{
@@ -1951,7 +1951,7 @@ function ofPreloadBackground(){
       if(settled)return;settled=true;clearTimeout(timer);
       if(image){image.onload=null;image.onerror=null;}
       if(reason){OF_BG_CANVAS=null;console.warn("龍脈溢界の背景を読み込めません。汎用背景を使用します。",reason);}
-      resolve();
+      OF_BG_SETTLED=true;resolve();
     };
     const timer=setTimeout(()=>finish("timeout (3s)"),3000);
     try{
@@ -2220,7 +2220,11 @@ async function ofStartRun(stage){
   if(!S.overflowUnlocked||OF_STARTING)return;
   OF_STARTING=true;
   const entryMode=MODE,entryOpen=OPEN,entryRun=RUN,entryTab=GATE_TAB;
-  try{await ofPreloadBackground();}finally{OF_STARTING=false;}
+  const background=ofPreloadBackground();
+  // A settled preload must preserve synchronous RUN creation for callers.
+  if(!OF_BG_SETTLED){
+    try{await background;}finally{OF_STARTING=false;}
+  }else OF_STARTING=false;
   if(!S.overflowUnlocked||MODE!==entryMode||OPEN!==entryOpen||RUN!==entryRun||GATE_TAB!==entryTab)return;
   const C=OFC();stage=Math.max(0,Math.min(ofMaxStage(),Math.floor(+stage||0)));
   RUN={kind:"overflow",stage,wave:0,t:0,heat:{},hpM:1,atkM:1,rewM:1,shards:0,frags:0,gear:0,cores:0,auto:0,paid:false,done:false};

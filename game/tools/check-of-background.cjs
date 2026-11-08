@@ -27,7 +27,7 @@ function setup(){
  }
  // Exercise actual entry function: gate clicks wait, result-screen retries still work,
  // duplicate clicks are ignored, and leaving the entry screen cancels a pending start.
- for(const retry of [false,true]){
+ for(const retry of [false,true])for(const fallback of [false,true]){
   const e=setup();
   e.run(`var S={overflowUnlocked:true,char:'lu'},MODE='${retry?'dive':'town'}',OPEN=${retry?'null':"'gate'"},RUN=${retry?"{kind:'overflow',done:true}":'null'},GATE_TAB='overflow';
    var SND={},FLOOR,WW,WH,HAZ,P,ALLIES,FX,PARTS,MARK,G,CIDS=['lu'],W=640,H=360,starts=0;
@@ -35,18 +35,19 @@ function setup(){
    function ofWave(){starts++}function syncModeUI(){}function syncStage(){}function markDirty(){}function log(){}`);
   e.run(source.slice(source.indexOf('async function ofStartRun('),source.indexOf('function ofWave(')));
   const start=e.run('ofStartRun(1)');await e.run('ofStartRun(1)');assert.equal(e.run('starts'),0);
-  await e.images[0].onload();await start;assert.equal(e.run('starts'),1);assert.equal(e.run('MODE'),'dive');
-  await e.run('ofStartRun(2)');assert.equal(e.run('starts'),2);assert.equal(e.images.length,1);
+  if(fallback)e.images[0].onerror();else await e.images[0].onload();await start;assert.equal(e.run('starts'),1);assert.equal(e.run('MODE'),'dive');
+  if(!retry)e.run("MODE='town';OPEN='gate';RUN=null");
+  e.run('ofStartRun(2)');assert.equal(e.run('RUN.kind'),'overflow');assert.equal(e.run('RUN.stage'),2);assert.equal(e.run('starts'),2);assert.equal(e.images.length,1);
  }
- {
+ for(const change of ["MODE='other'","OPEN=null","RUN={}","GATE_TAB='other'","S.overflowUnlocked=false"]){
   const e=setup();e.run("var S={overflowUnlocked:true},MODE='town',OPEN='gate',RUN=null,GATE_TAB='overflow'");
   e.run(source.slice(source.indexOf('async function ofStartRun('),source.indexOf('function ofWave(')));
-  const start=e.run('ofStartRun(0)');e.run("OPEN=null");e.images[0].onerror();await start;assert.equal(e.run('RUN'),null);
+  const start=e.run('ofStartRun(0)');e.run(change);const entryRun=e.run('RUN');e.images[0].onerror();await start;assert.strictEqual(e.run('RUN'),entryRun,change);assert.equal(e.run('OF_STARTING'),false);
  }
  const draw=source.slice(source.indexOf('function drawDive(){'),source.indexOf('function drawSkillBar('));
  assert(draw.includes('const ofBackground=OFM()&&OF_BG_CANVAS'));
  assert(draw.includes('deco=OFM()?[]:decoNow()'));
  assert(draw.indexOf('ctx.drawImage(ofBackground,0,0)')<draw.indexOf('drawHazards()'));
- assert(source.includes('await ofPreloadBackground();}finally'));
- console.log('PASS: syntax; single load/bake; 640x360; bgDim .2; error/decode/bake/timeout fallback; late decode ignored; retry reuses settled promise; OF-only render guards and ordering');
+ assert(source.includes('if(!OF_BG_SETTLED)'));
+ console.log('PASS: syntax; single load/bake; 640x360; bgDim .2; error/decode/bake/timeout fallback; late decode ignored; pending start cancellation and duplicate suppression; settled success/fallback creates RUN synchronously; retry reuses settled promise; OF-only render guards and ordering');
 })().catch(e=>{console.error(e);process.exitCode=1});
