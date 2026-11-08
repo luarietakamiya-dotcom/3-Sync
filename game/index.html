@@ -2320,7 +2320,7 @@ function ofDismantle(id){const it=itemById(id);if(!it||MODE!=="town"||!S.overflo
 function genDeco(seed){const r=srand(seed),a=[],n=Math.round(11*WW*WH/(W*H));for(let i=0;i<n;i++){a.push({x:20+r()*(WW-40),y:80+r()*(WH-96),k:Math.floor(r()*3),s:r()});}return a.filter(d=>Math.hypot(d.x-WW/2,d.y-WH/2-40)>70&&d.x>70);}
 const DECO_CACHE={};
 function decoNow(){const seed=(RUN&&RUN.kind==="run"?1000+RUN.seg*7+RUN.zi*131:5+FLOOR*17)+"_"+WW+"x"+WH,bg=zoneOf(FLOOR).backgroundId,A=BGS[bg]&&BGS[bg].art;
-  if(A){const key=seed+"_"+bg+"_a"+ART_VER+"_"+hazKey();return DECO_CACHE[key]||(DECO_CACHE[key]=genArtDeco(parseInt(seed),A));} // map-art zones: zone id, art version and the puddles they avoid are part of the key
+  if(A){const key=seed+"_"+bg+"_a"+(bg==="alley"?2:ART_VER)+"_"+hazKey();return DECO_CACHE[key]||(DECO_CACHE[key]=genArtDeco(parseInt(seed),A));} // map-art zones: zone id, art version and the puddles they avoid are part of the key
   return DECO_CACHE[seed]||(DECO_CACHE[seed]=genDeco(parseInt(seed)));} // each run segment looks different
 const GLITCH=(()=>{const r=srand(9);return Array.from({length:40},()=>({x:r()*W,y:r()*H,w:4+r()*40,h:1+r()*5,f:0.5+r()*3,p:r(),on:0.1+r()*0.3,dh:r()*80}));})();
 function shadow(x,y,rx){ctx.fillStyle="rgba(0,0,0,.35)";ctx.beginPath();ctx.ellipse(x,y,rx,rx*0.38,0,0,7);ctx.fill();}
@@ -2366,11 +2366,11 @@ alley:{
     alley_holo:{w:42,h:52,fd:12,wt:10,edge:1,max:2,light:"255,107,107",lw:24},
     alley_case:{w:44,h:30,fd:16,wt:18,max:3,near:["alley_shop","alley_pawn"],nd:[60,96]},
     alley_pawn:{w:38,h:48,fd:16,wt:12,edge:1,max:2,light:"246,168,69",lw:22},
-    alley_locker:{w:50,h:38,fd:16,wt:12,max:2},
-    alley_price:{w:24,h:28,fd:10,wt:10,max:2,near:["alley_case"],nd:[48,72]},
-    alley_pack:{w:28,h:22,fd:12,wt:10,max:3,pair:[32,38]},
-    alley_directory:{w:32,h:42,fd:12,wt:6,edge:1,max:1}},
-  minDist:{"alley_shop":116,"alley_canopy":110},tallH:50,tallGap:90,edgeBand:88,centerGap:26,maxScreen:14,maxTall:4,
+    alley_lantern:{w:30,h:54,fd:12,wt:8,edge:1,max:2,light:"246,168,69",lw:18},
+    alley_stonewall:{w:52,h:36,fd:16,wt:12,max:2},
+    alley_fox:{w:26,h:40,fd:12,wt:8,max:1,near:["alley_lantern"],nd:[40,70]},
+    alley_pots:{w:30,h:32,fd:12,wt:14,max:3,near:["alley_shop","alley_case"],nd:[40,72]}},
+  minDist:{alley_shop:116,alley_canopy:110,alley_lantern:110},tallH:41,tallGap:90,edgeBand:88,centerGap:26,maxScreen:14,maxTall:4,
   floor:{base:"#151119",panel:["#1A151E","#201923"],seam:"#48343F",seamA:0.24,glow:"246,168,69",glowA:0.06},
   rain:{back:60,front:20,splash:10},rainA:[0.10,0.14,0.07],rainL:[7,13],rainS:[180,280],
   refl:4,fog:1,skyLights:8,skyPer:[5,4],skyWin:4,puddle:false,fx:"alley",markFade:true}};
@@ -2635,6 +2635,7 @@ const ART_DRAW={
     for(let i=0;i<3;i++){const px=x-15+i*12;if(i===1){fR(C.pk,px,y-18,5,3);fR(C.pkT,px,y-18,5,1);}else{fR(C.dev,px,y-18,4,3);fR(C.devT,px,y-18,4,1);fR(`rgba(${am},.9)`,px+3,y-17,1,1);}} // three goods
     fR(C.e,x-20,y-14,36,1);fR("rgba(255,232,205,.2)",x-12,y-19,1,1);fR("rgba(255,232,205,.2)",x-11,y-18,4,1); // lit front edge, one reflection
     fR(C.j,x-17,y-11,16,7);fR(C.b,x-16,y-10,14,5); // price label
+    fB("#C9BAAB",[[x-16,y-10,3,5],[x-12,y-10,3,5],[x-8,y-10,3,5]]);fB(C.j,[[x-15,y-9,1,1],[x-11,y-9,1,1],[x-7,y-9,1,1]]); // clean physical price tags behind the display
     fR(C.j,x+8,y-10,4,4);fR(C.e,x+8,y-10,4,1);fR(C.j,x+9,y-8,2,1); // lock
     fR(C.j,x-18,y,4,1);fR(C.j,x+10,y,4,1);
   },dy(x,y,t,d){digs(x-15,y-9,String(100+Math.floor(hh(Math.floor(t/4.8),d.v,3)*900)),`rgba(${ART_A.co},.85)`,3);}}, // price refreshes every 4.8s
@@ -2648,37 +2649,57 @@ const ART_DRAW={
     fR(C.j,x-8,y-6,12,2);fR(C.e,x-8,y-4,12,1); // return slot
   },dy(x,y,t,d){const p=0.5-0.5*Math.cos(t*2.094),bx=x-10+Math.round(p*14);fR(`rgba(${ART_A.am},.18)`,bx-1,y-38,4,6);fR(`rgba(255,214,150,.8)`,bx,y-38,2,6); // light band sweeps there and back in 3s
     gL(ART_A.co,0.8,x+6,y-42,2,1,1);}},
-  alley_locker:{sh:(x,y)=>shadow(x+1,y,22),st(x,y,d){const C=ART_A,am=C.am,D=[0,1,2,3,4,5].map(i=>alleyLockerDoor(x,y,i));
-    aBox(x-22,y-33,40,30,6,5,C); // body
-    fB(C.j,[[x-21,y-3,38,3],[x-6,y-32,9,28],...D.map(([px,py,w])=>[px-1,py-1,w+2,10])]); // pedestal, authentication bay, door gaps
-    fB("#3A2E3B",D.map(([px,py,w])=>[px,py,w,8]));fB(C.e,[...D.map(([px,py,w])=>[px,py,w,1]),[x-3,y-19,3,3]]);fB(C.b,D.map(([px,py,w])=>[px,py+7,w,1])); // six stepped doors
-    fB(C.m,[[x-20,y-3,36,1],[x-4,y-20,5,5]]);fR(C.gl,x-5,y-30,7,6); // pedestal lip, scanner housing, screen glass
-    fB(`rgba(${am},.33)`,[[x-5,y-30,7,6],...D.map(([px,py])=>[px+2,py+3,1,1])]); // screen, door status dots
-    fB(C.j,[...D.map(([px,py,w])=>[px+w-4,py+3,2,3]),[x-2,y-18,1,1],[x-4,y-10,5,1]]); // recessed pulls, scanner, card slot
-    fR(C.e,x-3,y-19,3,3);fR(C.j,x-2,y-18,1,1);
-  },dy(x,y,t,d){const i=(Math.floor(t/5)+d.v)%6,[px,py]=alleyLockerDoor(x,y,i);gL(ART_A.am,0.95,px+2,py+3,1,1,1);gL(ART_A.co,0.6,x-1,y-27,1,1,1);}}, // one compartment lights each 5s
-  alley_price:{sh:(x,y)=>shadow(x,y,10),st(x,y,d){const C=ART_A;
-    aBox(x-9,y-5,16,4,4,3,C);fR(C.j,x-9,y-1,16,1);fR(C.j,x+1,y-3,5,1);fR(C.e,x+1,y-2,5,1); // base with the card reader slot
-    fR(C.f,x-2,y-13,4,8);fR(C.e,x-2,y-13,1,8);fR(C.b,x+1,y-13,1,8); // short leg
-    fP(C.b,[x+9,y-27,x+11,y-26,x+12,y-14,x+11,y-13]);fP(C.m,[x-9,y-27,x+9,y-27,x+11,y-13,x-11,y-13]);fR(C.e,x-9,y-27,18,1);fR(C.j,x-11,y-13,22,1); // tilted thick bezel
-    fP(C.gl,[x-7,y-25,x+7,y-25,x+8,y-16,x-8,y-16]);fP("rgba(246,168,69,.1)",[x-7,y-25,x+7,y-25,x+8,y-16,x-8,y-16]);fR(`rgba(${C.co},.7)`,x-7,y-23,3,1);
-  },dy(x,y,t,d){digs(x-5,y-21,String(10+Math.floor(hh(Math.floor(t/4),d.v,5)*90))+"0",`rgba(${ART_A.am},.9)`,3);}}, // one row of figures, every 4s
-  alley_pack:{sh:(x,y)=>shadow(x,y,13),st(x,y,d){const C=ART_A,am=C.am;
-    fR(C.j,x-10,y-3,6,3);fR(C.j,x+4,y-3,6,3); // skids: it stands, it does not roll
-    capsule(C.b,x-13,y-18,27,16);capsule(C.f,x-13,y-18,24,15);capsule(C.t,x-11,y-18,20,6);fR(C.e,x-7,y-18,12,1); // rounded body, lit top
-    fR(C.j,x-11,y-14,6,2);fR(C.b,x-11,y-12,6,1); // handle recess
-    fR(C.j,x+4,y-14,6,5);fR(`rgba(${am},.32)`,x+5,y-13,4,3); // content window
-    fR(C.j,x-2,y-18,5,16);fR(C.m,x-1,y-18,3,15);fR(C.e,x-1,y-18,1,15);fR(C.e,x-1,y-11,3,2);fR(C.j,x,y-10,1,1); // centre clamp + latch
-  },dy(x,y,t,d){const k=pulse(t,5,0.4);gL(ART_A.am,0.3+0.6*k,x+7,y-7,1,1,1);}}, // status lamp: 0.4s rise every 5s
-  alley_directory:{sh:(x,y)=>shadow(x,y,14),st(x,y,d){const C=ART_A,am=C.am;
-    for(const px of[x-14,x+11]){fR(C.f,px,y-38,3,36);fR(C.e,px,y-38,1,36);fR(C.m,px-1,y-3,5,3);fR(C.e,px-1,y-3,5,1);} // support frame on fixed feet
-    aBox(x-12,y-40,23,26,3,2,C);fR(C.b,x-11,y-12,22,2);
-    fR(C.j,x-11,y-39,21,4);for(let i=0;i<3;i++)fR(`rgba(${am},.6)`,x-9+i*6,y-38,4,2); // store numbers header
-    fR(C.j,x-11,y-35,20,12);fR(C.b,x-10,y-34,18,2);fR(C.b,x-10,y-34,2,10);fR(C.gl,x-8,y-32,16,8); // map window with depth
-    fR(`rgba(${am},.35)`,x-8,y-29,16,1);fR(`rgba(${am},.35)`,x-3,y-32,1,8);fR(`rgba(${am},.35)`,x+4,y-32,1,8);fR(`rgba(${am},.2)`,x-7,y-31,3,1);fR(`rgba(${am},.2)`,x+5,y-27,2,2);
-    for(let i=0;i<3;i++){fR(`rgba(${am},.5)`,x-9,y-21+i*2,2,1);fR(C.e,x-6,y-21+i*2,8+(i%2)*4,1);} // store list
-  },dy(x,y,t,d){gL(ART_A.co,0.6+0.35*Math.sin(t*2.618),x+1,y-30,2,2,1);}}, // you-are-here dot, gentle 2.4s
+
 };
+// Clean warm granite; all animated geometry is baked once into the shared LRU.
+const ALLEY_STONE={b:'#2E2B27',f:'#48433C',t:'#6B655B',e:'#9A9284',j:'#2E2B27'};
+function alleyLayer(kind,paint){return artBody({kind:'alley-v2-'+kind,v:0,w:60,h:60},{st:paint},1);}
+function alleyOverlay(kind,paint,x,y,alpha){const e=alleyLayer(kind,paint);ctx.save();ctx.globalAlpha*=alpha;ctx.drawImage(e.c,x-e.ox,y-e.oy,e.cw,e.ch);ctx.restore();}
+function alleyContact(x,y,w){ctx.fillStyle='rgba(10,8,12,.32)';ctx.fillRect(x-w/2,y-2,w,3);}
+const alleyNewDraw={
+ alley_lantern:{sh:(x,y)=>alleyContact(x,y,26),st(x,y){const C=ALLEY_STONE;
+  aBox(x-12,y-5,22,5,2,2,C); // foundation
+  aBox(x-4,y-24,7,18,2,2,C); // shaft
+  aBox(x-9,y-27,16,3,2,2,C); // middle platform
+  aBox(x-8,y-41,14,13,2,2,C); // light chamber
+  fR(C.b,x-5,y-39,8,9);fR('#9A7748',x-4,y-38,6,7);
+  // The shop canopy uses a 3:4 slant; share that exact eave angle.
+  fP(C.t,[x-15,y-44,x+12,y-44,x+9,y-48,x-12,y-48]);
+  fP(C.f,[x-15,y-44,x+12,y-44,x+12,y-42,x-15,y-42]);
+  fR(C.e,x-11,y-47,18,1);fR(C.e,x-14,y-44,25,1);
+  fP(C.f,[x-3,y-48,x-3,y-51,x,y-54,x+3,y-51,x+3,y-48]);fP(C.t,[x-3,y-51,x,y-54,x,y-49]);
+ },dy(x,y,t){alleyOverlay('lantern-window',(x,y)=>fR('#F6A845',x-4,y-38,6,7),x,y,.94+.03*Math.sin(t*2*Math.PI/3.1)+.03*Math.sin(t*2*Math.PI/1.7));}},
+ alley_stonewall:{sh:(x,y)=>alleyContact(x,y,48),st(x,y){const C=ALLEY_STONE;
+  aBox(x-24,y-29,46,29,3,3,C);
+  for(let row=0;row<3;row++){fR(C.b,x-24,y-9-row*9,46,1);for(let col=0;col<3;col++){const px=x-21+col*17+(row%2?7:0);if(px<x+21)fR(C.b,px,y-8-row*9,1,8);}}
+  fP(C.t,[x-26,y-32,x+23,y-32,x+20,y-36,x-23,y-36]);fR(C.f,x-26,y-32,49,3);fR(C.e,x-23,y-35,42,1);
+  for(let i=0;i<6;i++)fR(C.b,x-21+i*8,y-34,1,3);
+  aBox(x-8,y-23,16,9,1,1,C);fB(C.b,[[x-5,y-21,1,5],[x-6,y-20,4,1],[x-4,y-18,3,1],[x+2,y-21,4,1],[x+3,y-21,1,5],[x+1,y-18,5,1]]);
+ },dy(){}},
+ alley_fox:{sh:(x,y)=>alleyContact(x,y,24),st(x,y){const C=ALLEY_STONE;
+  aBox(x-12,y-4,22,4,2,2,C);
+  fP(C.b,[x+4,y-5,x+12,y-12,x+12,y-26,x+8,y-23,x+6,y-14,x,y-8]);
+  fP(C.f,[x-8,y-5,x-7,y-19,x-3,y-27,x+4,y-27,x+8,y-17,x+8,y-5]);
+  fP(C.t,[x-7,y-29,x-7,y-40,x-2,y-35,x+3,y-35,x+8,y-40,x+7,y-28,x,y-24]);
+  fP(C.f,[x-7,y-29,x,y-27,x+7,y-29,x,y-24]);fR(C.b,x-5,y-31,2,1);fR(C.b,x+3,y-31,2,1);
+  fP('#FF6B6B',[x-5,y-25,x+5,y-25,x+6,y-19,x,y-17,x-6,y-19]);fR('#FFA39A',x-4,y-25,8,1);
+  fR(C.e,x-5,y-15,2,9);fR(C.e,x+3,y-15,2,9);fR(C.e,x-11,y-4,20,1);
+ },dy(x,y,t){const p=((t%8)+8)%8;if(p<.3)alleyOverlay('fox-eyes',(x,y)=>fB('#EBC087',[[x-5,y-31,2,1],[x+3,y-31,2,1]]),x,y,.6*Math.sin(Math.PI*p/.3));}},
+ alley_pots:{sh:(x,y)=>alleyContact(x,y,28),st(x,y){
+  fB('#28323A',[[x-13,y-21,2,21],[x+11,y-21,2,21],[x-14,y-19,28,3],[x-14,y-3,28,3]]);fB('#67747C',[[x-14,y-19,28,1],[x-14,y-3,28,1]]);
+  for(const [px,py,col]of [[-8,-20,'#9C8276'],[5,-20,'#889398'],[-7,-4,'#7B8D86'],[6,-4,'#AC8F7E']]){
+   fP(col,[x+px-4,y+py-6,x+px+4,y+py-6,x+px+3,y+py,x+px-3,y+py]);fR('#C1B3A3',x+px-4,y+py-6,8,1);
+   fP('#365C45',[x+px,y+py-6,x+px-5,y+py-10,x+px-4,y+py-12,x+px,y+py-9,x+px+3,y+py-12,x+px+5,y+py-10]);
+   if(px===-8){X.fillStyle='#80A481';X.beginPath();X.ellipse(x+px-2,y+py-9,2,2,0,0,Math.PI*2);X.ellipse(x+px+2,y+py-10,2,2,0,0,Math.PI*2);X.fill();}
+   if(px===-7)fB('#80A481',[[x+px-3,y+py-11,6,1],[x+px-2,y+py-13,4,1],[x+px-1,y+py-15,2,1]]);
+   fR('#80A481',x+px,y+py-12,1,6);
+  }
+  fP('#6D9B76',[x-8,y-26,x-11,y-30,x-8,y-29,x-6,y-32,x-5,y-29,x-3,y-30,x-5,y-26]);
+  fB('#416D51',[[x+3,y-15,1,5],[x+5,y-16,1,6],[x+7,y-14,1,4]]);
+ },dy(x,y,t){alleyOverlay('pots-flower',(x,y)=>{fR('#EBC087',x+5,y-30,1,5);fB('#F6C477',[[x+3,y-30,5,2],[x+4,y-31,3,4]]);fR('#FFF0CA',x+5,y-30,1,1);},x,y,.8+.2*Math.sin(t*2*Math.PI/4));}}
+};
+Object.assign(ART_DRAW,alleyNewDraw);
+
 const ALLEY_HOLO=["質屋","営業中","買取","福"];
 // alley helpers: a box with lit top / mid front / dark right side, a capsule, 3×5 pixel figures
 function aBox(x0,yt,w,h,dx,dy,C){fP(C.b,[x0+w,yt+h,x0+w,yt,x0+w+dx,yt-dy,x0+w+dx,yt+h-dy]);fR(C.f,x0,yt,w,h);fP(C.t,[x0,yt,x0+w,yt,x0+w+dx,yt-dy,x0+dx,yt-dy]);fR(C.e,x0,yt,w,1);fR(C.e,x0,yt,1,h);fR(C.j,x0,yt+h-1,w,1);}
@@ -2686,7 +2707,7 @@ function fB(c,a){X.fillStyle=c;X.beginPath();for(const r of a)X.rect(r[0],r[1],r
 function capsule(c,x0,y0,w,h){const r=h/2;X.fillStyle=c;X.beginPath();X.moveTo(x0+r,y0);X.lineTo(x0+w-r,y0);X.arc(x0+w-r,y0+r,r,-Math.PI/2,Math.PI/2);X.lineTo(x0+r,y0+h);X.arc(x0+r,y0+r,r,Math.PI/2,Math.PI*1.5);X.fill();}
 const DIG=["111101101101111","010110010010111","111001111100111","111001111001111","101101111001001","111100111001111","111100111101111","111001010010010","111101111101111","111101111001111"];
 function digs(x,y,s,col,n){X.fillStyle=col;X.beginPath();for(let i=0;i<s.length&&i<(n||9);i++){const g=DIG[+s[i]]||DIG[0];for(let b=0;b<15;b++)if(g[b]==="1")X.rect(x+i*4+b%3,y+Math.floor(b/3),1,1);}X.fill();}
-function alleyLockerDoor(x,y,i){const c=i%2,r=Math.floor(i/2);return c?[x+5,y-32+r*10,12]:[x-20,y-32+r*10,13];}
+
 // ---- per-frame scene parts
 let ART_LT=0,ART_ON=null,ART_VIS=[];
 function artVisible(d,vx0,vy0,vw,vh){const hw=Math.max(d.w/2+8,d.kind==="slum_lamp"?36:0);return d.x+hw>vx0&&d.x-hw<vx0+vw&&d.y+18>vy0&&d.y-d.h-8<vy0+vh;} // drawn extent incl. glow, shadow, reflections and the lamp's floor light
