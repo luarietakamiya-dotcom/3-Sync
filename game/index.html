@@ -1400,7 +1400,7 @@ function showDeath(){
     overlay("やられた…",`${txt}持ち帰り中の素材を${G.lost}個なくした。共鳴の欠片 +${r.shards}（獲得済み）。装備とレベルはそのまま。`,[["街へ戻る","primary",()=>enterTown(true)]]);return;}
   overlay("やられた…",`第${FLOOR}層で力つきた。持ち帰り中の素材を${G.lost}個なくした。装備とレベルはそのまま。`,[["街へ戻る","primary",()=>enterTown(true)]]);
 }
-function overlay(t,s,btns){$("ovt").textContent=t;$("ovs").textContent=s;const b=$("ovb");b.innerHTML="";
+function overlay(t,s,btns){autoNextStop();$("ovt").textContent=t;$("ovs").textContent=s;const b=$("ovb");b.innerHTML="";
   for(const[l,cls,fn]of btns){const e=document.createElement("button");e.className="btn "+(cls||"");e.textContent=l;e.onclick=fn;b.appendChild(e);}$("ov").hidden=false;}
 function burst(x,y,hue,n){for(let i=0;i<n;i++)PARTS.push({x:x+rnd(-8,8),y:y-rnd(4,20),vx:rnd(-15,15),vy:rnd(-70,-30),l:rnd(0.8,1.5),hue:hue+rnd(-20,20),s:rnd(1.5,3)});}
 function killEnemy(e){
@@ -1743,7 +1743,25 @@ function floorChoice(){
   if(fi===5)s+=` ゲートから第${next}層に直接来られるようになった。`;
   if(fi===9)s+=` 次の層はボス「${ENEMIES[zoneOf(next).bossId].name}」。3人で戦う。`;
   if(newZone)s+=` 新しいエリア「${Zn.name}」（推奨Lv${Zn.recommendedLevel}）が開いた！`;
-  overlay(`第${FLOOR}層 クリア`,s,[[floorIn(next)===10?`ボスに挑む（第${next}層）`:`第${next}層へ`,"primary",()=>{FLOOR=next;startFloor();save(true);}],["街へ帰還","",()=>{returnHome();}]]);
+  const lbl=floorIn(next)===10?`ボスに挑む（第${next}層）`:`第${next}層へ`;let done=false;
+  const go=()=>{if(done)return;done=true;autoNextStop();FLOOR=next;startFloor();save(true);};
+  overlay(`第${FLOOR}層 クリア`,s,[[lbl,"primary",go],["街へ帰還","",()=>{if(done)return;done=true;autoNextStop();returnHome();}]]);
+  autoNextStart(lbl,go);
+}
+/* normal dive only: after the clear overlay appears, advance to the next floor automatically after AUTO_NEXT_SEC.
+   A wall-clock deadline + setInterval keeps it off the render loop; the token, the done-flag in floorChoice and the
+   "is this overlay still the one we opened?" check make sure it fires at most once and dies with its overlay. */
+const AUTO_NEXT_SEC=10;let AUTO_NEXT=null;
+function autoNextStop(){if(AUTO_NEXT){clearInterval(AUTO_NEXT.iv);AUTO_NEXT=null;}}
+function autoNextStart(lbl,go){autoNextStop();
+  const btn=$("ovb").querySelector("button.primary");if(!btn)return;
+  const a={iv:0,end:performance.now()+AUTO_NEXT_SEC*1000,btn};AUTO_NEXT=a;
+  const tick=()=>{if(AUTO_NEXT!==a)return;
+    if($("ov").hidden||!btn.isConnected||MODE!=="dive"||RUN||G.state!=="choice"){autoNextStop();return;} // overlay closed / replaced elsewhere
+    const left=Math.ceil((a.end-performance.now())/1000);
+    if(left<=0){autoNextStop();go();return;}
+    btn.textContent=`${lbl}（あと${left}秒で自動で進む）`;};
+  a.iv=setInterval(tick,200);tick();
 }
 /* ===== active skills (auto-cast; tap the icons at the bottom-left to cast your own) ===== */
 const INNATE={luarie:"lu_slow",ht:"ht_cheer",mimi:"mi_lance"}; // everyone starts with one skill
