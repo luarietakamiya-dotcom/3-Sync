@@ -1,0 +1,1 @@
+PASS: JS syntax, 40 deterministic seeds, per-screen limits, four new renderers at seven times, finite canvas arguments, shared cache, cached animation geometry and maximum two moving layers { cacheBytes: 100816, objects: 9 } { operations: 16291 }
