@@ -2320,7 +2320,7 @@ function ofDismantle(id){const it=itemById(id);if(!it||MODE!=="town"||!S.overflo
 function genDeco(seed){const r=srand(seed),a=[],n=Math.round(11*WW*WH/(W*H));for(let i=0;i<n;i++){a.push({x:20+r()*(WW-40),y:80+r()*(WH-96),k:Math.floor(r()*3),s:r()});}return a.filter(d=>Math.hypot(d.x-WW/2,d.y-WH/2-40)>70&&d.x>70);}
 const DECO_CACHE={};
 function decoNow(){const seed=(RUN&&RUN.kind==="run"?1000+RUN.seg*7+RUN.zi*131:5+FLOOR*17)+"_"+WW+"x"+WH,bg=zoneOf(FLOOR).backgroundId,A=BGS[bg]&&BGS[bg].art;
-  if(A){const key=seed+"_"+bg+"_a"+ART_VER+"_"+hazKey();return DECO_CACHE[key]||(DECO_CACHE[key]=genArtDeco(parseInt(seed),A));} // map-art zones: zone id, art version and the puddles they avoid are part of the key
+  if(A){const key=seed+"_"+bg+"_a"+(bg==="live"?2:ART_VER)+"_"+hazKey();return DECO_CACHE[key]||(DECO_CACHE[key]=genArtDeco(parseInt(seed),A));} // map-art zones: zone id, art version and the puddles they avoid are part of the key
   return DECO_CACHE[seed]||(DECO_CACHE[seed]=genDeco(parseInt(seed)));} // each run segment looks different
 const GLITCH=(()=>{const r=srand(9);return Array.from({length:40},()=>({x:r()*W,y:r()*H,w:4+r()*40,h:1+r()*5,f:0.5+r()*3,p:r(),on:0.1+r()*0.3,dh:r()*80}));})();
 function shadow(x,y,rx){ctx.fillStyle="rgba(0,0,0,.35)";ctx.beginPath();ctx.ellipse(x,y,rx,rx*0.38,0,0,7);ctx.fill();}
@@ -2363,12 +2363,12 @@ live:{
   objs:{
     live_speaker:{w:36,h:68,fd:16,wt:14,edge:1,max:2},
     live_light:{w:40,h:56,fd:16,wt:10,edge:1,max:2,light:"246,196,69",lw:24},
-    live_reel:{w:32,h:28,fd:14,wt:14,max:3,near:["live_speaker","live_mixer"],nd:[60,90]},
-    live_case:{w:46,h:28,fd:18,wt:18,max:3},
+    live_reel:{w:32,h:28,fd:14,wt:14,max:3,near:["live_speaker","live_fountain"],nd:[60,90]},
+    live_orb:{w:30,h:28,fd:12,wt:18,max:3,pair:[30,36]},
     live_arch:{w:88,h:72,fd:18,wt:6,edge:1,max:1,light:"255,79,168",lw:40},
-    live_ticket:{w:34,h:46,fd:14,wt:10,edge:1,max:2,light:"255,79,168",lw:18},
-    live_mixer:{w:48,h:34,fd:18,wt:10,max:2},
-    live_duct:{w:38,h:32,fd:16,wt:10,max:2,near:["live_light"],nd:[64,96]},
+    live_statue:{w:30,h:66,fd:14,wt:10,edge:1,max:1,light:"246,196,69",lw:20},
+    live_fountain:{w:56,h:38,fd:20,wt:8,max:1,light:"255,79,168",lw:28},
+    live_bush:{w:42,h:36,fd:16,wt:12,max:2,near:["live_light"],nd:[64,96]},
     live_marquee:{w:60,h:40,fd:12,wt:8,max:2,light:"255,79,168",lw:30}},
   minDist:{"live_speaker":112,"live_arch":140},tallH:50,tallGap:96,edgeBand:96,centerGap:28,maxScreen:14,maxTall:4,
   floor:{base:"#100D16",panel:["#15111C","#1A1422"],seam:"#3B2B47",seamA:0.22,glow:"255,79,168",glowA:0.035},
@@ -2614,16 +2614,7 @@ const ART_DRAW={
     lvB(C.mt,[[x+4,y-12,3,2],[x+12,y-16,1,1]]);fR(C.j,x+5,y-12,1,2); // clipped cable end, axle bolt
     fR(`rgba(${C.gd},.3)`,x+1,y-3,1,1);
   },dy(x,y,t,d){gL(ART_L.gd,0.25+0.6*(0.5-0.5*Math.cos(t*1.047)),x+1,y-3,1,1,1);}}, // terminal lamp brightens and settles over 6s; the turns never move
-  live_case:{sh:(x,y)=>shadow(x,y,20),st(x,y,d){const C=ART_L,P2=Math.PI,cy=y-15; // acoustic drum case: a lying cylinder on two low cradles (open below)
-    lvP(C.mt,[[x-15,y-6,x-9,y-6,x-8,y,x-16,y],[x+7,y-6,x+13,y-6,x+14,y,x+6,y]]);lvB(C.mtT,[[x-16,y-1,8,1],[x+6,y-1,8,1]]);lvB(C.j,[[x-15,y-6,6,1],[x+7,y-6,6,1]]); // cradles
-    lvE(C.b,[[x+18,cy,5,10]]);lvB(C.f,[[x-18,cy-10,36,20]]);lvE(C.f,[[x-18,cy,4,10]]); // far end face, barrel, near rounded end
-    lvB(C.t,[[x-18,cy-10,36,3]]);lvB("#332841",[[x-18,cy-7,36,2]]);lvB(C.b,[[x-18,cy+4,36,6]]);lvB(C.j,[[x-18,cy+9,36,1]]); // round shading: lit crown, mid, dark belly
-    lvSt(C.mt,3,[[x-15,cy,2.5,10,P2*0.5,P2*1.5],[x+14,cy,2.5,10,-P2*0.5,P2*0.5]]);lvArc(C.mtT,[[x-15,cy,3.5,10.5,P2*1.1,P2*1.45],[x+14,cy,1.5,10.5,P2*1.2,P2*1.5]]); // thick end rings
-    lvE(C.mt,[[x+19,cy,4.2,10.2]]);lvE(C.m,[[x+19.5,cy,3,8]]);lvE(C.j,[[x+20,cy,1,1.6]]);lvArc(C.mtT,[[x+19,cy,4.2,10.2,P2*1.1,P2*1.5]]); // drum head on the far end, vent
-    lvSt(C.mt,1.5,[[x-9,cy,3,10,-P2*0.5,P2*0.5],[x+7,cy,3,10,P2*0.5,P2*1.5]]);lvB(C.mtT,[[x-7,cy-1,2,3],[x+4,cy-1,2,3]]); // curved straps, buckles
-    lvSt(C.mt,1.5,[[x-1,cy-10,6,3.5,P2,P2*2]]);lvB(C.mtT,[[x-8,cy-11,2,2],[x+5,cy-11,2,2]]); // carry handle on the crown
-    lvB(C.j,[[x-3,cy-4,6,3]]);fR(C.gl,x-3,cy-4,6,2);lvB(C.e,[[x-18,cy-10,36,1]]); // status window, lit top line
-  },dy(x,y,t,d){const s=Math.floor(t/4.8),c=(s+d.v)%3;gL(s%2?ART_L.pk:ART_L.gd,0.9,x-3+c*2,y-19,2,2,1);}}, // status cell steps every 4.8s
+
   live_arch:{sh:(x,y)=>{shadow(x-36,y,10);shadow(x+32,y,10);},st(x,y,d){const C=ART_L,P2=Math.PI,cx=x-2,cy=y-50;
     lvBoxes(C,[[x-43,y-6,14,6,3,2],[x+25,y-6,14,6,3,2]]);lvBoxes(C,[[x-40,y-52,8,46,3,2],[x+28,y-52,8,46,3,2]]); // fixed bases, twin legs
     const st=(c,w,rx,ry,a0,a1)=>{X.strokeStyle=c;X.lineWidth=w;X.beginPath();X.ellipse(cx,cy,rx,ry,0,a0,a1);X.stroke();};
@@ -2635,45 +2626,9 @@ const ART_DRAW={
     fR(`rgba(${C.pk},.12)`,x-18,y-69,32,10);lvTxt(x-17,y-68,"LIVE",`rgba(${C.pk},.92)`,2);lvB(C.mtT,[[x-18,y-60,1,1],[x+13,y-60,1,1]]);
   },dy(x,y,t,d){const u=(t%6)/6,a=Math.PI*1.08+u*Math.PI*0.84;if(Math.abs(Math.cos(a))*34<19)return; // a short band runs along the beam once per 6s (hidden behind the plate)
     ctx.beginPath();ctx.ellipse(x-2,y-50,34,16,0,a-0.08,a+0.08);ctx.strokeStyle=`rgba(${ART_L.pk},.14)`;ctx.lineWidth=5;ctx.stroke();ctx.strokeStyle=`rgba(${ART_L.pk},.75)`;ctx.lineWidth=2;ctx.stroke();ctx.lineWidth=1;}},
-  live_ticket:{sh:(x,y)=>shadow(x-2,y,14),st(x,y,d){const C=ART_L,P2=Math.PI,cx=x+2,cy=y-30; // show-guide disc on one curved post, set off-centre
-    lvE(C.b,[[x-8,y-2,7,2.5]]);lvE(C.t,[[x-9,y-2.5,6,1.6]]); // round foot
-    X.lineCap="round";X.strokeStyle=C.f;X.lineWidth=3;X.beginPath();X.moveTo(x-9,y-3);X.quadraticCurveTo(x-13,y-12,x-6,y-19);X.stroke();
-    X.strokeStyle=C.e;X.lineWidth=1;X.beginPath();X.moveTo(x-10.5,y-4);X.quadraticCurveTo(x-14.5,y-12,x-7.5,y-20);X.stroke();X.lineCap="butt"; // curved post, lit edge
-    lvE("#1E1828",[[cx+3,cy-2,14,14]]);lvSt(C.t,1.5,[[cx+3,cy-2,13.2,13.2,P2*1.2,P2*1.85]]); // disc depth
-    lvE(C.f,[[cx,cy,14,14]]);lvE(C.j,[[cx,cy,12.3,12.3]]);lvE(C.gl,[[cx,cy,11.5,11.5]]);lvArc(C.e,[[cx,cy,13.6,13.6,P2,P2*1.55]]); // rim, bezel, round screen
-    lvSt(`rgba(${C.pk},.5)`,1,[[cx,cy,12.9,12.9,P2*1.3,P2*1.7]]);lvB(C.mt,[[cx-13,cy-1,1,2],[cx+12,cy-1,1,2],[cx-5,cy+12,1,1]]); // header arc, rim bolts
-    lvB(C.f,[[cx-5,cy+12,10,5]]);lvB(C.t,[[cx-5,cy+12,10,1]]);lvB(C.b,[[cx+5,cy+12,1,5]]);lvB(C.j,[[cx-4,cy+15,7,1]]); // ticket mouth at the disc's lower edge
-    fR(`rgba(${C.gd},.7)`,cx+3,cy+13,1,1); // card reader lens
-  },dy(x,y,t,d){const u=t%6,sw=u<0.2?Math.abs(u-0.1)/0.1:1,L=LV_TK[(Math.floor(t/6)+d.v)%LV_TK.length],c=`rgba(${ART_L.pk},${0.95*sw})`,cx=x+2,cy=y-30; // wording swaps every 6s (0.2s)
-    lvE(`rgba(${ART_L.pk},${0.05*sw})`,[[cx,cy,11.5,11.5]]);
-    if(L.length>1){X.fillStyle=c;X.beginPath();lvTxtP(cx-lvTxtW(L[0],1)/2,cy-6,L[0],1);lvTxtP(cx-lvTxtW(L[1],1)/2,cy+1,L[1],1);X.fill();}
-    else lvTxt(cx-lvTxtW(L[0],1)/2,cy-3,L[0],c,1);}},
-  live_mixer:{sh:(x,y)=>shadow(x,y,19),st(x,y,d){const C=ART_L,P2=Math.PI,a0=LV_MX[0],a1=LV_MX[1],oy=y-6; // fan-shaped desk, meters on its arc, two splayed legs (open below)
-    lvP(C.f,[[x-6,y-9,x-3,y-9,x-11,y-2,x-14,y-2],[x+3,y-9,x+6,y-9,x+14,y-2,x+11,y-2]]);lvB(C.e,[[x-14,y-3,1,1],[x-12,y-5,1,1],[x-10,y-7,1,1]]);lvB(C.mt,[[x-16,y-2,6,2],[x+10,y-2,6,2]]); // legs, feet
-    lvSt("#2C2240",1,[[x,y-7,8,4,P2*0.15,P2*0.85]]); // cable loop inside the frame
-    lvSec(C.b,x,oy+3,9,6,21,15,a0,a1);lvSec("#30253D",x,oy,9,6,21,15,a0,a1); // desk thickness, top
-    lvSt(C.m,6,[[x,oy,24,18,a0+0.04,a1-0.04]]);lvArc(C.e,[[x,oy,27,21,a0+0.1,a1-0.1],[x,oy,21,15,a0,a1]]);lvArc(C.j,[[x,oy,21.5,15.5,a0+0.04,a1-0.04]]); // meter bridge on the arc
-    lvArc(C.t,[[x,oy,9,6,a0,a1]]); // front lip
-    const g=[],cp=[],dm=[],kn=[];for(let i=0;i<5;i++){const a=a0+0.3+i*(a1-a0-0.6)/4,c=Math.cos(a),s=Math.sin(a);g.push([x+c*11,oy+s*7.5,x+c*19,oy+s*13.5]); // fader grooves run radially
-      const f=0.25+hh(i,d.v,3)*0.6;cp.push([Math.round(x+c*(11+8*f))-1,Math.round(oy+s*(7.5+6*f)),3,1]);kn.push([Math.round(x+c*10)-0,Math.round(oy+s*6.8)-1,1,1]);}
-    X.strokeStyle=C.j;X.beginPath();for(const l of g){X.moveTo(l[0],l[1]);X.lineTo(l[2],l[3]);}X.stroke();lvB(C.mt,cp);lvB(C.mtT,kn);
-    for(const[px,py]of lvMxCells(x,oy))dm.push([px,py,2,1]);lvB("#2A2136",dm); // unlit meter cells
-    fR(`rgba(${C.gd},.55)`,x-1,y-10,1,1);fR(`rgba(${C.gd},.55)`,x+1,y-10,1,1);
-  },dy(x,y,t,d){const gd=[],pk=[],cs=lvMxCells(x,y-6);for(let i=0;i<6;i++){const n=Math.round(1.5+1.5*Math.sin(t*(1.7+i*0.45)+d.v*2+i*1.3)); // 6 meters follow a time function, never a full flash
-      for(let k=0;k<n;k++)(k===2?pk:gd).push([cs[i*3+k][0],cs[i*3+k][1],2,1]);}
-    lvB(`rgba(${ART_L.gd},.85)`,gd);if(pk.length)lvB(`rgba(${ART_L.pk},.9)`,pk);}},
-  live_duct:{sh:(x,y)=>shadow(x,y,17),st(x,y,d){const C=ART_L,P2=Math.PI,fx=x-6,fy=y-17,bx=x+5,by=y-20; // short turbine drum on three legs; the sealed tank is its rounded tail
-    lvP(C.f,[[x+8,y-13,x+10,y-13,x+14,y-5,x+12,y-5]]);lvB(C.mt,[[x+11,y-5,5,1]]); // rear leg (behind, foot higher)
-    lvE(C.b,[[x+12,by+1,7,7.5]]);lvArc(C.t,[[x+12,by+1,6.5,7,P2*1.2,P2*1.8]]);lvArc(C.j,[[x+12,by+1,3,7.5,-P2*0.5,P2*0.5]]); // tank tail, its seam
-    lvE(C.f,[[bx,by,10,10]]);lvP(C.f,[[fx,fy-11,bx,by-10,bx,by+10,fx,fy+11]]);lvP(C.t,[[fx,fy-11,bx,by-10,bx,by-7,fx,fy-8]]);lvP(C.b,[[fx,fy+8,bx,by+7,bx,by+10,fx,fy+11]]);lvArc(C.b,[[bx,by,10,10,-P2*0.4,P2*0.5]]); // drum side: lit crown, belly
-    lvArc(C.j,[[x-1,y-18.5,10.5,10.5,-P2*0.45,P2*0.45],[x+3,y-19.5,10.2,10.2,-P2*0.45,P2*0.45]]); // band seams
-    lvP(C.f,[[x-12,y-9,x-10,y-9,x-14,y-1,x-16,y-1],[x-1,y-8,x+1,y-8,x+2,y-1,x,y-1]]);lvB(C.e,[[x-16,y-2,1,1],[x-14,y-5,1,1]]);lvB(C.mt,[[x-18,y-2,5,2],[x-1,y-2,5,2]]); // two front legs, pads
-    lvE(C.m,[[fx,fy,11,11]]);lvArc(C.e,[[fx,fy,10.6,10.6,P2,P2*1.55]]);lvE(C.j,[[fx,fy,9,9]]); // round intake
-    fR(`rgba(${C.pk},.45)`,x+14,y-25,1,1);
-  },dy(x,y,t,d){const cx=x-6,cy=y-17,a=t*1.571; // fan: one turn / 4s behind the fixed vanes
-    ctx.strokeStyle="#4A3C5C";ctx.lineWidth=2;ctx.beginPath();for(let k=0;k<3;k++){const b=a+k*2.094;ctx.moveTo(cx,cy);ctx.lineTo(cx+Math.cos(b)*7.5,cy+Math.sin(b)*7.5);}ctx.stroke();
-    ctx.strokeStyle=ART_L.mt;ctx.lineWidth=1;ctx.beginPath();for(let k=0;k<4;k++){const b=0.785+k*1.571;ctx.moveTo(cx+Math.cos(b)*2.5,cy+Math.sin(b)*2.5);ctx.lineTo(cx+Math.cos(b)*9,cy+Math.sin(b)*9);}ctx.stroke();
-    fR(ART_L.mtT,cx-1,cy-1,2,2);}},
+
+
+
   live_marquee:{sh:(x,y)=>{shadow(x-23,y,7);shadow(x+22,y,7);},st(x,y,d){const C=ART_L,top=lvMqPts(x,y,-5,28),bot=lvMqPts(x,y,4,28); // a thin arched ribbon display on two slim legs
     lvB(C.mt,[[x-27,y-3,7,3],[x+20,y-3,7,3]]);lvB(C.mtT,[[x-27,y-3,7,1],[x+20,y-3,7,1]]); // feet
     lvB(C.f,[[x-25,y-24,2,21],[x+22,y-24,2,21]]);lvB(C.e,[[x-25,y-24,1,21],[x+22,y-24,1,21]]); // slim legs
@@ -2687,6 +2642,35 @@ const ART_DRAW={
     X.fillStyle=`rgba(${C.pk},${0.95*sw})`;X.beginPath();let gx=Math.round(x-1-lvTxtW(txt,1)/2);for(const ch of txt){const gw=LV_GL[ch]?LV_GL[ch].length/5:3;if(ch!==" ")lvTxtP(gx,Math.round(yc(gx+gw/2))-3,ch,1);gx+=gw+1;}X.fill();
     const sx=Math.round(x-26+(t%4)/4*52);fR("rgba(255,196,228,.2)",sx,Math.round(yc(sx))-3,1,6);}},
 };
+// Live variety: bodies and animation strips are baked once; warm frames use only drawImage.
+const LIVE_STRIPS=new Map();let LIVE_STRIP_BYTES=0;const LIVE_STRIP_CAP=16*1024*1024;
+function liveEllipse(c,x,y,rx,ry){X.fillStyle=c;X.beginPath();X.ellipse(x,y,rx,ry,0,0,Math.PI*2);X.fill();}
+function liveCurve(c,w,pts){X.strokeStyle=c;X.lineWidth=w;X.lineCap='round';X.beginPath();X.moveTo(...pts[0]);for(let i=1;i<pts.length;i++)X.bezierCurveTo(...pts[i]);X.stroke();X.lineWidth=1;}
+function liveCylinder(x,y,rx,h,c){liveEllipse('#100D16',x,y-2,rx,4);X.fillStyle=c;X.fillRect(x-rx,y-h,rx*2,h-3);liveEllipse(c,x,y-3,rx,4);liveEllipse('#D8D6E0',x,y-h,rx,4);}
+function liveStrip(id,x,y,t,period,paint){const m=ctx.getTransform(),sc=Math.max(1,Math.round(Math.hypot(m.a,m.b)*100)/100),key=id+'|'+sc;let e=LIVE_STRIPS.get(key);
+ if(!e){const [w,h]=id.startsWith('fountain')?[64,46]:id.startsWith('statue')?[38,74]:id.startsWith('orb')?[38,36]:[50,44],n=60,c=document.createElement('canvas'),pw=Math.ceil(w*sc),ph=Math.ceil(h*sc);c.width=pw*n;c.height=ph;const g=c.getContext('2d');g.scale(sc,sc);const prev=X;X=g;try{for(let i=0;i<n;i++){g.save();g.translate(i*pw/sc+w/2,h-4);paint(i/n);g.restore();}}finally{X=prev;}e={c,pw,ph,w,h,bytes:c.width*c.height*4};LIVE_STRIPS.set(key,e);LIVE_STRIP_BYTES+=e.bytes;for(const [k,v]of LIVE_STRIPS){if(LIVE_STRIP_BYTES<=LIVE_STRIP_CAP)break;if(v===e)continue;LIVE_STRIPS.delete(k);LIVE_STRIP_BYTES-=v.bytes;}}
+ const f=Math.floor(((t%period)+period)%period/period*60)%60;ctx.drawImage(e.c,f*e.pw,0,e.pw,e.ph,x-e.w/2,y-e.h+4,e.pw/sc,e.ph/sc);
+}
+const liveNewDraw={
+ live_statue:{sh:(x,y)=>shadow(x,y,14),st(x,y){
+  liveCylinder(x,y,14,19,'#B0AFBF');for(const dy of [5,14]){X.strokeStyle='#D9B95E';X.beginPath();X.ellipse(x,y-dy,14,4,0,0,Math.PI);X.stroke();}
+  X.fillStyle='#F1EFF5';X.beginPath();X.moveTo(x-10,y-21);X.bezierCurveTo(x+7,y-35,x-9,y-38,x-3,y-49);X.bezierCurveTo(x-8,y-57,x-4,y-62,x+1,y-60);X.bezierCurveTo(x+10,y-52,x+1,y-45,x+4,y-39);X.bezierCurveTo(x+3,y-31,x+11,y-26,x+9,y-21);X.closePath();X.fill();
+  liveCurve('#C9CAD8',3,[[x+1,y-51],[x-4,y-41,x+9,y-35,x+2,y-26]]);
+  liveCurve('#F7F5FA',4,[[x+2,y-44],[x+11,y-47,x+7,y-57,x+10,y-64]]);liveEllipse('#F7F5FA',x+10,y-64,2,2);
+  liveCurve('#D4D4E1',2,[[x-1,y-47],[x-8,y-48,x-10,y-40,x-8,y-37]]);
+  liveEllipse('#777585',x,y-10,5,2);liveCurve('#C9C4BB',.7,[[x-3,y-10],[x-1,y-12,x+1,y-8,x+3,y-10]]);
+ },dy(x,y,t){liveStrip('statue-dot',x,y,t,6,p=>{if(p<.5)liveEllipse('#FFE6A0',14*Math.cos(p*Math.PI*2),-14+4*Math.sin(p*Math.PI*2),1.3,1.1);});}},
+ live_fountain:{sh:(x,y)=>shadow(x,y,26),st(x,y){
+  liveCylinder(x,y,28,12,'#6D5B7C');liveEllipse('#B8A1BE',x,y-12,28,8);liveEllipse('#342B52',x,y-12,24,6);liveEllipse('#6C527D',x,y-12,22,5);
+  liveCylinder(x,y-14,11,7,'#A293AF');liveEllipse('#66547D',x,y-21,9,3);liveCylinder(x,y-22,3,12,'#D3CBDD');
+  for(const dx of [-19,0,19])liveCurve('#A7CEE0',1.1,[[x,y-33],[x+dx*.6,y-43,x+dx,y-28,x+dx,y-13]]);
+  liveCurve('#F3A6CA',1,[[x-19,y-13],[x-10,y-10,x-5,y-12,x-2,y-12]]);liveCurve('#F6C445',1,[[x+7,y-12],[x+12,y-10,x+19,y-12,x+20,y-13]]);
+ },dy(x,y,t){liveStrip('fountain-flow',x,y,t,2,p=>{for(const dx of [-19,0,19])for(let j=0;j<5;j++){const u=(j/5+p)%1,v=1-u;liveEllipse('#C4DAF0',3*v*v*u*dx*.6+3*v*u*u*dx+u*u*u*dx,v*v*v*-33+3*v*v*u*-43+3*v*u*u*-28+u*u*u*-13,.65,.8);}});liveStrip('fountain-ring',x,y,t,4,p=>{X.globalAlpha=1-p;X.strokeStyle='#EDA6CE';X.lineWidth=.7;X.beginPath();X.ellipse(0,-12,2+20*p,.5+4*p,0,0,Math.PI*2);X.stroke();X.globalAlpha=1;});}},
+ live_orb:{sh:(x,y)=>shadow(x,y,14),st(x,y){liveCylinder(x,y,15,5,'#695A78');for(const [cx,cy,r]of [[-7,-13,7],[6,-17,10],[10,-8,4]]){liveEllipse('#AAA5B8',x+cx,y+cy,r,r);liveEllipse('#EEEAF1',x+cx-1,y+cy-1,r-1,r-1);liveEllipse('#FFFFFF',x+cx-r*.3,y+cy-r*.4,r*.2,r*.15);}},dy(x,y,t){liveStrip('orb-breath',x,y,t,4,p=>{for(const [cx,cy,r,c,ph]of [[-7,-13,7,'#FFE7AB',0],[6,-17,10,'#FFD1E7',2.1],[10,-8,4,'#FFFFFF',4.2]]){X.globalAlpha=.75+.125*(1+Math.sin(p*Math.PI*2+ph));liveEllipse(c,cx,cy,r-1,r-1);}X.globalAlpha=1;});}},
+ live_bush:{sh:(x,y)=>shadow(x,y,20),st(x,y){liveCylinder(x,y,21,10,'#81748D');liveEllipse('#3B3845',x,y-10,18,5);for(const [cx,cy,rx,ry,c]of [[0,-20,19,13,'#254F43'],[-6,-23,13,12,'#396C50'],[6,-22,13,11,'#477D57'],[-4,-27,11,8,'#669768']])liveEllipse(c,x+cx,y+cy,rx,ry);for(const [cx,cy]of [[-12,-23],[-5,-30],[5,-28],[13,-21],[4,-15],[-7,-17]])liveEllipse('#B99840',x+cx,y+cy,1.5,1.5);},dy(x,y,t){liveStrip('bush-fruit',x,y,t,5,p=>{[[-12,-23],[-5,-30],[5,-28],[13,-21],[4,-15],[-7,-17]].forEach(([cx,cy],i)=>{X.globalAlpha=.35+.65*Math.pow((1+Math.cos(p*Math.PI*2-i*Math.PI/3))/2,3);liveEllipse('#FFDF80',cx,cy,1.5,1.5);});X.globalAlpha=1;});}}
+};
+Object.assign(ART_DRAW,liveNewDraw);
+
 // live helpers: boxes (all sides, then fronts, tops, lit edges, seams: 5 fills), batched rects / polygons / ellipses / arcs, 3×5 pixel letters
 function lvBoxes(C,bs){const sd=[],tp=[];for(const[x0,yt,w,h,dx,dy]of bs){sd.push([x0+w,yt+h,x0+w,yt,x0+w+dx,yt-dy,x0+w+dx,yt+h-dy]);tp.push([x0,yt,x0+w,yt,x0+w+dx,yt-dy,x0+dx,yt-dy]);}
   lvP(C.b,sd);lvB(C.f,bs.map(b=>[b[0],b[1],b[2],b[3]]));lvP(C.t,tp);lvB(C.e,bs.flatMap(b=>[[b[0],b[1],b[2],1],[b[0],b[1],1,b[3]]]));lvB(C.j,bs.map(b=>[b[0],b[1]+b[3]-1,b[2],1]));}
