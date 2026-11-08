@@ -578,7 +578,7 @@ async function loadData(){
   for(const m of mt.materials)MATS[m.id]={nm:m.name,base:m.price,zone:m.zone,boss:!!m.boss};
   for(const e of en.enemies){ENEMIES[e.id]=e;if(e.missionOnly)SPECIAL[e.id]={nm:e.name,minF:e.minFloor||1,desc:e.desc||""};}
   ZONES=mp.zones;BGS=mp.backgrounds||{};
-  for(const k in BG_ART)if(BGS[k]){BGS[k].art=BG_ART[k];BGS[k].deco=Object.keys(BG_ART[k].objs);} // map-art settings (configured zones)
+  for(const k in BG_ART)if(BGS[k]){BGS[k].art=BG_ART[k];} // map-art settings (configured zones)
   try{const md=await get("data/modes.json");MODES={...MODES,...md};}catch(err){console.warn("modes.json",err);}
   MODES.overflow={...OF_DEF,...(MODES.overflow||{})};
   try{const d=await get("data/npcs.json");
@@ -2320,7 +2320,7 @@ function ofDismantle(id){const it=itemById(id);if(!it||MODE!=="town"||!S.overflo
 function genDeco(seed){const r=srand(seed),a=[],n=Math.round(11*WW*WH/(W*H));for(let i=0;i<n;i++){a.push({x:20+r()*(WW-40),y:80+r()*(WH-96),k:Math.floor(r()*3),s:r()});}return a.filter(d=>Math.hypot(d.x-WW/2,d.y-WH/2-40)>70&&d.x>70);}
 const DECO_CACHE={};
 function decoNow(){const seed=(RUN&&RUN.kind==="run"?1000+RUN.seg*7+RUN.zi*131:5+FLOOR*17)+"_"+WW+"x"+WH,bg=zoneOf(FLOOR).backgroundId,A=BGS[bg]&&BGS[bg].art;
-  if(A){const key=seed+"_"+bg+"_a"+ART_VER+"_"+hazKey();return DECO_CACHE[key]||(DECO_CACHE[key]=genArtDeco(parseInt(seed),A));} // map-art zones: zone id, art version and the puddles they avoid are part of the key
+  if(A&&!OFM()){const key=seed+"_"+bg+"_a"+ART_VER+"_"+hazKey();return DECO_CACHE[key]||(DECO_CACHE[key]=genArtDeco(parseInt(seed),A));} // map-art zones: zone id, art version and the puddles they avoid are part of the key
   return DECO_CACHE[seed]||(DECO_CACHE[seed]=genDeco(parseInt(seed)));} // each run segment looks different
 const GLITCH=(()=>{const r=srand(9);return Array.from({length:40},()=>({x:r()*W,y:r()*H,w:4+r()*40,h:1+r()*5,f:0.5+r()*3,p:r(),on:0.1+r()*0.3,dh:r()*80}));})();
 function shadow(x,y,rx){ctx.fillStyle="rgba(0,0,0,.35)";ctx.beginPath();ctx.ellipse(x,y,rx,rx*0.38,0,0,7);ctx.fill();}
