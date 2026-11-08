@@ -2319,7 +2319,7 @@ function ofDismantle(id){const it=itemById(id);if(!it||MODE!=="town"||!S.overflo
 function genDeco(seed){const r=srand(seed),a=[],n=Math.round(11*WW*WH/(W*H));for(let i=0;i<n;i++){a.push({x:20+r()*(WW-40),y:80+r()*(WH-96),k:Math.floor(r()*3),s:r()});}return a.filter(d=>Math.hypot(d.x-WW/2,d.y-WH/2-40)>70&&d.x>70);}
 const DECO_CACHE={};
 function decoNow(){const seed=(RUN&&RUN.kind==="run"?1000+RUN.seg*7+RUN.zi*131:5+FLOOR*17)+"_"+WW+"x"+WH,bg=zoneOf(FLOOR).backgroundId,A=BGS[bg]&&BGS[bg].art;
-  if(A){const key=seed+"_"+bg+"_a"+ART_VER+"_"+hazKey();return DECO_CACHE[key]||(DECO_CACHE[key]=genArtDeco(parseInt(seed),A));} // map-art zones: zone id, art version and the puddles they avoid are part of the key
+  if(A){const key=seed+"_"+bg+"_a"+(bg==="slum"?2:ART_VER)+"_"+hazKey();return DECO_CACHE[key]||(DECO_CACHE[key]=genArtDeco(parseInt(seed),A));} // map-art zones: zone id, art version and the puddles they avoid are part of the key
   return DECO_CACHE[seed]||(DECO_CACHE[seed]=genDeco(parseInt(seed)));} // each run segment looks different
 const GLITCH=(()=>{const r=srand(9);return Array.from({length:40},()=>({x:r()*W,y:r()*H,w:4+r()*40,h:1+r()*5,f:0.5+r()*3,p:r(),on:0.1+r()*0.3,dh:r()*80}));})();
 function shadow(x,y,rx){ctx.fillStyle="rgba(0,0,0,.35)";ctx.beginPath();ctx.ellipse(x,y,rx,rx*0.38,0,0,7);ctx.fill();}
@@ -2348,11 +2348,11 @@ const BG_ART={slum:{
     slum_shack:{w:64,h:56,fd:20,wt:14,edge:1,max:2},
     slum_holo:{w:36,h:60,fd:10,wt:10,max:2,light:"101,200,208",lw:22},
     slum_barrel:{w:22,h:25,fd:10,wt:18,pair:[24,30]},
-    slum_power:{w:30,h:38,fd:12,wt:12,near:["slum_shack","slum_pipe"],nd:[45,85]},
-    slum_terminal:{w:28,h:40,fd:12,wt:10,max:2},
+    slum_mycel:{w:30,h:36,fd:12,wt:12,near:["slum_shack","slum_pipe"],nd:[45,85],light:"190,230,140",lw:14},
+    slum_shrine:{w:30,h:40,fd:12,wt:8,edge:1,max:1,light:"216,174,114",lw:14},
     slum_lamp:{w:24,h:70,fd:8,wt:8,edge:1,max:2,light:"150,215,222",lw:18},
-    slum_pipe:{w:48,h:24,fd:14,wt:12,near:["slum_shack","slum_power"],nd:[45,85]},
-    slum_container:{w:40,h:31,fd:16,wt:10,max:2},
+    slum_pipe:{w:48,h:24,fd:14,wt:12,near:["slum_shack","slum_mycel"],nd:[45,85]},
+    slum_garden:{w:40,h:34,fd:16,wt:12,max:2},
     slum_vendor:{w:34,h:50,fd:14,wt:6,edge:1,max:1,light:"216,174,114",lw:20}},
   minDist:{"slum_shack":100,"slum_lamp":110},tallH:50,tallGap:80,edgeBand:80,centerGap:24,maxScreen:14,maxTall:4,
   floor:{base:"#101821",panel:["#131D28","#17212C"],seam:"#2A3948",seamA:0.28,glow:"101,200,208",glowA:0.1},
@@ -2385,9 +2385,7 @@ function artFits(A,c,placed,mate){
     if(p.kind===c.kind&&A.minDist[c.kind]&&dd<A.minDist[c.kind])return false;
     if(p.tall&&c.tall&&dd<A.tallGap)return false;
     if((c.kind==="slum_vendor"&&p.kind==="slum_shack"||p.kind==="slum_shack"&&c.kind==="slum_vendor")&&sep<24)return false;
-    // terminals never stand in front of a shack or a sign
-    const tm=c.kind==="slum_terminal"?c:p.kind==="slum_terminal"?p:null,bk=tm===c?p:c;
-    if(tm&&(bk.kind==="slum_shack"||bk.kind==="slum_holo")&&tm.y>=bk.y-4&&tm.y<=bk.y+44&&Math.abs(tm.x-bk.x)<(bk.w+tm.w)/2+4)return false;}
+    }
   const all=placed.concat(mate&&!placed.includes(mate)?[mate]:[]);
   if(o.max&&winMax(all,c,p=>p.kind===c.kind)>o.max)return false;
   if(winMax(all,c,()=>true)>A.maxScreen)return false;
@@ -2485,30 +2483,6 @@ const ART_DRAW={
     X.strokeStyle=C.e;X.beginPath();X.ellipse(x,y-21,10,3.5,0,Math.PI,Math.PI*1.6);X.stroke();
     fR(C.j,x+5,y-22,2,1);fR(C.e,x-1,y-22,2,1);
   },dy(x,y,t,d){const k=pulse(t,4,0.25);if(k>0)gL(ART_C.teal,0.5*k,x-1,y-12,2,1,1);}}, // level dot: gentle 0.25s rise every 4s
-  slum_power:{sh:(x,y)=>shadow(x+1,y,16),st(x,y,d){const C=ART_C;
-    fP(C.b,[x+11,y,x+11,y-33,x+15,y-38,x+15,y-5]);
-    fP(C.f,[x-13,y,x-13,y-31,x-11,y-33,x+11,y-33,x+11,y]);fP(C.t,[x-11,y-33,x+11,y-33,x+15,y-38,x-7,y-38]);fR(C.e,x-11,y-33,22,1);fR(C.e,x-13,y-31,1,27); // chamfered housing
-    fR(C.b,x-13,y-4,24,4);fR(C.j,x-13,y-4,24,1);
-    fR(C.j,x-11,y-31,15,26);fR("#2B3A4B",x-11,y-31,14,25);fR(C.e,x-11,y-31,14,1); // stepped door
-    fR(C.t,x-12,y-28,1,3);fR(C.t,x-12,y-12,1,3); // hinges
-    fR(C.j,x+1,y-21,1,6);fR(C.e,x,y-21,1,6); // recessed handle
-    fR(C.j,x-8,y-27,7,1);fR(C.j,x-8,y-25,7,1);gL(C.warm,0.45,x-8,y-15,6,2,0);
-    fR("#1E2A37",x+5,y-31,5,25);fR(C.j,x+5,y-31,1,25);fR(C.e,x+7,y-9,1,1); // terminal cover
-    for(let i=0;i<3;i++)fR(`rgba(${C.teal},.15)`,x+7,y-29+i*4,2,2);
-    fR(C.j,x-8,y-2,3,2);fR(C.j,x+1,y-2,3,2);fR(C.j,x-7,y,1,2);fR(C.j,x+2,y,1,2); // cable ports
-  },dy(x,y,t,d){const c=t%3.6;if(c<0.9)for(let i=0;i<3;i++)if(c>=i*0.3)gL(ART_C.teal,0.9,x+7,y-29+i*4,2,2,1);}}, // 3 lamps step on 0.3s apart, then 2.7s rest
-  slum_terminal:{sh:(x,y)=>shadow(x,y,12),st(x,y,d){const C=ART_C,TL=C.teal;
-    fP(C.b,[x+8,y,x+8,y-4,x+11,y-6,x+11,y-2]);fR(C.f,x-10,y-4,18,4);fP(C.t,[x-10,y-4,x+8,y-4,x+11,y-6,x-7,y-6]);fR(C.e,x-10,y-4,1,4);
-    fR(C.f,x-3,y-20,5,15);fR(C.b,x+2,y-20,2,15);fR(C.e,x-3,y-20,1,15);fR(C.j,x-2,y-15,3,1);gL(TL,0.7,x-1,y-12,1,1,1); // column + card slot
-    fP(C.t,[x-12,y-20,x+10,y-20,x+12,y-24,x-10,y-24]);fR(C.f,x-12,y-20,22,2);fR(C.e,x-12,y-20,22,1); // input surface
-    X.fillStyle=C.j;for(let i=0;i<5;i++){X.fillRect(x-8+i*3,y-23,2,1);X.fillRect(x-9+i*3,y-22,2,1);}
-    fP(C.f,[x-12,y-24,x+11,y-24,x+12,y-40,x-10,y-40]);fP(C.b,[x+11,y-24,x+14,y-25,x+15,y-39,x+12,y-40]); // thick bezel, tilted back
-    X.strokeStyle=C.e;X.beginPath();X.moveTo(x-10,y-39.5);X.lineTo(x+12,y-39.5);X.moveTo(x-11.5,y-25);X.lineTo(x-9.5,y-39);X.stroke();
-    fP(`rgba(${TL},.06)`,[x-11,y-26,x+10,y-26,x+11,y-38,x-9,y-38]);fP("#0A1C22",[x-9,y-27,x+8,y-27,x+9,y-37,x-7,y-37]); // screen
-    X.fillStyle=`rgba(${TL},.8)`;X.fillRect(x-6,y-35,8,1);X.fillRect(x-6,y-33,11,1);X.fillRect(x-7,y-29,6,1);
-    fR(`rgba(${C.warm},.8)`,x+4,y-36,2,2);
-  },dy(x,y,t,d){const TL=ART_C.teal;ctx.fillStyle=`rgba(${TL},.8)`;ctx.fillRect(x-7,y-31,4+Math.floor(hh(Math.floor(t/4),d.v,5)*9),1); // one row refreshes every 4s
-    if(t%1.2<0.8)gL(TL,0.9,x,y-30,2,2,1);}}, // cursor: 0.8s on / 0.4s off
   slum_lamp:{sh:(x,y)=>shadow(x,y,9),st(x,y,d){const C=ART_C,TL=C.teal;
     fP(C.b,[x+5,y,x+5,y-3,x+7,y-5,x+7,y-2]);fR(C.f,x-6,y-3,11,3);fP(C.t,[x-6,y-3,x+5,y-3,x+7,y-5,x-4,y-5]);fR(C.t,x-9,y-2,3,2);fR(C.b,x+5,y-1,3,1);fR(C.j,x-4,y-2,1,1);fR(C.j,x+3,y-2,1,1); // fixing foot
     fR(C.e,x-1,y-62,1,57);fR(C.f,x,y-62,1,57);fR(C.b,x+1,y-62,1,57); // segmented column
@@ -2531,16 +2505,6 @@ const ART_DRAW={
     X.fillStyle=C.j;X.beginPath();X.arc(x+17,y-14,2.6,0,7);X.fill();
   },dy(x,y,t,d){const TL=ART_C.teal;fR(`rgba(${TL},.85)`,x-9+Math.floor((t%1.6)/1.6*11),y-9,3,2); // flow marker, one lap / 1.6s
     ctx.fillStyle=`rgba(${TL},${0.45+0.3*Math.sin(t*1.309)})`;ctx.beginPath();ctx.arc(x+17,y-14,1.7,0,7);ctx.fill();}}, // pressure window (4.8s)
-  slum_container:{sh:(x,y)=>shadow(x+1,y,21),st(x,y,d){const C=ART_C;
-    fP(C.b,[x+14,y,x+14,y-22,x+20,y-28,x+20,y-6]);fR(C.f,x-18,y-22,32,22);
-    fR(C.m,x-19,y-25,34,3);fR(C.e,x-19,y-25,34,1);fP(C.t,[x-19,y-25,x+15,y-25,x+21,y-31,x-13,y-31]);fP(C.b,[x+15,y-22,x+15,y-25,x+21,y-31,x+21,y-28]); // lid
-    X.strokeStyle="#2A3A4A";X.beginPath();X.moveTo(x-16,y-27.5);X.lineTo(x+17,y-27.5);X.stroke();
-    fR(C.e,x-18,y-22,1,21);fR(C.j,x-18,y-16,32,1);fR(C.m,x-18,y-15,32,1);fR(C.j,x-18,y-8,32,1);fR(C.m,x-18,y-7,32,1); // storage rails
-    fR("#1A2531",x-8,y-14,12,5);fR(`rgba(${d.v===2?C.teal:C.warm},.55)`,x-6,y-12,7,1);fR(`rgba(${C.warm},.3)`,x-6,y-11,4,1); // inset label
-    fR(C.j,x-5,y-21,10,2);fR(C.e,x-5,y-20,10,1); // slim handle
-    for(const[lx,ly]of[[x-18,y-22],[x+11,y-22],[x-18,y-3],[x+11,y-3]]){fR(C.t,lx,ly,3,3);fR(C.j,lx+1,ly+1,1,1);}
-    gL(C.teal,0.35,x+12,y-24,1,1,1);
-  },dy(x,y,t,d){const k=pulse(t,5,0.4);if(k>0)gL(ART_C.teal,0.55*k,x+12,y-24,1,1,1);}}, // lock status: 0.4s rise every 5s
   slum_vendor:{sh:(x,y)=>shadow(x+1,y,18),st(x,y,d){const C=ART_C,b=0.9;
     fP(C.b,[x+13,y,x+13,y-44,x+18,y-49,x+18,y-5]);
     fP(C.f,[x-15,y,x-15,y-42,x-13,y-44,x+13,y-44,x+13,y]);fP(C.t,[x-13,y-44,x+13,y-44,x+18,y-49,x-8,y-49]);fR(C.e,x-13,y-44,26,1);fR(C.e,x-15,y-42,1,38); // chamfered shell
@@ -2639,6 +2603,38 @@ function drawArtPuddle(h,idx,ds){const t=G.t,R=h.radius||26,ry=R*0.45,x=h.x,y=h.
   ctx.strokeStyle="rgba(182,232,140,.6)";ctx.beginPath();ctx.ellipse(x,y,R,ry,0,0,7);ctx.stroke(); // danger rim = hit test
   const ba=0.575+0.125*Math.sin(t*3.491+idx);ctx.strokeStyle=`rgba(182,232,140,${ba})`;ctx.lineWidth=2;ctx.beginPath();
   for(let q=0;q<4;q++){const a0=0.35+q*Math.PI/2;ctx.moveTo(x+Math.cos(a0)*R,y+Math.sin(a0)*ry);ctx.ellipse(x,y,R,ry,0,a0,a0+0.32);}ctx.stroke();ctx.lineWidth=1;}
+// Three mushroom groups are two nonnegative sine-basis images plus a static base.
+// Each cap is exactly .85 + .15*sin(2πt/6 + phase), using only two cached layers.
+const SL_CAPS=[[-9,-30,2.6,0],[-5,-33,3,0],[-1,-31,2.4,1],[3,-34,2.8,1],[8,-31,2.7,2],[11,-28,2.4,2]];
+function slEllipse(c,x,y,rx,ry){X.fillStyle=c;X.beginPath();X.ellipse(x,y,rx,ry,0,0,Math.PI*2);X.fill();}
+function slCaps(x,y,layer){for(const[cx,cy,r,g]of SL_CAPS){const p=g*Math.PI/4,a=layer===0?.85-.15*(Math.cos(p)+Math.sin(p)):.3*(layer===1?Math.cos(p):Math.sin(p));
+ slEllipse(`rgba(190,230,140,${a})`,x+cx,y+cy,r,1.8);}}
+function slLayer(d,f,x,y,a,add=false){const m=ctx.getTransform(),sc=Math.round(Math.hypot(m.a,m.b)*100)/100,e=artBody(d,f,sc),old=ctx.globalAlpha,blend=ctx.globalCompositeOperation;if(add)ctx.globalCompositeOperation="lighter";ctx.globalAlpha=old*a;ctx.drawImage(e.c,x-e.ox,y-e.oy,e.cw,e.ch);ctx.globalAlpha=old;ctx.globalCompositeOperation=blend;}
+const SL_MYC_L=[1,2].map(i=>({d:{kind:'slum_mycel_glow'+i,v:0,w:30,h:36},f:{st(x,y){slCaps(x,y,i);}}}));
+const SL_LANT_L=[-1,1].map(s=>({d:{kind:'slum_shrine_led'+s,v:0,w:30,h:40},f:{st(x,y){slEllipse('rgba(216,174,114,.12)',x+s*10,y-22,4,6);slEllipse('#D8AE72',x+s*10,y-22,2.4,4);fR('#FFE4B4',x+s*10-1,y-25,1,5);}}}));
+const slumNewDraw={
+ slum_mycel:{sh:(x,y)=>shadow(x,y,15),st(x,y){const C=ART_C;
+ fR(C.f,x-14,y-26,24,26);fP(C.b,[x+10,y,x+15,y-5,x+15,y-31,x+10,y-26]);fP(C.t,[x-14,y-26,x+10,y-26,x+15,y-31,x-9,y-31]);fR(C.e,x-14,y-26,24,1);fR(C.e,x-14,y-25,1,24);fR(C.j,x-12,y-3,21,1);fR(C.m,x-11,y-22,17,14);fR(C.j,x-10,y-21,15,1);
+ // White filament net follows the top and right side, with controlled forked strands.
+ X.strokeStyle='#DEE4D3';X.lineWidth=.65;X.beginPath();for(const a of [[-12,-26,-5,-28,3,-27,12,-30],[-7,-30,-3,-27,2,-26,11,-28],[11,-27,13,-22,11,-16,13,-9],[14,-27,11,-23,14,-17,11,-10],[11,-20,14,-19,12,-14,14,-12],[-5,-27,-8,-23,-6,-19,-10,-15]]){X.moveTo(x+a[0],y+a[1]);for(let i=2;i<a.length;i+=2)X.lineTo(x+a[i],y+a[i+1]);}X.stroke();
+ for(const[cx,cy]of SL_CAPS)fR('#D8DDC5',x+cx-.5,y+cy,1,5);slCaps(x,y,0);
+ },dy(x,y,t){for(let i=0;i<2;i++)slLayer(SL_MYC_L[i].d,SL_MYC_L[i].f,x,y,(1+Math.sin(t*Math.PI/3+i*Math.PI/2))/2,true);}},
+ slum_shrine:{sh:(x,y)=>shadow(x,y,15),st(x,y){const C=ART_C;
+ fR(C.f,x-12,y-30,22,30);fP(C.b,[x+10,y,x+14,y-4,x+14,y-33,x+10,y-30]);fR(C.e,x-12,y-30,1,29);fR(C.j,x-9,y-28,17,22);fR('#303644',x-7,y-26,13,18);fR(C.b,x-8,y-27,2,19);fR(C.t,x-12,y-4,22,4);fR(C.e,x-12,y-4,22,1);
+ fP('#E7E6DE',[x-7,y-9,x+6,y-9,x+7,y-6,x-8,y-6]);fR('#BFC5C0',x-6,y-6,12,2);slEllipse('#777E7D',x,y-13,4.4,5);slEllipse('#AAB3AC',x-1,y-15,3.2,2.5);
+ fP(C.t,[x-15,y-31,x-1,y-40,x+15,y-32,x+1,y-34]);fP(C.m,[x-15,y-31,x-1,y-40,x+1,y-34]);fR(C.e,x-15,y-31,14,1);fP(C.b,[x+1,y-34,x+15,y-32,x+15,y-30,x+1,y-32]);
+ for(const s of [-1,1]){fR(C.e,x+s*10,y-31,1,4);fR(C.b,x+s*10-2,y-27,4,1);fR(C.b,x+s*10-2,y-18,4,1);}
+ for(const s of [-1,1]){fR('#82978B',x+s*6-1,y-12,2,1);fR('#566E61',x+s*6-1.5,y-11,3,5);fR('#BECEB7',x+s*6-1,y-10,1,3);}
+ },dy(x,y,t){for(let i=0;i<2;i++)slLayer(SL_LANT_L[i].d,SL_LANT_L[i].f,x,y,.925+.075*Math.sin(t*Math.PI*2/5+i*Math.PI/2));}},
+ slum_garden:{sh:(x,y)=>shadow(x,y,20),st(x,y){const C=ART_C;
+ for(const px of [-20,16]){fR(C.b,x+px,y-32,4,32);fR(C.e,x+px,y-32,1,32);}
+ fP(C.t,[x-20,y-31,x+16,y-31,x+20,y-34,x-16,y-34]);fR(C.f,x-20,y-31,36,2);fR('#E8DFC5',x-16,y-29,30,1);fR('rgba(232,223,197,.10)',x-16,y-28,30,3);
+ for(const ty of [-17,-2]){fR(C.f,x-18,y+ty-3,34,4);fP(C.t,[x-18,y+ty-3,x+16,y+ty-3,x+19,y+ty-6,x-15,y+ty-6]);fR(C.e,x-18,y+ty-3,34,1);fR(C.j,x-15,y+ty-2,27,1);
+ for(let i=0;i<5;i++){const px=x-13+i*6;fR('#476C48',px,y+ty-11,1,6);slEllipse('#2F5A3A',px-1.3,y+ty-8,2.2,2.8);slEllipse('#487B4D',px+1.2,y+ty-10,1.8,3);slEllipse('#6FA070',px+.8,y+ty-12,1.2,1.7);}}
+ },dy(){}}
+};
+Object.assign(ART_DRAW,slumNewDraw);
+
 function pixBlob(cx,cy,r,seed,t){const s=3;for(let gy=-r;gy<=0;gy+=s)for(let gx=-r;gx<=r;gx+=s){const d=(gx*gx)/(r*r)+(gy*gy)/(r*r*0.8);if(d>1)continue;
   const h=Math.sin(gx*12.9+gy*78.2+seed)*43758.5,fr=h-Math.floor(h);if(fr<0.08&&Math.floor(t*10+fr*10)%3===0)continue;
   ctx.fillRect(cx+gx+(fr>0.93?Math.round(Math.sin(t*30+fr*9)*3):0),cy+gy,s,s);}}
