@@ -2342,7 +2342,7 @@ function drawDeco(d,R){
 // Settings come from R.art (merged into BGS at load). Zones without art keep the old genDeco / grid / rain.
 // objs: w×h = drawn size, fd = footprint depth (footprint width = 80% of w), wt = draw weight, edge = outer band only,
 // max = per base screen, near/nd = preferred neighbours and base-point distance, light = casts a ground reflection.
-const ART_VER=1;
+const ART_VER=2;
 const BG_ART={slum:{
   objs:{
     slum_shack:{w:64,h:56,fd:20,wt:14,edge:1,max:2},
@@ -2355,7 +2355,7 @@ const BG_ART={slum:{
     slum_garden:{w:40,h:34,fd:16,wt:12,max:2},
     slum_vendor:{w:34,h:50,fd:14,wt:6,edge:1,max:1,light:"216,174,114",lw:20}},
   minDist:{"slum_shack":100,"slum_lamp":110},tallH:50,tallGap:80,edgeBand:80,centerGap:24,maxScreen:14,maxTall:4,
-  floor:{base:"#101821",panel:["#131D28","#17212C"],seam:"#2A3948",seamA:0.28,glow:"101,200,208",glowA:0.1},
+  floor:{kind:"slum",base:"#0E1418",panel:["#191F23","#1C2226"],seam:"#0E1418",seamA:1,glow:"101,200,208",glowA:0.07,lane:{w:144,dy:32},mats:{stone:{face:["#151D22","#182126","#1B2429"],joint:"#0A0F12",hl:"#24343B"}},curb:{top:"#2B3338",face:"#12181C",w:4},gutter:{w:6,face:"#070D10",water:"#0F2A31"},anim:{speed:16,max:6}},
   rain:{back:72,front:24,splash:12},refl:4,fog:2,skyLights:8,puddle:true}};
 const ART_C={b:"#18212D",f:"#263444",t:"#35495A",j:"#101823",e:"#60788A",m:"#2E3F50",teal:"101,200,208",warm:"216,174,114"};
 function hh(a,b,c){let h=Math.imul((a|0)^0x9E3779B9,0x85EBCA6B)^Math.imul((b|0)+0x632BE5AB,0xC2B2AE35)^Math.imul((c|0)+0x27D4EB2F,0x165667B1);h=Math.imul(h^h>>>15,0x2C1B3C6D);h^=h>>>13;h=Math.imul(h,0x297A2D39);h^=h>>>16;return(h>>>0)/4294967296;}
@@ -2422,7 +2422,8 @@ function artBody(d,f,sc){const key=d.kind+"|"+d.v+"|"+sc;let e=ART_CACHE.get(key
   c.width=Math.ceil(cw*sc);c.height=Math.ceil(ch*sc);const g=c.getContext("2d");g.scale(sc,sc);
   X=g;try{f.st(ox,oy,d);}finally{X=ctx;}
   e={c,ox,oy,cw:c.width/sc,ch:c.height/sc,b:c.width*c.height*4};ART_CACHE.set(key,e);ART_CACHE_BYTES+=e.b;
-  for(const[k,v]of ART_CACHE){if(ART_CACHE_BYTES<=ART_CACHE_CAP)break;if(v===e)continue;ART_CACHE.delete(k);ART_CACHE_BYTES-=v.b;}
+  for(const[k,v]of ART_CACHE){if(ART_CACHE_BYTES+FLOOR_CACHE_BYTES<=ART_CACHE_CAP)break;if(v===e)continue;ART_CACHE.delete(k);ART_CACHE_BYTES-=v.b;}
+  if(ART_CACHE_BYTES+FLOOR_CACHE_BYTES>ART_CACHE_CAP)floorCacheTrim();
   return e;}
 function drawArtDeco(d,f){const x=Math.round(d.x),y=Math.round(d.y),t=G.t+d.ph,m=ctx.getTransform(),sc=Math.round(Math.hypot(m.a,m.b)*100)/100;
   f.sh(x,y);if(d.al<1){ctx.save();ctx.globalAlpha=d.al;}
@@ -2538,31 +2539,62 @@ function teleBoxes(){const b=[];for(const e of EN){if(e.wind>0&&e.ca!==undefined
   for(const h of HAZ)if(h.type==="falling")for(const m of h.marks){const R=h.radius||30;b.push([m.x-R,m.y-R*0.5,m.x+R,m.y+R*0.5]);}
   return b;}
 const teleK=(tb,x0,y0,x1,y1)=>{for(const b of tb)if(x1>b[0]&&x0<b[2]&&y1>b[1]&&y0<b[3])return 0.25;return 1;};
-// paving: 96×48 panels, rows offset by 48, some split into 48×48; only the visible part, batched by colour
-function drawArtFloor(A,vx0,vy0,vw,vh,seed,tb){const F=A.floor,PW=96,PH=48,TOP=62;
-  const fx0=Math.max(0,vx0),fy0=Math.max(TOP,vy0),fx1=Math.min(WW,vx0+vw),fy1=Math.min(WH,vy0+vh);if(fx1<=fx0||fy1<=fy0)return;
-  ctx.fillStyle=F.panel[0];ctx.fillRect(fx0,fy0,fx1-fx0,fy1-fy0); // the common panel shade is the backdrop; only the other shade is filled per panel
-  const r0=Math.max(0,Math.floor((vy0-TOP)/PH)),r1=Math.floor((Math.min(WH,vy0+vh)-TOP)/PH),pa=[[],[]],seams=[],steps=[],hl=[],plates=[],glows=[];
-  for(let r=r0;r<=r1;r++){const off=(r&1)?48:0,py=TOP+r*PH,c0=Math.floor((Math.max(0,vx0)+off)/PW),c1=Math.floor((Math.min(WW,vx0+vw)+off)/PW);
-    for(let c=c0;c<=c1;c++){const px=c*PW-off,h=hh(c,r,seed);
-      if(h<0.11){pa[0].push([px,py,48,PH]);pa[1].push([px+48,py,48,PH]);seams.push([px+48,py,1,PH]);plates.push([px+48+10+Math.floor(hh(c,r,seed+3)*14),py+14,14,10]);}
-      else pa[h<0.55?0:1].push([px,py,PW,PH]);
-      seams.push([px,py,1,PH],[px,py,PW,1]);steps.push([px+1,py+1,PW-1,1]);hl.push([px+2,py+2,10+Math.floor(hh(r,c,seed)*12),1]);
-      if(hh(c,r,seed+7)<0.045){const L=24+Math.floor(hh(c,r,seed+8)*25),gx=px+4+Math.floor(hh(c,r,seed+9)*(PW-8-L));glows.push([gx,py,L]);}}}
-  ctx.fillStyle=F.panel[1];for(const p of pa[1])ctx.fillRect(p[0]+1,p[1]+1,p[2]-1,p[3]-1); // fillRect is the fast path (no path rasterising)
-  ctx.fillStyle=F.base;for(const s of seams)ctx.fillRect(s[0],s[1],s[2],s[3]); // 1px joint gap in the base colour
-  ctx.fillStyle="#0E151E";for(const s of steps)ctx.fillRect(s[0],s[1],s[2],s[3]); // step under each joint
-  ctx.fillStyle="#1A2430";for(const s of hl)ctx.fillRect(s[0],s[1],s[2],s[3]); // thin edge highlight
-  ctx.fillStyle="#111A24";ctx.beginPath();for(const p of plates)ctx.rect(p[0],p[1]+p[3],p[2],1);ctx.fill(); // service plates on the split panels: flush cover, lit top edge, two bolts
-  ctx.fillStyle="#152029";ctx.beginPath();for(const p of plates)ctx.rect(p[0],p[1],p[2],p[3]);ctx.fill();
-  ctx.fillStyle="#1A2430";ctx.beginPath();for(const p of plates){ctx.rect(p[0],p[1],p[2],1);ctx.rect(p[0]+2,p[1]+3,1,1);ctx.rect(p[0]+p[2]-3,p[1]+p[3]-3,1,1);}ctx.fill();
-  ctx.globalAlpha=F.seamA;ctx.fillStyle=F.seam;for(const s of seams)ctx.fillRect(s[0],s[1],s[2],s[3]);ctx.globalAlpha=1; // same joints, seam colour at ≤0.3
-  // drain slits: one per base-screen cell, kept in the middle half so any screen holds at most 4
-  const cx0=Math.floor(vx0/W),cx1=Math.floor((vx0+vw)/W),cy0=Math.floor(vy0/H),cy1=Math.floor((vy0+vh)/H);ctx.fillStyle="#0A1017";ctx.beginPath();const bars=[];
-  for(let cy=cy0;cy<=cy1;cy++)for(let cx=cx0;cx<=cx1;cx++){const sx=Math.round(cx*W+W/4+hh(cx,cy,seed+11)*W/2),sy=Math.round(cy*H+H/4+hh(cx,cy,seed+12)*H/2);if(sy<90||sy>WH-20||sx<20||sx>WW-40)continue;
-    ctx.rect(sx,sy,18,4);for(let i=0;i<4;i++)bars.push([sx+3+i*4,sy+1]);}
-  ctx.fill();ctx.fillStyle="#18232F";ctx.beginPath();for(const b of bars)ctx.rect(b[0],b[1],1,2);ctx.fill();
-  for(const g of glows){const near=Math.hypot(g[0]+g[2]/2-P.x,g[1]-P.y)<48?0.5:1;ctx.fillStyle=`rgba(${F.glow},${F.glowA*near*teleK(tb,g[0],g[1]-2,g[0]+g[2],g[1]+2)})`;ctx.fillRect(g[0],g[1],g[2],1);}} // a few lit joints (≤5%)
+// Slum floor: deterministic static chunks and uncached hazard-aware light strips.
+// Shared floor cache: byte accounting includes the existing object cache.
+const FLOOR_CACHE=new Map(),FLOOR_CHUNK=256,FLOOR_CACHE_CAP=6*1024*1024,FLOOR_CACHE_MAX=24;
+let FLOOR_CACHE_BYTES=0,FLOOR_FRAME=-1,FLOOR_BUILT=0,FLOOR_LEVEL='';
+function floorCacheTrim(incoming=0){
+ while(FLOOR_CACHE.size&&(FLOOR_CACHE.size>=FLOOR_CACHE_MAX||FLOOR_CACHE_BYTES+incoming>FLOOR_CACHE_CAP||ART_CACHE_BYTES+FLOOR_CACHE_BYTES+incoming>ART_CACHE_CAP)){
+ const [k,e]=FLOOR_CACHE.entries().next().value;FLOOR_CACHE.delete(k);FLOOR_CACHE_BYTES-=e.b;}
+ while(ART_CACHE.size&&ART_CACHE_BYTES+FLOOR_CACHE_BYTES+incoming>ART_CACHE_CAP){const[k,e]=ART_CACHE.entries().next().value;ART_CACHE.delete(k);ART_CACHE_BYTES-=e.b;}}
+function floorHazKey(){return hazKey()+'|'+HAZ.filter(h=>h.type!=='falling'&&h.x!==undefined).map(h=>[h.type,h.x,h.y,h.radius||(h.type==='puddle'?26:40),...(h.type==='electric'?[h.w||70,h.h||26]:[])].join(',')).join(';');}
+function drawCachedFloor(A,x,y,w,h,seed,paint){
+ const m=ctx.getTransform(),sc=Math.max(.25,Math.round(Math.max(Math.hypot(m.a,m.b),Math.hypot(m.c||0,m.d||m.a)) *4)/4);
+ const level=[A.floor.kind||A.fx||A.zone,seed,floorHazKey(),ART_VER,WW,WH].join('|'),key=level+'|'+sc,initial=FLOOR_LEVEL!==level;
+ FLOOR_LEVEL=level;if(FLOOR_FRAME!==G.t){FLOOR_FRAME=G.t;FLOOR_BUILT=0;}
+ const left=Math.max(0,x),top=Math.max(62,y),right=Math.min(WW,x+w),bottom=Math.min(WH,y+h);if(right<=left||bottom<=top)return;
+ ctx.save();ctx.beginPath();ctx.rect(left,top,right-left,bottom-top);ctx.clip();
+ for(let cy=Math.floor(top/256);cy<Math.ceil(bottom/256);cy++)for(let cx=Math.floor(left/256);cx<Math.ceil(right/256);cx++){
+ const k=key+'|'+cx+','+cy,px=cx*256,py=cy*256;let e=FLOOR_CACHE.get(k);
+ if(e){FLOOR_CACHE.delete(k);FLOOR_CACHE.set(k,e);}
+ else if(initial||FLOOR_BUILT<2){const size=Math.ceil(256*sc),bytes=size*size*4;
+ if(bytes<=FLOOR_CACHE_CAP){floorCacheTrim(bytes);const c=document.createElement('canvas');c.width=c.height=size;const g=c.getContext('2d');g.scale(sc,sc);g.translate(-px,-py);paint(g,px,py,256,256);e={c,b:bytes};FLOOR_CACHE.set(k,e);FLOOR_CACHE_BYTES+=bytes;FLOOR_BUILT++;}}
+ if(e)ctx.drawImage(e.c,px,py,256,256);else{ctx.save();ctx.beginPath();ctx.rect(px,py,256,256);ctx.clip();paint(ctx,px,py,256,256);ctx.restore();}}
+ ctx.restore();}
+
+// Floor generation only reads the existing deterministic deco cache; never consumes its RNG.
+function slumLane(seed){return Math.round(WH/2+40+(hh(seed,91,0)-.5)*32);}
+function slumFloorQuiet(x,y){return !HAZ.some(h=>{if(h.type!=='puddle')return false;const r=h.radius||26;return ((x-h.x)/(r+16))**2+((y-h.y)/(r*.45+16))**2<=1;});}
+function slumFloorLight(g,color,x,y,w,h=1){g.fillStyle=color;for(let j=0;j<h;j++)for(let i=0;i<w;i++)if(slumFloorQuiet(x+i,y+j))g.fillRect(x+i,y+j,1,1);}
+function drawArtFloorStatic(g,A,vx,vy,vw,vh,seed){const F=A.floor,L=slumLane(seed),lo=L-72,hi=L+72,M=F.mats.stone;
+ const x0=Math.max(0,vx),y0=Math.max(62,vy),x1=Math.min(WW,vx+vw),y1=Math.min(WH,vy+vh);if(x1<=x0||y1<=y0)return;
+ const decoKey=seed+'_'+WW+'x'+WH+'_slum_a2_'+hazKey();
+ const ds=(typeof DECO_CACHE==='undefined'?genArtDeco(seed,A):(DECO_CACHE[decoKey]||(DECO_CACHE[decoKey]=genArtDeco(seed,A)))).filter(d=>['slum_mycel','slum_garden','slum_pipe'].includes(d.kind));
+ g.save();g.beginPath();g.rect(x0,y0,x1-x0,y1-y0);g.clip();g.fillStyle=M.joint;g.fillRect(x0,y0,x1-x0,y1-y0);
+ for(let r=Math.max(0,Math.floor((y0-62)/24));62+r*24<y1;r++){const y=62+r*24,off=(r&1)*24;
+ for(let c=Math.floor((x0+off)/48)-1;c*48-off<x1+48;c++){const x=c*48-off,n=hh(c,r,seed+101);g.fillStyle=M.face[Math.floor(n*3)];g.fillRect(x+1,y+1,47,23);
+ if(hh(c,r,seed+102)<.5)slumFloorLight(g,M.hl,x+1,y+1,47);
+ const rich=ds.some(d=>Math.hypot(d.x-x,d.y-y)<72),chance=rich?.6:.3;
+ if(hh(c,r,seed+103)<chance){slumFloorLight(g,'#1C3328',x+4,y,36);slumFloorLight(g,'#1C3328',x,y+3,1,17);slumFloorLight(g,'#21392D',x-1,y,3,2);}}}
+ // Concrete retains the old staggered grid, clipped to the 144px lane.
+ g.save();g.beginPath();g.rect(x0,lo,x1-x0,144);g.clip();g.fillStyle=F.base;g.fillRect(x0,lo,x1-x0,144);
+ for(let r=Math.max(0,Math.floor((lo-62)/48));62+r*48<hi;r++){const y=62+r*48,off=(r&1)*48;
+ for(let c=Math.floor((x0+off)/96);c*96-off<x1;c++){const x=c*96-off,n=hh(c,r,seed);g.fillStyle=F.panel[n<.55?0:1];g.fillRect(x+1,y+1,95,47);
+ if(n<.11){g.fillStyle=F.panel[1];g.fillRect(x+49,y+1,47,47);g.fillStyle=F.base;g.fillRect(x+48,y,1,48);}
+ g.fillStyle='#0B1013';g.fillRect(x+1,y+1,95,1);slumFloorLight(g,'#2A3237',x+2,y+2,10+Math.floor(hh(r,c,seed)*13));
+ if(hh(c,r,seed+104)<.3)for(const dy of [16,32])slumFloorLight(g,'#20272B',x+6,y+dy,84);}}
+ g.restore();
+ for(const side of [-1,1]){const cy=side<0?lo-4:hi,gy=side<0?lo-10:hi+4;
+ g.fillStyle=F.curb.face;g.fillRect(x0,cy,x1-x0,4);slumFloorLight(g,F.curb.top,x0,cy,x1-x0,2);
+ g.fillStyle=F.gutter.face;g.fillRect(x0,gy,x1-x0,6);g.fillStyle='#1F2A30';g.fillRect(x0,gy,x1-x0,1);g.fillStyle=F.gutter.water;g.fillRect(x0,gy+4,x1-x0,2);
+ let x=24+Math.floor(hh(seed,side,105)*96),i=0;while(x<WW){if(x+24>x0&&x<x1){g.fillStyle='#1E272C';g.fillRect(x,gy-3,24,12);g.fillStyle='#070D10';for(let j=0;j<4;j++)g.fillRect(x+3+j*5,gy-1,2,8);}x+=192+Math.floor(hh(seed,i++,side)*97);}}
+ g.restore();}
+function drawArtFloorDynamic(A,vx,vy,vw,vh,seed,tb){const F=A.floor,L=slumLane(seed),lo=L-72,hi=L+72;
+ const light=(x,y,w,alpha)=>{if(y<vy||y>=vy+vh||x+w<vx||x>vx+vw)return;const near=Math.hypot(x+w/2-P.x,y-P.y)<48?.5:1,k=teleK(tb,x,y,x+w,y+1)*near;ctx.fillStyle=`rgba(${F.glow},${alpha*k})`;for(let i=0;i<w;i++)if(slumFloorQuiet(x+i,y))ctx.fillRect(x+i,y,1,1);};
+ for(let r=Math.max(0,Math.ceil((lo-62)/48));62+r*48<hi;r++){const y=62+r*48,off=(r&1)*48;for(let c=Math.floor((Math.max(0,vx)+off)/96);c*96-off<Math.min(WW,vx+vw);c++)if(hh(c,r,seed+7)<.02)light(c*96-off+4,y,16+Math.floor(hh(c,r,seed+8)*17),F.glowA);}
+ let count=0;for(const side of [-1,1]){const y=side<0?lo-5:hi+9;if(y<vy||y>=vy+vh)continue;
+ for(let n=Math.floor((vx-G.t*16)/160)-1;n*160+G.t*16<Math.min(WW,vx+vw);n++){const x=n*160+G.t*16+hh(n,side,seed+106)*32,w=12+Math.floor(hh(n,side,seed+107)*9);if(x<0||x+w>WW||x+w<vx||x>vx+vw)continue;if(count>=6)return;light(x,y,w,.09);count++;}}}
+function drawArtFloor(A,x,y,w,h,seed,tb){drawCachedFloor(A,x,y,w,h,seed,(g,x,y,w,h)=>drawArtFloorStatic(g,A,x,y,w,h,seed));drawArtFloorDynamic(A,x,y,w,h,seed,tb);}
 // ground layer: lamp pools, reflections, low fog, back rain, splashes (before hazards and telegraphs)
 const RAIN2=(()=>{const r=srand(23);return Array.from({length:96},(_,i)=>({x:r()*W,y:r()*H,l:6+r()*8,s:180+r()*120,a:i<72?(r()<0.5?0:1):0}));})();
 function drawArtRain(A,front,vx0,vy0,vw,vh){const n=A.rain.back;

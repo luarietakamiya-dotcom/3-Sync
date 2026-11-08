@@ -1,0 +1,3 @@
+PASS: syntax; 100 deterministic seeds and byte-identical baseline deco; floor does not change deco; static time invariance; puddle quiet zones; finite arguments; 2/frame lazy generation; 24 chunks / 6MiB / shared 16MiB; scale fallback; hazard dimensions invalidate, falling marks do not
+PASS: 1x static full-map and chunked raster equivalence, including concrete, gutters, shoulders and moss
+PASS: 200 animation times; <=6 water fragments; +16px/s; teleK alpha; puddle blackout
