@@ -2320,7 +2320,7 @@ function ofDismantle(id){const it=itemById(id);if(!it||MODE!=="town"||!S.overflo
 function genDeco(seed){const r=srand(seed),a=[],n=Math.round(11*WW*WH/(W*H));for(let i=0;i<n;i++){a.push({x:20+r()*(WW-40),y:80+r()*(WH-96),k:Math.floor(r()*3),s:r()});}return a.filter(d=>Math.hypot(d.x-WW/2,d.y-WH/2-40)>70&&d.x>70);}
 const DECO_CACHE={};
 function decoNow(){const seed=(RUN&&RUN.kind==="run"?1000+RUN.seg*7+RUN.zi*131:5+FLOOR*17)+"_"+WW+"x"+WH,bg=zoneOf(FLOOR).backgroundId,A=BGS[bg]&&BGS[bg].art;
-  if(A&&!OFM()){const key=seed+"_"+bg+"_a"+ART_VER+"_"+hazKey();return DECO_CACHE[key]||(DECO_CACHE[key]=genArtDeco(parseInt(seed),A));} // map-art zones: zone id, art version and the puddles they avoid are part of the key
+  if(A&&!OFM()){const key=seed+"_"+bg+"_a"+(bg==="front"?FRONT_ART_VER:ART_VER)+"_"+hazKey();return DECO_CACHE[key]||(DECO_CACHE[key]=genArtDeco(parseInt(seed),A));} // map-art zones: zone id, art version and the puddles they avoid are part of the key
   return DECO_CACHE[seed]||(DECO_CACHE[seed]=genDeco(parseInt(seed)));} // each run segment looks different
 const GLITCH=(()=>{const r=srand(9);return Array.from({length:40},()=>({x:r()*W,y:r()*H,w:4+r()*40,h:1+r()*5,f:0.5+r()*3,p:r(),on:0.1+r()*0.3,dh:r()*80}));})();
 function shadow(x,y,rx){ctx.fillStyle="rgba(0,0,0,.35)";ctx.beginPath();ctx.ellipse(x,y,rx,rx*0.38,0,0,7);ctx.fill();}
@@ -2343,7 +2343,8 @@ function drawDeco(d,R){
 // Settings come from R.art (merged into BGS at load). Zones without art keep the old genDeco / grid / rain.
 // objs: w×h = drawn size, fd = footprint depth (footprint width = 80% of w), wt = draw weight, edge = outer band only,
 // max = per base screen, near/nd = preferred neighbours and base-point distance, light = casts a ground reflection.
-const ART_VER=1;
+// Version only front placement, keeping other zones' seeded layouts unchanged.
+const ART_VER=1,FRONT_ART_VER=2;
 const BG_ART={slum:{
   objs:{
     slum_shack:{w:64,h:56,fd:20,wt:14,edge:1,max:2},
@@ -2359,14 +2360,16 @@ const BG_ART={slum:{
   floor:{base:"#101821",panel:["#131D28","#17212C"],seam:"#2A3948",seamA:0.28,glow:"101,200,208",glowA:0.1},
   rain:{back:72,front:24,splash:12},refl:4,fog:2,skyLights:8,puddle:true}};
 BG_ART.front={zone:"front",objs:{
- front_crystal:{w:42,h:64,fd:18,wt:14,edge:1,max:2,light:"169,152,205",lw:24},
- front_float:{w:44,h:40,fd:18,wt:14,max:2},front_column:{w:38,h:70,fd:16,wt:10,edge:1,max:2},
- front_stake:{w:24,h:42,fd:12,wt:12,edge:1,max:2},front_residue:{w:46,h:26,fd:16,wt:14,max:2},
- front_lens:{w:48,h:52,fd:18,wt:8,edge:1,max:1,light:"197,139,240",lw:24},
- front_holo:{w:34,h:46,fd:12,wt:8,edge:1,max:2,light:"197,139,240",lw:18},
- front_anchor:{w:40,h:32,fd:16,wt:12,max:2,near:["front_crystal","front_column"],nd:[64,96]},
- front_prism:{w:28,h:24,fd:12,wt:8,max:2}},
- minDist:{front_crystal:110,front_column:110},tallH:50,tallGap:96,edgeBand:96,centerGap:40,maxScreen:14,maxTall:4,
+ front_crystal:{w:42,h:64,fd:18,wt:12,edge:1,max:2,light:"196,170,240",lw:24},
+ front_geode:{w:34,h:58,fd:14,wt:8,edge:1,max:1,light:"255,154,208",lw:20},
+ front_cluster:{w:48,h:34,fd:18,wt:18,max:3},
+ front_torii:{w:80,h:72,fd:18,wt:6,edge:1,max:1},
+ front_pillar:{w:38,h:70,fd:16,wt:10,edge:1,max:2},
+ front_shrine:{w:44,h:40,fd:18,wt:12,max:2,near:["front_pillar","front_torii"],nd:[64,96],light:"169,152,205",lw:16},
+ front_pave:{w:56,h:22,fd:20,wt:12,max:2},
+ front_shard:{w:36,h:36,fd:14,wt:14,max:2,near:["front_crystal","front_cluster"],nd:[60,96]},
+ front_holo:{w:34,h:46,fd:12,wt:8,edge:1,max:2,light:"197,139,240",lw:18}},
+ minDist:{front_crystal:110,front_geode:110,front_torii:140,front_pillar:110},tallH:41,tallGap:96,edgeBand:96,centerGap:40,maxScreen:14,maxTall:4,
  floor:{base:"#100D19",panel:["#161020","#1C1428"],seam:"#463153",seamA:.2,glow:"169,152,205",glowA:.025},
  rain:{back:0,front:0,splash:0},refl:2,fog:2,skyLights:3,puddle:false};
 const ART_C={b:"#18212D",f:"#263444",t:"#35495A",j:"#101823",e:"#60788A",m:"#2E3F50",teal:"101,200,208",warm:"216,174,114"};
@@ -2442,7 +2445,7 @@ function drawArtDeco(d,f){const x=Math.round(d.x),y=Math.round(d.y),t=G.t+d.ph,m
   f.sh(x,y);if(d.al<1){ctx.save();ctx.globalAlpha=d.al;}
   const e=artBody(d,f,sc),sm=ctx.imageSmoothingEnabled;ctx.imageSmoothingEnabled=false;ctx.drawImage(e.c,x-e.ox,y-e.oy,e.cw,e.ch);ctx.imageSmoothingEnabled=sm;
   f.dy(x,y,t,d);
-  if(d.kind.startsWith("front_")&&ART_VIS.filter(o=>o.kind.startsWith("front_")).indexOf(d)<2&&!frontNearHaz(x,y-d.h/2,12)&&t%10<.12){ctx.save();ctx.beginPath();ctx.rect(x-d.w/4,y-d.h*.6,d.w/2,2);ctx.clip();ctx.drawImage(e.c,x-e.ox+2,y-e.oy,e.cw,e.ch);ctx.restore();}
+  if(d.kind==="front_holo"&&ART_VIS.filter(o=>o.kind.startsWith("front_")).indexOf(d)<2&&!frontNearHaz(x,y-d.h/2,12)&&t%10<.12){ctx.save();ctx.beginPath();ctx.rect(x-d.w/4,y-d.h*.6,d.w/2,2);ctx.clip();ctx.drawImage(e.c,x-e.ox+2,y-e.oy,e.cw,e.ch);ctx.restore();}
   if(d.al<1)ctx.restore();}
 const HOLO_TXT=["住区","食堂","24H","給水","充電","共用","診療","洗濯"];
 const ART_DRAW={
@@ -2587,18 +2590,49 @@ function frontFoot(x,y,w){const C=FRONT_C;fP(C.b,[x-w/2,y-4,x+w*.3,y-7,x+w/2,y-2
 function frontArm(x,y,dx,dy){const C=FRONT_C;fP(C.b,[x-2,y-3,x+dx-2,y+dy-3,x+dx+2,y+dy,x+2,y]);fP(C.t,[x-2,y-5,x+dx-2,y+dy-5,x+dx+2,y+dy-3,x+2,y-3]);fR(C.e,x+dx-2,y+dy-3,3,2);}
 function frontPart(d,key,x,y,w,h,angle=0){const e=artBody({kind:"front_part_"+key,v:0,w,h}, {st:(a,b)=>frontFacet(a,b,w-4,h-3)},1);
  ctx.save();ctx.translate(x,y);ctx.rotate(angle);ctx.drawImage(e.c,-e.ox,-e.oy,e.cw,e.ch);ctx.restore();}
-Object.assign(ART_DRAW,{
- front_crystal:{sh:(x,y)=>shadow(x,y,19),st(x,y){frontFoot(x,y,36);frontFacet(x-5,y-5,28,59);frontFacet(x+12,y-5,15,30);fR(FRONT_C.e,x-10,y-8,7,2);},dy(x,y,t){gL("169,152,205",.14+.1*Math.sin(t*6.283/7),x-8,y-39,3,12,1);}},
- front_float:{sh:(x,y)=>shadow(x,y,19),st(x,y){for(const [dx,dy]of [[-16,-1],[15,-3],[1,-9]])frontArm(x,y-3,dx,dy);fR(FRONT_C.light,x-2,y-8,4,2);},dy(x,y,t,d){for(let i=0;i<3;i++){const a=t*6.283/(8+i*2)+i*1.9;frontPart(d,"float"+i,x-12+i*12+Math.sin(a)*3,y-13-i*4+Math.cos(a)*2,12+i*2,12+i*3,Math.sin(a)*Math.PI/30);}}},
- front_column:{sh:(x,y)=>shadow(x,y,17),st(x,y){frontFoot(x,y,32);fP(FRONT_C.e,[x-3,y-6,x-6,y-65,x-2,y-69,x+2,y-8]);frontFacet(x-3,y-5,26,20);frontFacet(x+3,y-47,28,23);fR(FRONT_C.light,x-3,y-45,2,22);},dy(x,y,t,d){frontPart(d,"column",x+Math.sin(t*Math.PI/4)*1.5,y-26,33,23);}},
- front_stake:{sh:(x,y)=>shadow(x,y,11),st(x,y){for(const [dx,dy]of [[-10,-1],[9,-3],[1,-9]])frontArm(x,y-7,dx,dy);fP(FRONT_C.e,[x-2,y-7,x+4,y-41,x+7,y-40,x+1,y-7]);frontFacet(x+1,y-20,19,10);fR(FRONT_C.j,x+3,y-34,3,6);},dy(x,y,t){gL("197,139,240",.6,x-6+(t%6)/6*12,y-25,2,1,1);}},
- front_residue:{sh:(x,y)=>shadow(x,y,21),st(x,y){frontArm(x-7,y-1,-13,-4);frontArm(x+7,y-2,13,-9);fP(FRONT_C.t,[x-21,y-5,x-20,y-20,x-15,y-23,x-15,y-16,x-17,y-6]);fP(FRONT_C.e,[x+16,y-9,x+19,y-24,x+22,y-19,x+20,y-8]);},dy(x,y,t,d){frontPart(d,"membrane",x,y-6+Math.sin(t*Math.PI/3),27,17);}},
+// Clean marble parts and translucent crystals, baked through the shared LRU.
+const FRONT_STONE={b:'#2A2238',f:'#4B4260',t:'#7D7398',e:'#B9AED0'};
+function frontStone(x,y,w,h){const C=FRONT_STONE;fP(C.b,[x-w/2,y,x+w/2-4,y,x+w/2,y-4,x+w/2,y-h-4,x+w/2-4,y-h,x-w/2,y-h]);fR(C.f,x-w/2,y-h,w-4,h);fP(C.t,[x-w/2,y-h,x-w/2+4,y-h-4,x+w/2,y-h-4,x+w/2-4,y-h]);fR(C.e,x-w/2,y-h,w-4,1);}
+function frontPillarBlock(x,y,w,h){const C=FRONT_STONE;
+ fP(C.b,[x-w/2+3,y,x+w/2-3,y,x+w/2,y-3,x+w/2,y-h+3,x+w/2-3,y-h,x-w/2+3,y-h,x-w/2,y-h+3,x-w/2,y-3]);
+ fR(C.f,x-w/2+4,y-h,w-8,h);fP(C.t,[x-w/2,y-h+3,x-w/2+4,y-h,x+w/2-4,y-h,x+w/2,y-h+3]);fR(C.e,x-w/2+4,y-h,w-8,1);
+}
+function frontGem(x,y,w,h){
+ const ps=[[x-w*.5,y-h*.6],[x-w*.15,y-h],[x+w*.48,y-h*.75],[x+w*.5,y-h*.2],[x,y],[x-w*.5,y-h*.18]],c=[x+w*.05,y-h*.52];
+ const grad=X.createLinearGradient(x-w/2,y-h,x+w/2,y);grad.addColorStop(0,'#E8DFFF');grad.addColorStop(.52,'#A998CD');grad.addColorStop(1,'#FF9AD0');fP(grad,ps.flat());
+ const cols=['rgba(232,223,255,.38)','rgba(232,223,255,.22)','rgba(96,67,139,.42)','rgba(255,154,208,.38)','rgba(94,69,132,.46)','rgba(232,223,255,.25)'];
+ ps.forEach((p,i)=>fP(cols[i],[...p,...ps[(i+1)%6],...c]));
+ fP('rgba(232,223,255,.32)',[x-w*.27,y-h*.7,x+w*.26,y-h*.65,x+w*.14,y-h*.28,x-w*.1,y-h*.18]);
+ X.strokeStyle='#FFFFFF';X.lineWidth=.7;X.beginPath();X.moveTo(...ps[0]);X.lineTo(...ps[1]);X.lineTo(...ps[2]);X.stroke();
+}
+// Every animated component is cached; frames only translate images or change alpha.
+function frontLayer(key,x,y,w,h,paint,alpha=1){const m=ctx.getTransform(),sc=Math.round(Math.hypot(m.a,m.b)*100)/100,e=artBody({kind:'front_layer_'+key,v:0,w,h},{st:paint},sc);ctx.save();ctx.globalAlpha*=alpha;ctx.drawImage(e.c,x-e.ox,y-e.oy,e.cw,e.ch);ctx.restore();}
+function frontShade(x,y,w){fP('rgba(0,0,0,.3)',[x-w/2,y-2,x+w/2-3,y-4,x+w/2,y,x-w/2+3,y+2]);}
+let FRONT_CRYSTAL_MASK=null;
+function frontCrystalMask(){if(!FRONT_CRYSTAL_MASK){const p=new Path2D();p.moveTo(-19,-40);p.lineTo(-9,-64);p.lineTo(8,-49);p.lineTo(9,-17);p.lineTo(-5,-5);p.lineTo(-19,-15);p.closePath();FRONT_CRYSTAL_MASK=p;}return FRONT_CRYSTAL_MASK;}
+function frontGeodeGem(x,y){const ps=[[x-4,y-56],[x+13,y-47],[x+14,y-28],[x+1,y-20],[x-12,y-42]],c=[x+2,y-38];
+ const g=X.createLinearGradient(x-12,y-56,x+14,y-20);g.addColorStop(0,'#E8DFFF');g.addColorStop(.5,'#A998CD');g.addColorStop(1,'#FF9AD0');fP(g,ps.flat());
+ ps.forEach((p,i)=>fP(['rgba(232,223,255,.4)','rgba(92,68,132,.3)','rgba(255,154,208,.2)','rgba(232,223,255,.2)','rgba(232,223,255,.3)'][i],[...p,...ps[(i+1)%5],...c]));
+}
+const frontNewDraw={
+ front_crystal:{sh:(x,y)=>frontShade(x,y,38),st(x,y){frontFoot(x,y,36);frontGem(x-5,y-5,28,59);frontGem(x+12,y-5,15,30);},dy(x,y,t){frontLayer('crystalInner',x,y,42,64,(a,b)=>fP('rgba(232,223,255,.28)',[a-12,b-43,a-3,b-49,a+1,b-22,a-4,b-13]),.85+.15*(.5+.5*Math.sin(t*2*Math.PI/7)));const q=((t%9)+9)%9;if(q<.6){
+    ctx.save();ctx.translate(x,y);ctx.clip(frontCrystalMask());
+    frontLayer('crystalSweep',-34+q/.6*52,0,48,64,(a,b)=>fP('rgba(255,255,255,.5)',[a,b-64,a+3,b-64,a+23,b,a+20,b]));ctx.restore();
+  }}},
+ front_geode:{sh:(x,y)=>frontShade(x,y,30),st(x,y){const C=FRONT_STONE;X.fillStyle=C.f;X.beginPath();X.ellipse(x,y-4,15,4,0,0,7);X.fill();fR(C.f,x-15,y-8,30,4);X.fillStyle=C.t;X.beginPath();X.ellipse(x,y-8,15,4,0,0,7);X.fill();},dy(x,y,t){const yy=y+2*Math.sin(t*Math.PI/3);frontLayer('geode',x,yy,34,58,(a,b)=>{X.save();X.translate(a,b-38);X.rotate(10*Math.PI/180);frontGeodeGem(0,38);X.restore();});const face=Math.floor(t/1.2)%5;frontLayer('geodeFace'+face,x,yy,34,58,(a,b)=>{X.save();X.translate(a,b-38);X.rotate(10*Math.PI/180);const ps=[[-4,-18],[13,-9],[14,10],[1,18],[-12,-4]];fP('rgba(255,225,248,.28)',[...ps[face],...ps[(face+1)%5],2,0]);X.restore();});}},
+ front_cluster:{sh:(x,y)=>frontShade(x,y,46),st(x,y){frontStone(x,y,47,5);for(const [dx,dy,w,h]of[[-17,-4,10,15],[-8,-5,13,28],[4,-4,12,21],[15,-4,12,25],[0,-3,10,13],[20,-3,7,12]])frontGem(x+dx,y+dy,w,h);},dy(x,y,t){for(let i=0;i<2;i++)frontLayer('clusterStar'+i,x,y,48,34,(a,b)=>{const sx=a+(i?13:-10),sy=b-(i?29:33);fR('#FFF4FF',sx-2,sy,4,1);fR('#FFF4FF',sx,sy-2,1,4);},Math.max(0,Math.sin(t*Math.PI/2+i*Math.PI))*.85);}},
+ front_torii:{sh:(x,y)=>frontShade(x,y,76),st(x,y){frontStone(x-26,y,18,8);frontStone(x+27,y,18,8);frontStone(x-26,y-7,11,48);frontStone(x+27,y-7,11,23);frontStone(x+25,y-32,11,23);frontStone(x,y-43,64,7);frontStone(x,y-47,10,12);fR('#2A2238',x-2,y-57,1,5);fR('#2A2238',x+1,y-55,2,1);},dy(x,y,t){frontLayer('toriiCap',x,y+1.5*Math.sin(t*Math.PI/4),80,72,(a,b)=>{X.save();X.translate(a,b-62);X.rotate(4*Math.PI/180);frontStone(0,0,78,3);X.restore();});}},
+ front_pillar:{sh:(x,y)=>frontShade(x,y,34),st(x,y){frontStone(x,y,36,7);frontPillarBlock(x,y-7,13,56);frontPillarBlock(x,y-7,27,17);frontPillarBlock(x,y-46,29,17);frontStone(x,y-63,36,4);frontGem(x+1,y-51,10,12);},dy(x,y,t){frontLayer('pillarMiddle',x+1.5*Math.sin(t*Math.PI/4),y,38,70,(a,b)=>frontPillarBlock(a,b-26,30,17));frontLayer('pillarInlay',x,y,38,70,(a,b)=>frontGem(a+1,b-51,10,12),.8+.2*(.5+.5*Math.sin(t*Math.PI/2.5)));}},
+ front_shrine:{sh:(x,y)=>frontShade(x,y,42),st(x,y){frontStone(x,y,42,6);frontStone(x,y-6,30,19);fR('#2A2238',x-9,y-23,16,16);frontStone(x-13,y-6,5,19);frontStone(x+12,y-6,5,19);frontGem(x,y-9,11,13);},dy(x,y,t){frontLayer('shrineRoof',x,y+1.5*Math.sin(t*Math.PI/3),44,40,(a,b)=>{fP('#4B4260',[a-20,b-30,a+1,b-39,a+23,b-30,a+19,b-27,a-17,b-27]);fP('#7D7398',[a-20,b-30,a+1,b-39,a+5,b-38,a+23,b-30]);fR('#B9AED0',a-17,b-30,36,1);});frontLayer('shrineHeart',x,y,44,40,(a,b)=>frontGem(a,b-9,11,13),.7+.3*(.5+.5*Math.sin(t*Math.PI/2.5)));}},
+ front_pave:{sh:(x,y)=>frontShade(x,y,54),st(x,y){frontStone(x,y,54,5);for(const [dx,dy,w]of[[-16,-3,20],[6,-3,20],[-16,-12,20],[6,-12,20]])frontStone(x+dx,y+dy,w,4);},dy(x,y,t){frontLayer('paveEdge',x,y+Math.sin(t*Math.PI/3.5),56,22,(a,b)=>frontStone(a+23,b-8,10,5));}},
+ front_shard:{sh:(x,y)=>frontShade(x,y,34),st(x,y){frontStone(x,y,34,5);},dy(x,y,t){frontLayer('shardStones',x,y+2*Math.sin(t*Math.PI/3),36,36,(a,b)=>{frontStone(a-10,b-14,13,12);fR('#B9AED0',a-15,b-22,8,2);frontStone(a+9,b-24,14,7);fP('#B9AED0',[a+3,b-31,a+9,b-35,a+16,b-31]);});frontLayer('shardGem',x,y+2*Math.sin(t*Math.PI/2.5+2),36,36,(a,b)=>frontGem(a+7,b-9,12,14));}}
+};
+
+Object.assign(ART_DRAW,frontNewDraw,{
  front_lens:{sh:(x,y)=>shadow(x,y,21),st(x,y){frontFoot(x,y,37);frontArm(x-12,y-4,2,-22);frontArm(x+13,y-5,4,-17);
  fP(FRONT_C.e,[x-22,y-35,x-12,y-50,x+9,y-52,x+23,y-37,x+18,y-18,x+3,y-13,x-16,y-22,x-19,y-28,x-12,y-26,x+2,y-19,x+13,y-23,x+17,y-36,x+7,y-45,x-10,y-44,x-16,y-34]);
  fP("rgba(169,152,205,.17)",[x-14,y-34,x-9,y-43,x+7,y-44,x+16,y-35,x+12,y-24,x+2,y-20,x-12,y-27]);fR(FRONT_C.b,x-23,y-34,7,5);},dy(x,y,t,d){frontPart(d,"lens",x+1,y-27,12,13,t*Math.PI/6);}},
- front_holo:{sh:(x,y)=>shadow(x,y,12),st(x,y){frontFoot(x,y,25);fP(FRONT_C.e,[x-6,y-5,x,y-38,x+3,y-39,x-3,y-5]);fP(FRONT_C.f,[x-16,y-42,x+4,y-46,x+7,y-31,x-12,y-28]);fP(FRONT_C.t,[x-7,y-25,x+16,y-30,x+13,y-17,x-4,y-13]);fR(FRONT_C.light,x-11,y-40,10,1);},dy(x,y,t,d){ctx.fillStyle="#C58BF0";ctx.font="5px monospace";ctx.fillText(["ERR0R","NULL","？？？","404"][(Math.floor(t/6)+d.v)%4],x-11,y-34);gL("197,139,240",.6,x+4,y-21,6,1,1);}},
- front_anchor:{sh:(x,y)=>shadow(x,y,19),st(x,y){for(const [dx,dy]of [[-18,-3],[17,-7],[-4,-23]])frontArm(x,y-10,dx,dy);frontFacet(x+1,y-8,17,19);for(let i=0;i<3;i++)fR(FRONT_C.e,x-7+i*5,y-10,2,2);},dy(x,y,t){gL("197,139,240",.7,x-7+Math.floor(t%4.8/1.6)*5,y-10,2,1,1);}},
- front_prism:{sh:(x,y)=>shadow(x,y,12),st(x,y){frontFoot(x,y,26);frontArm(x-6,y-2,-4,-8);frontArm(x+5,y-3,6,-5);frontFacet(x+1,y-5,20,19);fR(FRONT_C.e,x+7,y-3,5,2);},dy(x,y,t){gL("169,152,205",.6,x-3+Math.floor(t%5),y-13,1,2,1);}}
+ front_holo:{sh:(x,y)=>shadow(x,y,12),st(x,y){frontFoot(x,y,25);fP(FRONT_C.e,[x-6,y-5,x,y-38,x+3,y-39,x-3,y-5]);fP(FRONT_C.f,[x-16,y-42,x+4,y-46,x+7,y-31,x-12,y-28]);fP(FRONT_C.t,[x-7,y-25,x+16,y-30,x+13,y-17,x-4,y-13]);fR(FRONT_C.light,x-11,y-40,10,1);},dy(x,y,t,d){ctx.fillStyle="#C58BF0";ctx.font="5px monospace";ctx.fillText(["ERR0R","NULL","？？？","404"][(Math.floor(t/6)+d.v)%4],x-11,y-34);gL("197,139,240",.6,x+4,y-21,6,1,1);}}
 });
 function frontNearHaz(x,y,pad){return HAZ.some(h=>h.x!==undefined&&((x-h.x)/((h.type==="rift"?80:h.radius||40)+pad))**2+((y-h.y)/((h.type==="rift"?40:(h.radius||40)*.5)+pad))**2<1);}
 function drawFrontFloor(A,x,y,w,h,seed,tb){const F=A.floor;ctx.save();ctx.beginPath();ctx.rect(Math.max(0,x),Math.max(62,y),Math.min(w,WW-Math.max(0,x)),Math.min(h,WH-Math.max(62,y)));ctx.clip();ctx.fillStyle=F.base;ctx.fillRect(x,y,w,h);
