@@ -2343,7 +2343,7 @@ function drawDeco(d,R){
 // Settings come from R.art (merged into BGS at load). Zones without art keep the old genDeco / grid / rain.
 // objs: w×h = drawn size, fd = footprint depth (footprint width = 80% of w), wt = draw weight, edge = outer band only,
 // max = per base screen, near/nd = preferred neighbours and base-point distance, light = casts a ground reflection.
-const ART_VER=1;
+const ART_VER=1,BORDER_FLOOR_VER=2;
 const BG_ART={slum:{
   objs:{
     slum_shack:{w:64,h:56,fd:20,wt:14,edge:1,max:2},
@@ -2370,7 +2370,7 @@ BG_ART.border={
     border_stone:{w:18,h:28,fd:10,wt:12,max:2,pair:[34,42]},
     border_capsule:{w:42,h:32,fd:16,wt:8,max:2,near:["border_auth"],nd:[62,92]}},
   minDist:{border_gate:140,border_scan:100,border_stele:140},tallH:41,tallGap:100,edgeBand:96,centerGap:40,maxScreen:14,maxTall:4,
-  floor:{base:"#101821",panel:["#141E29","#192430"],seam:"#3C5368",seamA:.22,glow:"159,211,255",glowA:.025},
+  floor:{kind:"border",mats:{limestone:{face:["#1D2023","#202326","#232629"],joint:"#121518",hl:"#30353A",sub:"#1B1E21"}},base:"#101821",panel:["#141E29","#192430"],seam:"#3C5368",seamA:.22,glow:"159,211,255",glowA:.025},
   rain:{back:0,front:0,splash:0},refl:2,fog:0,skyLights:6,puddle:false};
 const ART_C={b:"#18212D",f:"#263444",t:"#35495A",j:"#101823",e:"#60788A",m:"#2E3F50",teal:"101,200,208",warm:"216,174,114"};
 ART_C.border={b:"#202D3C",f:"#64798B",t:"#9AAEBD",white:"#D8E5EC",j:"#15212D",light:"159,211,255"};
@@ -2443,7 +2443,7 @@ function artBody(d,f,sc){const key=d.kind+"|"+d.v+"|"+sc;let e=ART_CACHE.get(key
   c.width=Math.ceil(cw*sc);c.height=Math.ceil(ch*sc);const g=c.getContext("2d");g.scale(sc,sc);
   X=g;try{f.st(ox,oy,d);}finally{X=ctx;}
   e={c,ox,oy,cw:c.width/sc,ch:c.height/sc,b:c.width*c.height*4};ART_CACHE.set(key,e);ART_CACHE_BYTES+=e.b;
-  for(const[k,v]of ART_CACHE){if(ART_CACHE_BYTES<=ART_CACHE_CAP)break;if(v===e)continue;ART_CACHE.delete(k);ART_CACHE_BYTES-=v.b;}
+  for(const[k,v]of ART_CACHE){if(ART_CACHE_BYTES+FLOOR_CACHE_BYTES<=ART_CACHE_CAP)break;if(v===e)continue;ART_CACHE.delete(k);ART_CACHE_BYTES-=v.b;}
   return e;}
 function drawArtDeco(d,f){const x=Math.round(d.x),y=Math.round(d.y),t=G.t+d.ph,m=ctx.getTransform(),sc=Math.round(Math.hypot(m.a,m.b)*100)/100;
   f.sh(x,y);if(d.al<1){ctx.save();ctx.globalAlpha=d.al;}
@@ -2626,9 +2626,49 @@ const borderNewDraw={
  }}
 };
 Object.assign(ART_DRAW,borderNewDraw);
-function drawBorderFloor(A,vx,vy,vw,vh,seed,tb){const F=A.floor;ctx.save();ctx.beginPath();ctx.rect(0,62,WW,WH-62);ctx.clip();ctx.fillStyle=F.base;ctx.fillRect(vx,Math.max(62,vy),vw,vh);
- for(let r=Math.max(0,Math.floor((vy-62)/64));r<=Math.floor((vy+vh-62)/64);r++)for(let c=Math.max(0,Math.floor(vx/160));c<=Math.floor((vx+vw)/160);c++){const x=c*160,y=62+r*64;ctx.fillStyle=F.panel[hh(c,r,seed)<.5?0:1];ctx.fillRect(x+1,y+2,159,61);ctx.fillStyle=F.base;ctx.fillRect(x,y,160,2);ctx.fillStyle=`rgba(60,83,104,${F.seamA})`;ctx.fillRect(x,y+2,160,1);ctx.fillRect(x,y+3,1,61);ctx.fillStyle="#101821";ctx.fillRect(x+9,y+9,8,3);
- if(hh(c,r,seed+7)<.01){const gx=x+12,gy=y+2,L=12+hh(c,r,seed+8)*8;if(!HAZ.some(h=>h.type==="electric"&&gx+L>h.x-16&&gx<h.x+(h.w||70)+16&&gy>h.y-16&&gy<h.y+(h.h||26)+16)){ctx.fillStyle=`rgba(${F.glow},${F.glowA*teleK(tb,gx,gy,gx+L,gy+1)})`;ctx.fillRect(gx,gy,L,1);}}}ctx.restore();}
+// Shared floor cache: byte accounting includes the existing object cache.
+const FLOOR_CACHE=new Map(),FLOOR_CHUNK=256,FLOOR_CACHE_CAP=6*1024*1024,FLOOR_CACHE_MAX=24;
+let FLOOR_CACHE_BYTES=0,FLOOR_FRAME=-1,FLOOR_BUILT=0,FLOOR_LEVEL='';
+function floorCacheTrim(incoming=0){
+ while(FLOOR_CACHE.size&&(FLOOR_CACHE.size>=FLOOR_CACHE_MAX||FLOOR_CACHE_BYTES+incoming>FLOOR_CACHE_CAP||ART_CACHE_BYTES+FLOOR_CACHE_BYTES+incoming>ART_CACHE_CAP)){
+ const [k,e]=FLOOR_CACHE.entries().next().value;FLOOR_CACHE.delete(k);FLOOR_CACHE_BYTES-=e.b;}
+ while(ART_CACHE.size&&ART_CACHE_BYTES+FLOOR_CACHE_BYTES+incoming>ART_CACHE_CAP){const[k,e]=ART_CACHE.entries().next().value;ART_CACHE.delete(k);ART_CACHE_BYTES-=e.b;}}
+function floorHazKey(){return hazKey()+'|'+HAZ.filter(h=>h.x!==undefined).map(h=>[h.type,h.x,h.y,h.radius||40,...(h.type==='electric'?[h.w||70,h.h||26]:[])].join(',')).join(';');}
+function drawCachedFloor(A,x,y,w,h,seed,paint){
+ const m=ctx.getTransform(),sc=Math.max(.25,Math.round(Math.max(Math.hypot(m.a,m.b),Math.hypot(m.c||0,m.d||m.a)) *4)/4);
+ const level=[A===BG_ART.border?'border':A.zone,seed,floorHazKey(),A===BG_ART.border?BORDER_FLOOR_VER:ART_VER,WW,WH].join('|'),key=level+'|'+sc,initial=FLOOR_LEVEL!==level;
+ FLOOR_LEVEL=level;if(FLOOR_FRAME!==G.t){FLOOR_FRAME=G.t;FLOOR_BUILT=0;}
+ const left=Math.max(0,x),top=Math.max(62,y),right=Math.min(WW,x+w),bottom=Math.min(WH,y+h);if(right<=left||bottom<=top)return;
+ ctx.save();ctx.beginPath();ctx.rect(left,top,right-left,bottom-top);ctx.clip();
+ for(let cy=Math.floor(top/256);cy<Math.ceil(bottom/256);cy++)for(let cx=Math.floor(left/256);cx<Math.ceil(right/256);cx++){
+ const k=key+'|'+cx+','+cy,px=cx*256,py=cy*256;let e=FLOOR_CACHE.get(k);
+ if(e){FLOOR_CACHE.delete(k);FLOOR_CACHE.set(k,e);}
+ else if(initial||FLOOR_BUILT<2){const size=Math.ceil(256*sc),bytes=size*size*4;
+ if(bytes<=FLOOR_CACHE_CAP){floorCacheTrim(bytes);const c=document.createElement('canvas');c.width=c.height=size;const g=c.getContext('2d');g.scale(sc,sc);g.translate(-px,-py);paint(g,px,py,256,256);e={c,b:bytes};FLOOR_CACHE.set(k,e);FLOOR_CACHE_BYTES+=bytes;FLOOR_BUILT++;}}
+ if(e)ctx.drawImage(e.c,px,py,256,256);else{ctx.save();ctx.beginPath();ctx.rect(px,py,256,256);ctx.clip();paint(ctx,px,py,256,256);ctx.restore();}}
+ ctx.restore();}
+// Pure floor plan; does not consume placement RNG or inspect deco.
+function borderFloorPlan(seed){const lane=WH/2+40+(hh(seed,91,0)-.5)*32,top=62+64*Math.max(0,Math.round((lane-62)/64));
+ const side=hh(seed,92,0)<.5?.25:.60;let band=WW*(side+hh(seed,93,0)*.15);if(Math.abs(band-WW/2)<78)band=WW*(side<.5?.25:.75);
+ return{top,bottom:top+128,band:Math.floor(band)};}
+function borderFloorQuiet(x,y,pad=1){return !HAZ.some(h=>h.type==="electric"?x>=h.x-16-pad&&x<=h.x+(h.w||70)+16+pad&&y>=h.y-16-pad&&y<=h.y+(h.h||26)+16+pad:h.type==="noise"&&((x-h.x)/((h.radius||40)+16+pad))**2+((y-h.y)/((h.radius||40)*.5+16+pad))**2<=1);}
+function borderFloorDetail(g,x,y,w,color){g.fillStyle=color;for(let i=0;i<w;i++)if(borderFloorQuiet(x+i,y))g.fillRect(x+i,y,1,1);}
+function drawBorderFloorStatic(g,A,vx,vy,vw,vh,seed){const F=A.floor,M=F.mats,plan=borderFloorPlan(seed);g.save();g.beginPath();g.rect(vx,vy,vw,vh);g.clip();g.fillStyle=M.limestone.joint;g.fillRect(vx,vy,vw,vh);
+ for(let r=Math.max(0,Math.floor((vy-62)/32));62+r*32<vy+vh;r++){const y=62+r*32;if(y>=plan.top&&y<plan.bottom)continue;
+ // Walk from a world anchor so tile/chunk boundaries cannot change stone lengths.
+ let x=-(r%2)*32,c=0;while(x<vx+vw){const len=[48,64,80][Math.floor(hh(c,r,seed+101)*3)];if(x+len>vx){g.fillStyle=M.limestone.face[Math.floor(hh(c,r,seed+102)*3)];g.fillRect(x+1,y+1,len-1,31);borderFloorDetail(g,x+4,y+1,len-9,M.limestone.hl);if(hh(c,r,seed+103)<.25)borderFloorDetail(g,x+6,y+12+Math.floor(hh(c,r,seed+104)*10),len-12,M.limestone.sub);}x+=len;c++;}}
+ for(let r=Math.max(0,Math.floor((vy-62)/64));62+r*64<vy+vh;r++){const y=62+r*64;if(y<plan.top||y>=plan.bottom)continue;for(let c=Math.max(0,Math.floor(vx/160));c*160<vx+vw;c++){const x=c*160;g.fillStyle=F.base;g.fillRect(x,y,160,64);g.fillStyle=F.panel[hh(c,r,seed)<.5?0:1];g.fillRect(x+1,y+2,159,61);g.fillStyle=`rgba(60,83,104,${F.seamA})`;g.fillRect(x,y+2,160,1);g.fillRect(x,y+3,1,61);g.fillStyle=F.base;g.fillRect(x+9,y+9,8,3);
+}}
+ // A lattice with fixed seed offsets: any W x H viewport contains at most 3 x 2 dots.
+ const dx=Math.ceil(W/3),dy=Math.ceil(H/2),ox=Math.floor(hh(seed,111,0)*dx),oy=Math.floor(hh(seed,112,0)*dy);
+ for(let j=Math.floor((vy-oy)/dy);j*dy+oy<vy+vh;j++)for(let i=Math.floor((vx-ox)/dx);i*dx+ox<vx+vw;i++){const x=i*dx+ox,y=j*dy+oy;if(y>=62&&(y<plan.top||y>=plan.bottom)&&Math.abs(x-plan.band)>10&&borderFloorQuiet(x,y)) {g.fillStyle='rgba(168,188,208,.30)';g.fillRect(x,y,1,1);}}
+ for(const y of [plan.top,plan.bottom-3]){g.fillStyle='#26313B';g.fillRect(vx,y,vw,3);g.fillStyle='rgba(60,83,104,.4)';g.fillRect(vx,y,vw,1);}
+ const bx=plan.band;g.fillStyle='#0C0F12';g.fillRect(bx,62,16,WH-62);for(let r=0;62+r*24<WH;r++){g.fillStyle=hh(r,113,seed)<.5?'#171B20':'#1A1E23';g.fillRect(bx+1,63+r*24,14,23);if(r%4===0){g.fillStyle='#101317';g.fillRect(bx,62+r*24,16,8);}}
+ g.fillStyle='#2A323B';g.fillRect(bx,62,1,WH-62);g.fillRect(bx+15,62,1,WH-62);
+ // Metal abutments at the crossing, with no luminous outline.
+ g.fillStyle='#26313B';g.fillRect(bx-3,plan.top,3,128);g.fillRect(bx+16,plan.top,3,128);g.restore();}
+function drawBorderFloorDynamic(A,vx,vy,vw,vh,seed,tb){const F=A.floor,p=borderFloorPlan(seed);ctx.save();ctx.beginPath();ctx.rect(Math.max(0,vx),Math.max(62,vy),vw,vh);ctx.clip();for(let r=(p.top-62)/64;r<(p.bottom-62)/64;r++)for(let c=Math.max(0,Math.floor(vx/160));c*160<Math.min(WW,vx+vw);c++){if(hh(c,r,seed+7)>=.01)continue;const x=c*160+12,y=62+r*64+2,L=Math.floor(12+hh(c,r,seed+8)*8),a=F.glowA*teleK(tb,x,y,x+L,y+1);for(let i=0;i<L;i++)if(x+i<p.band-3||x+i>=p.band+19)borderFloorDetail(ctx,x+i,y,1,`rgba(${F.glow},${a})`);}ctx.restore();}
+function drawBorderFloor(A,vx,vy,vw,vh,seed,tb){drawCachedFloor(A,vx,vy,vw,vh,seed,(g,x,y,w,h)=>drawBorderFloorStatic(g,A,x,y,w,h,seed));drawBorderFloorDynamic(A,vx,vy,vw,vh,seed,tb);}
 function drawBorderGround(A,ds,tb){for(const d of ds.filter(d=>d.light&&!borderNewDraw[d.kind]).sort((a,b)=>Math.hypot(a.x-CAM.x,a.y-CAM.y)-Math.hypot(b.x-CAM.x,b.y-CAM.y)).slice(0,2)){ctx.fillStyle=`rgba(${d.light},${.032*teleK(tb,d.x-d.lw/2,d.y,d.x+d.lw/2,d.y+4)})`;ctx.fillRect(d.x-d.lw/2,d.y+2,d.lw,1);}}
 function drawBorderHazard(h,idx){const t=G.t;ctx.save();
  if(h.type==="electric"){const w=h.w||70,H=h.h||26,on=h.on||1.4,off=h.off||2.6,pre=!h.live?Math.max(0,1-(on+off-h.t)/.35):0;ctx.fillStyle=h.live?"rgba(63,224,255,.16)":"rgba(63,224,255,.035)";ctx.fillRect(h.x,h.y,w,H);ctx.strokeStyle=h.live?"rgba(200,250,255,.95)":`rgba(63,224,255,${.35+.2*pre})`;ctx.lineWidth=h.live?2:1;ctx.strokeRect(h.x,h.y,w,H);ctx.lineWidth=1;
