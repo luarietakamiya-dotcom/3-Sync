@@ -578,7 +578,7 @@ async function loadData(){
   for(const m of mt.materials)MATS[m.id]={nm:m.name,base:m.price,zone:m.zone,boss:!!m.boss};
   for(const e of en.enemies){ENEMIES[e.id]=e;if(e.missionOnly)SPECIAL[e.id]={nm:e.name,minF:e.minFloor||1,desc:e.desc||""};}
   ZONES=mp.zones;BGS=mp.backgrounds||{};
-  for(const k in BG_ART)if(BGS[k]){BGS[k].art=BG_ART[k];BGS[k].deco=Object.keys(BG_ART[k].objs);} // map-art settings (slum only for now)
+  for(const k in BG_ART)if(BGS[k]){BGS[k].art=BG_ART[k];BGS[k].deco=Object.keys(BG_ART[k].objs);} // map-art settings (slum, alley)
   try{const md=await get("data/modes.json");MODES={...MODES,...md};}catch(err){console.warn("modes.json",err);}
   MODES.overflow={...OF_DEF,...(MODES.overflow||{})};
   try{const d=await get("data/npcs.json");
@@ -1322,6 +1322,7 @@ function drawHazards(){
   const t=G.t,A=MODE==="dive"&&!OFM()&&ART_ON;let hi=-1;
   for(const h of HAZ){hi++;
     if(h.type==="puddle"&&A&&A.puddle){drawArtPuddle(h,hi,ART_VIS);continue;} // map-art zones: new water surface, same hit ellipse
+    if(h.type==="falling"&&A&&A.fx==="alley"){drawAlleyFalling(h);continue;} // alley: fixed final ellipse + carrier block, same timing and hit test
     if(h.type==="puddle"){ctx.fillStyle="rgba(150,230,120,.22)";ctx.beginPath();ctx.ellipse(h.x,h.y,h.radius||26,(h.radius||26)*0.45,0,0,7);ctx.fill();
       ctx.fillStyle="rgba(190,255,150,.55)";for(let i=0;i<3;i++){const k=(t*0.8+i*0.33)%1;ctx.fillRect(h.x+Math.sin(i*2.1+h.x)*12,h.y-k*6,2,2);}}
     else if(h.type==="noise"){ctx.save();ctx.globalAlpha=.35;for(let i=0;i<14;i++){const a=Math.random()*7,r=Math.random()*(h.radius||40);ctx.fillStyle=pick(["#ff4fa8","#3fe0ff","#ffffff"]);ctx.fillRect(h.x+Math.cos(a)*r,h.y+Math.sin(a)*r*0.5,3,2);}
@@ -2356,8 +2357,26 @@ const BG_ART={slum:{
     slum_vendor:{w:34,h:50,fd:14,wt:6,edge:1,max:1,light:"216,174,114",lw:20}},
   minDist:{"slum_shack":100,"slum_lamp":110},tallH:50,tallGap:80,edgeBand:80,centerGap:24,maxScreen:14,maxTall:4,
   floor:{base:"#101821",panel:["#131D28","#17212C"],seam:"#2A3948",seamA:0.28,glow:"101,200,208",glowA:0.1},
-  rain:{back:72,front:24,splash:12},refl:4,fog:2,skyLights:8,puddle:true}};
+  rain:{back:72,front:24,splash:12},refl:4,fog:2,skyLights:8,puddle:true},
+// alley: amber shop-front corridor. fx names the zone's own floor / ground / falling-hazard painters (ART_FX); clear = entrance kept open in front of the base point [width, depth]
+alley:{
+  objs:{
+    alley_shop:{w:76,h:60,fd:22,wt:14,edge:1,max:2,light:"246,168,69",lw:36,clear:[24,24]},
+    alley_canopy:{w:64,h:54,fd:12,wt:8,edge:1,max:1,light:"246,168,69",lw:32},
+    alley_holo:{w:42,h:52,fd:12,wt:10,edge:1,max:2,light:"255,107,107",lw:24},
+    alley_case:{w:44,h:30,fd:16,wt:18,max:3,near:["alley_shop","alley_pawn"],nd:[60,96]},
+    alley_pawn:{w:38,h:48,fd:16,wt:12,edge:1,max:2,light:"246,168,69",lw:22},
+    alley_locker:{w:50,h:38,fd:16,wt:12,max:2},
+    alley_price:{w:24,h:28,fd:10,wt:10,max:2,near:["alley_case"],nd:[48,72]},
+    alley_pack:{w:28,h:22,fd:12,wt:10,max:3,pair:[32,38]},
+    alley_directory:{w:32,h:42,fd:12,wt:6,edge:1,max:1}},
+  minDist:{"alley_shop":116,"alley_canopy":110},tallH:50,tallGap:90,edgeBand:88,centerGap:26,maxScreen:14,maxTall:4,
+  floor:{base:"#151119",panel:["#1A151E","#201923"],seam:"#48343F",seamA:0.24,glow:"246,168,69",glowA:0.06},
+  rain:{back:60,front:20,splash:10},rainA:[0.10,0.14,0.07],rainL:[7,13],rainS:[180,280],
+  refl:4,fog:1,skyLights:8,skyPer:[5,4],skyWin:4,puddle:false,fx:"alley",markFade:true}};
 const ART_C={b:"#18212D",f:"#263444",t:"#35495A",j:"#101823",e:"#60788A",m:"#2E3F50",teal:"101,200,208",warm:"216,174,114"};
+// alley materials (ART_C stays as it is for slum)
+const ART_A={b:"#211A25",f:"#352A36",t:"#4B3B49",j:"#130F18",e:"#8B747E",m:"#2B2230",gl:"#1B1420",am:"246,168,69",co:"255,107,107",dev:"#56606E",devT:"#6E7A88",pk:"#7A6656",pkT:"#96806C"};
 function hh(a,b,c){let h=Math.imul((a|0)^0x9E3779B9,0x85EBCA6B)^Math.imul((b|0)+0x632BE5AB,0xC2B2AE35)^Math.imul((c|0)+0x27D4EB2F,0x165667B1);h=Math.imul(h^h>>>15,0x2C1B3C6D);h^=h>>>13;h=Math.imul(h,0x297A2D39);h^=h>>>16;return(h>>>0)/4294967296;}
 let HAZ_KEY_SRC=null,HAZ_KEY="";
 function hazKey(){if(HAZ!==HAZ_KEY_SRC){HAZ_KEY_SRC=HAZ;HAZ_KEY=HAZ.filter(h=>h.x!==undefined).map(h=>Math.round(h.x)+","+Math.round(h.y)).join(";");}return HAZ_KEY;}
@@ -2387,7 +2406,9 @@ function artFits(A,c,placed,mate){
     if((c.kind==="slum_vendor"&&p.kind==="slum_shack"||p.kind==="slum_shack"&&c.kind==="slum_vendor")&&sep<24)return false;
     // terminals never stand in front of a shack or a sign
     const tm=c.kind==="slum_terminal"?c:p.kind==="slum_terminal"?p:null,bk=tm===c?p:c;
-    if(tm&&(bk.kind==="slum_shack"||bk.kind==="slum_holo")&&tm.y>=bk.y-4&&tm.y<=bk.y+44&&Math.abs(tm.x-bk.x)<(bk.w+tm.w)/2+4)return false;}
+    if(tm&&(bk.kind==="slum_shack"||bk.kind==="slum_holo")&&tm.y>=bk.y-4&&tm.y<=bk.y+44&&Math.abs(tm.x-bk.x)<(bk.w+tm.w)/2+4)return false;
+    // an entrance keeps open floor in front of it (alley shops: 24px wide, 24px deep on the centre line)
+    for(const[s,q]of[[p,c],[c,p]]){const cl=A.objs[s.kind].clear;if(cl&&q.x1>s.x-cl[0]/2&&q.x0<s.x+cl[0]/2&&q.y1>s.y&&q.y0<s.y+cl[1])return false;}}
   const all=placed.concat(mate&&!placed.includes(mate)?[mate]:[]);
   if(o.max&&winMax(all,c,p=>p.kind===c.kind)>o.max)return false;
   if(winMax(all,c,()=>true)>A.maxScreen)return false;
@@ -2557,17 +2578,126 @@ const ART_DRAW={
     fR(C.j,x-11,y-11,17,4);fR("#0B121B",x-10,y-10,15,2);fR(C.e,x-11,y-7,17,1); // pickup slot
   },dy(x,y,t,d){const C=ART_C,wk=0.5+0.5*Math.sin(t*0.898),sel=Math.floor(t/2.4)%6; // window 90-100% over 7s; selection moves every 2.4s
     fR(`rgba(${C.warm},${0.035*wk})`,x-11,y-36,13,22);gL(C.teal,0.95,x+6+(sel%2)*3,y-31+Math.floor(sel/2)*3,2,1,1);}},
+  // ---- alley: amber shop fronts. Bodies, frames and goods are baked; window light, displays, scans and lamps are live
+  alley_shop:{sh:(x,y)=>shadow(x+2,y,36),st(x,y,d){const C=ART_A,am=C.am; // drawn by colour layer (one call per layer) to stay inside the 60-op budget
+    aBox(x-34,y-50,64,48,6,6,C);aBox(x-14,y-57,24,3,3,3,C); // body, rooftop service box
+    fB(C.j,[[x+32,y-44,3,1],[x+32,y-41,3,1],[x+32,y-38,3,1],[x-33,y-48,62,8],[x-37,y-34,70,1],[x-32,y-31,20,24],[x-12,y-33,24,31],[x+13,y-31,15,12],[x+16,y-18,10,11],[x-12,y-2,24,1],[x-34,y-3,64,2]]); // side vents, fascia, canopy underside, outer frames, plinth
+    fB(C.m,[[x-32,y-47,60,6],[x-31,y-30,18,22],[x-11,y-32,22,29],[x+14,y-30,13,10],[x-32,y-3,8,3],[x+22,y-3,8,3]]); // fascia board, window / door frames, two fixed feet
+    fP(C.t,[x-34,y-40,x+30,y-40,x+33,y-36,x-37,y-36]);fR(C.f,x-37,y-36,70,2); // thin canopy: top, lip
+    X.fillStyle=C.b;X.beginPath();for(const bx of[x-33,x+27]){X.moveTo(bx,y-34);X.lineTo(bx+3,y-34);X.lineTo(bx+3,y-30);X.closePath();}X.fill(); // two closed brackets
+    fB(C.gl,[[x-29,y-28,14,18],[x-10,y-31,9,27],[x+1,y-31,9,27],[x+15,y-29,11,8]]); // glass
+    fB(C.b,[[x-29,y-22,14,1],[x-29,y-15,14,1],[x+15,y-22,11,1],[x+17,y-17,8,9]]); // shelves, payment panel
+    fB(`rgba(${am},.55)`,[[x-29,y-28,14,18],[x+15,y-29,11,8],[x+18,y-15,6,3],[x-28,y-46,5,4],[x-21,y-46,5,4],[x-14,y-46,5,4],[x-32,y-41,60,1]]); // lit windows, payment screen, name plate, fascia line
+    fB(`rgba(${am},.3)`,[[x-10,y-31,9,27],[x+1,y-31,9,27]]); // door glass
+    fB("rgba(19,15,24,.6)",[[x-29,y-28,14,1],[x-29,y-28,1,18],[x-10,y-31,9,1],[x+1,y-31,9,1]]);fR("rgba(220,190,160,.25)",x-29,y-11,14,1); // glass thickness
+    const dv=[],dt=[],pk=[],pt=[],ld=[];for(let i=0;i<3;i++){const px=x-28+i*5;dv.push([px,y-26,3,4]);dt.push([px,y-26,3,1]);ld.push([px+1,y-24,1,1]);pk.push([px,y-20,4,5]);pt.push([px,y-20,4,1]);}
+    dv.push([x+16,y-26,3,4],[x+21,y-26,3,4]);dt.push([x+16,y-26,3,1],[x+21,y-26,3,1]);
+    fB(C.dev,dv);fB(C.devT,dt);fB(C.pk,pk);fB(C.pkT,pt);fB(`rgba(${am},.9)`,ld); // aligned goods
+    fR(C.t,x-29,y-13,14,3); // counter
+    fB(C.j,[[x-1,y-31,2,27],[x-26,y-44,1,1],[x-19,y-45,1,2],[x+15,y-47,12,6],[x-27,y-18,2,1],[x-22,y-18,2,1],[x-17,y-18,2,1]]); // door seam, plate cuts, display housing, labels
+    fB(`rgba(${C.co},.3)`,[[x+17,y-45,2,2],[x+20,y-45,2,2],[x+23,y-45,2,2]]); // small display cells (dim)
+    const e=[[x-37,y-36,70,1],[x-32,y-35,1,1],[x+28,y-35,1,1],[x-31,y-30,18,1],[x-31,y-30,1,22],[x-11,y-32,22,1],[x-3,y-19,1,4],[x+2,y-19,1,4],[x+14,y-30,13,1],[x+17,y-17,8,1],[x-32,y-3,8,1],[x+22,y-3,8,1]];
+    for(let i=0;i<3;i++)e.push([x+18+i*2,y-11,1,1],[x+18+i*2,y-9,1,1]);fB(C.e,e); // lit edges, handles, keypad
+    fR("#5E4C5A",x-12,y-3,24,1); // entrance rail
+    gL(am,0.55,x-32,y-33,60,1,2);gL(am,0.7,x+6,y-56,2,1,1); // warm light under the canopy, rooftop lamp
+  },dy(x,y,t,d){const C=ART_A,am=C.am,wk=Math.max(0,0.5+0.5*Math.sin(t*1.047)); // window 90-100% over 6s
+    if(wk>0.02)fB(`rgba(${am},${0.055*wk})`,[[x-29,y-28,14,18],[x+15,y-29,11,8]]);
+    fR(`rgba(${C.co},.95)`,x+17+(Math.floor(t/4)%3)*3,y-45,2,2); // small display steps every 4s
+    const o=Math.round(Math.sin(t*0.898)),r=[];for(let i=0;i<6;i++)r.push([x-27+o+i,y-27+i*3,1,3]);fB("rgba(255,232,205,.22)",r); // one glass reflection line, ±1px over 7s
+  }},
+  alley_canopy:{sh:(x,y)=>{shadow(x-26,y,8);shadow(x+25,y,8);},st(x,y,d){const C=ART_A,am=C.am,P=[x-28,x+23];
+    fB(C.f,P.flatMap(px=>[[px,y-42,4,40],[px-2,y-3,8,3]]));fB(C.b,P.flatMap(px=>[[px+3,y-42,1,40],[px+6,y-4,2,4]])); // two posts on base plates
+    aBox(x-31,y-52,58,10,4,2,C); // horizontal light box
+    fB(C.t,P.flatMap(px=>[[px-1,y-5,8,2],[px-2,y-42,8,3]])); // plate tops, closed collars at the joints
+    const j=[[x-29,y-51,54,8]];for(const px of P)j.push([px+1,y-2,2,1],[px+1,y-41,1,1]);for(let i=0;i<6;i++)j.push([x-22+i*7,y-42,6,3]);fB(C.j,j); // lamp frame, plate slots, collar bolts, lens housings
+    fR(`rgba(${am},.75)`,x-28,y-50,52,6);fR("rgba(255,226,180,.35)",x-28,y-50,52,1); // stable main lamp
+    const a=[];for(let i=1;i<4;i++)a.push([x-28+i*13,y-50,1,6]);for(let i=0;i<6;i++)a.push([x-21+i*7,y-42,4,2]);fB(`rgba(${am},.32)`,a); // lamp ribs, strip lenses
+    fB(C.e,P.flatMap(px=>[[px,y-42,1,40],[px-2,y-5,8,1],[px-2,y-42,8,1]])); // lit edges
+  },dy(x,y,t,d){const i=Math.floor((t%5)/5*6);gL(ART_A.am,0.9,x-20+i*7,y-42,2,1,1);}}, // a small light point walks the lenses once per 5s
+  alley_holo:{sh:(x,y)=>shadow(x,y,16),st(x,y,d){const C=ART_A;
+    aBox(x-16,y-6,30,5,3,3,C);fR(C.j,x-16,y-1,30,1);fR(C.j,x-10,y-8,20,1);fR(C.e,x-10,y-7,20,1); // pedestal with the projection slit
+    for(const px of[x-12,x+7]){fR(C.f,px,y-26,3,20);fR(C.e,px,y-26,1,20);fR(C.b,px+2,y-26,1,20);} // twin legs
+    fP(C.t,[x-20,y-50,x+20,y-50,x+22,y-52,x-18,y-52]);fR(C.f,x-20,y-50,40,2);fR(C.f,x-20,y-26,40,2);fR(C.f,x-20,y-50,2,26);fR(C.b,x+18,y-50,2,26); // wide display frame
+    fP(C.b,[x+20,y-50,x+22,y-52,x+22,y-27,x+20,y-24]);fR(C.e,x-20,y-50,40,1);fR(C.e,x-20,y-50,1,26);fR(C.j,x-18,y-48,36,1);
+    for(const[bx,by]of[[x-19,y-49],[x+18,y-49],[x-19,y-26],[x+18,y-26]])fR(C.j,bx,by,1,1); // corner fixings
+  },dy(x,y,t,d){const C=ART_A,b=0.9+0.1*Math.sin(t*1.745),am=C.am,co=C.co;
+    fP(`rgba(${am},${0.05*b})`,[x-10,y-8,x+10,y-8,x+17,y-26,x-17,y-26]); // projection fan from the slit
+    fR(`rgba(${am},${0.07*b})`,x-18,y-47,36,21);ctx.strokeStyle=`rgba(${am},${0.35*b})`;ctx.strokeRect(x-17.5,y-46.5,35,19);
+    const u=t%6,sw=u<0.2?Math.abs(u-0.1)/0.1:1,txt=ALLEY_HOLO[(d.v+Math.floor(t/6))%ALLEY_HOLO.length]; // text swaps every 6s
+    ctx.font="9px DotGothic16, monospace";ctx.textAlign="center";ctx.fillStyle=`rgba(${co},${0.95*b*sw})`;ctx.fillText(txt,x,y-33);ctx.textAlign="left";
+    fR(`rgba(255,214,160,${0.35*b})`,x-17,y-29-Math.floor((t%3.6)/3.6*17),34,1); // scan inside the frame, 3.6s
+  }},
+  alley_case:{sh:(x,y)=>shadow(x+1,y,20),st(x,y,d){const C=ART_A,am=C.am;
+    aBox(x-14,y-27,34,7,2,2,C);fR(C.j,x-12,y-25,30,3);gL(am,0.5,x-11,y-24,28,1,1); // back riser with the warm lamp
+    aBox(x-20,y-14,36,13,6,6,C);fR(C.j,x-20,y-1,36,1); // body
+    fP(C.gl,[x-20,y-14,x+16,y-14,x+22,y-20,x-14,y-20]);fP(`rgba(${am},.24)`,[x-19,y-15,x+15,y-15,x+20,y-19,x-14,y-19]); // glass top
+    X.strokeStyle=C.m;X.lineWidth=1;X.beginPath();X.moveTo(x-7.5,y-14);X.lineTo(x-1.5,y-20);X.moveTo(x+4.5,y-14);X.lineTo(x+10.5,y-20);X.stroke(); // inner dividers
+    for(let i=0;i<3;i++){const px=x-15+i*12;if(i===1){fR(C.pk,px,y-18,5,3);fR(C.pkT,px,y-18,5,1);}else{fR(C.dev,px,y-18,4,3);fR(C.devT,px,y-18,4,1);fR(`rgba(${am},.9)`,px+3,y-17,1,1);}} // three goods
+    fR(C.e,x-20,y-14,36,1);fR("rgba(255,232,205,.2)",x-12,y-19,1,1);fR("rgba(255,232,205,.2)",x-11,y-18,4,1); // lit front edge, one reflection
+    fR(C.j,x-17,y-11,16,7);fR(C.b,x-16,y-10,14,5); // price label
+    fR(C.j,x+8,y-10,4,4);fR(C.e,x+8,y-10,4,1);fR(C.j,x+9,y-8,2,1); // lock
+    fR(C.j,x-18,y,4,1);fR(C.j,x+10,y,4,1);
+  },dy(x,y,t,d){digs(x-15,y-9,String(100+Math.floor(hh(Math.floor(t/4.8),d.v,3)*900)),`rgba(${ART_A.co},.85)`,3);}}, // price refreshes every 4.8s
+  alley_pawn:{sh:(x,y)=>shadow(x+1,y,17),st(x,y,d){const C=ART_A,am=C.am;
+    aBox(x-16,y-44,28,43,6,4,C);fR(C.j,x-16,y-1,28,1);
+    for(let i=0;i<6;i++){fR(C.j,x+13,y-35+i*5,4,1);fR(C.m,x+13,y-34+i*5,4,1);} // side cooling fins
+    fR(C.j,x-13,y-41,22,12);fR(C.m,x-12,y-40,20,10);fR(C.e,x-12,y-40,20,1);fR(C.gl,x-10,y-38,16,6);fR(`rgba(${am},.4)`,x-10,y-38,16,6);fR("rgba(19,15,24,.6)",x-10,y-38,16,1); // appraisal window
+    fR(C.j,x-13,y-27,13,7);fR(`rgba(${am},.42)`,x-12,y-26,11,5);fR(C.j,x-11,y-24,7,1);fR(C.j,x-11,y-22,5,1); // input screen
+    for(let i=0;i<4;i++)fR(C.e,x+2+(i%2)*3,y-26+Math.floor(i/2)*3,2,2);
+    fR(C.j,x-12,y-18,20,10);fR(C.b,x-11,y-17,18,8);fR(C.m,x-11,y-17,18,1);fR(C.j,x-11,y-13,18,1);fR(C.e,x-5,y-11,6,1); // closed intake hatch
+    fR(C.j,x-8,y-6,12,2);fR(C.e,x-8,y-4,12,1); // return slot
+  },dy(x,y,t,d){const p=0.5-0.5*Math.cos(t*2.094),bx=x-10+Math.round(p*14);fR(`rgba(${ART_A.am},.18)`,bx-1,y-38,4,6);fR(`rgba(255,214,150,.8)`,bx,y-38,2,6); // light band sweeps there and back in 3s
+    gL(ART_A.co,0.8,x+6,y-42,2,1,1);}},
+  alley_locker:{sh:(x,y)=>shadow(x+1,y,22),st(x,y,d){const C=ART_A,am=C.am,D=[0,1,2,3,4,5].map(i=>alleyLockerDoor(x,y,i));
+    aBox(x-22,y-33,40,30,6,5,C); // body
+    fB(C.j,[[x-21,y-3,38,3],[x-6,y-32,9,28],...D.map(([px,py,w])=>[px-1,py-1,w+2,10])]); // pedestal, authentication bay, door gaps
+    fB("#3A2E3B",D.map(([px,py,w])=>[px,py,w,8]));fB(C.e,[...D.map(([px,py,w])=>[px,py,w,1]),[x-3,y-19,3,3]]);fB(C.b,D.map(([px,py,w])=>[px,py+7,w,1])); // six stepped doors
+    fB(C.m,[[x-20,y-3,36,1],[x-4,y-20,5,5]]);fR(C.gl,x-5,y-30,7,6); // pedestal lip, scanner housing, screen glass
+    fB(`rgba(${am},.33)`,[[x-5,y-30,7,6],...D.map(([px,py])=>[px+2,py+3,1,1])]); // screen, door status dots
+    fB(C.j,[...D.map(([px,py,w])=>[px+w-4,py+3,2,3]),[x-2,y-18,1,1],[x-4,y-10,5,1]]); // recessed pulls, scanner, card slot
+    fR(C.e,x-3,y-19,3,3);fR(C.j,x-2,y-18,1,1);
+  },dy(x,y,t,d){const i=(Math.floor(t/5)+d.v)%6,[px,py]=alleyLockerDoor(x,y,i);gL(ART_A.am,0.95,px+2,py+3,1,1,1);gL(ART_A.co,0.6,x-1,y-27,1,1,1);}}, // one compartment lights each 5s
+  alley_price:{sh:(x,y)=>shadow(x,y,10),st(x,y,d){const C=ART_A;
+    aBox(x-9,y-5,16,4,4,3,C);fR(C.j,x-9,y-1,16,1);fR(C.j,x+1,y-3,5,1);fR(C.e,x+1,y-2,5,1); // base with the card reader slot
+    fR(C.f,x-2,y-13,4,8);fR(C.e,x-2,y-13,1,8);fR(C.b,x+1,y-13,1,8); // short leg
+    fP(C.b,[x+9,y-27,x+11,y-26,x+12,y-14,x+11,y-13]);fP(C.m,[x-9,y-27,x+9,y-27,x+11,y-13,x-11,y-13]);fR(C.e,x-9,y-27,18,1);fR(C.j,x-11,y-13,22,1); // tilted thick bezel
+    fP(C.gl,[x-7,y-25,x+7,y-25,x+8,y-16,x-8,y-16]);fP("rgba(246,168,69,.1)",[x-7,y-25,x+7,y-25,x+8,y-16,x-8,y-16]);fR(`rgba(${C.co},.7)`,x-7,y-23,3,1);
+  },dy(x,y,t,d){digs(x-5,y-21,String(10+Math.floor(hh(Math.floor(t/4),d.v,5)*90))+"0",`rgba(${ART_A.am},.9)`,3);}}, // one row of figures, every 4s
+  alley_pack:{sh:(x,y)=>shadow(x,y,13),st(x,y,d){const C=ART_A,am=C.am;
+    fR(C.j,x-10,y-3,6,3);fR(C.j,x+4,y-3,6,3); // skids: it stands, it does not roll
+    capsule(C.b,x-13,y-18,27,16);capsule(C.f,x-13,y-18,24,15);capsule(C.t,x-11,y-18,20,6);fR(C.e,x-7,y-18,12,1); // rounded body, lit top
+    fR(C.j,x-11,y-14,6,2);fR(C.b,x-11,y-12,6,1); // handle recess
+    fR(C.j,x+4,y-14,6,5);fR(`rgba(${am},.32)`,x+5,y-13,4,3); // content window
+    fR(C.j,x-2,y-18,5,16);fR(C.m,x-1,y-18,3,15);fR(C.e,x-1,y-18,1,15);fR(C.e,x-1,y-11,3,2);fR(C.j,x,y-10,1,1); // centre clamp + latch
+  },dy(x,y,t,d){const k=pulse(t,5,0.4);gL(ART_A.am,0.3+0.6*k,x+7,y-7,1,1,1);}}, // status lamp: 0.4s rise every 5s
+  alley_directory:{sh:(x,y)=>shadow(x,y,14),st(x,y,d){const C=ART_A,am=C.am;
+    for(const px of[x-14,x+11]){fR(C.f,px,y-38,3,36);fR(C.e,px,y-38,1,36);fR(C.m,px-1,y-3,5,3);fR(C.e,px-1,y-3,5,1);} // support frame on fixed feet
+    aBox(x-12,y-40,23,26,3,2,C);fR(C.b,x-11,y-12,22,2);
+    fR(C.j,x-11,y-39,21,4);for(let i=0;i<3;i++)fR(`rgba(${am},.6)`,x-9+i*6,y-38,4,2); // store numbers header
+    fR(C.j,x-11,y-35,20,12);fR(C.b,x-10,y-34,18,2);fR(C.b,x-10,y-34,2,10);fR(C.gl,x-8,y-32,16,8); // map window with depth
+    fR(`rgba(${am},.35)`,x-8,y-29,16,1);fR(`rgba(${am},.35)`,x-3,y-32,1,8);fR(`rgba(${am},.35)`,x+4,y-32,1,8);fR(`rgba(${am},.2)`,x-7,y-31,3,1);fR(`rgba(${am},.2)`,x+5,y-27,2,2);
+    for(let i=0;i<3;i++){fR(`rgba(${am},.5)`,x-9,y-21+i*2,2,1);fR(C.e,x-6,y-21+i*2,8+(i%2)*4,1);} // store list
+  },dy(x,y,t,d){gL(ART_A.co,0.6+0.35*Math.sin(t*2.618),x+1,y-30,2,2,1);}}, // you-are-here dot, gentle 2.4s
 };
+const ALLEY_HOLO=["質屋","営業中","買取","福"];
+// alley helpers: a box with lit top / mid front / dark right side, a capsule, 3×5 pixel figures
+function aBox(x0,yt,w,h,dx,dy,C){fP(C.b,[x0+w,yt+h,x0+w,yt,x0+w+dx,yt-dy,x0+w+dx,yt+h-dy]);fR(C.f,x0,yt,w,h);fP(C.t,[x0,yt,x0+w,yt,x0+w+dx,yt-dy,x0+dx,yt-dy]);fR(C.e,x0,yt,w,1);fR(C.e,x0,yt,1,h);fR(C.j,x0,yt+h-1,w,1);}
+function fB(c,a){X.fillStyle=c;X.beginPath();for(const r of a)X.rect(r[0],r[1],r[2],r[3]);X.fill();} // one fill for many same-colour rects
+function capsule(c,x0,y0,w,h){const r=h/2;X.fillStyle=c;X.beginPath();X.moveTo(x0+r,y0);X.lineTo(x0+w-r,y0);X.arc(x0+w-r,y0+r,r,-Math.PI/2,Math.PI/2);X.lineTo(x0+r,y0+h);X.arc(x0+r,y0+r,r,Math.PI/2,Math.PI*1.5);X.fill();}
+const DIG=["111101101101111","010110010010111","111001111100111","111001111001111","101101111001001","111100111001111","111100111101111","111001010010010","111101111101111","111101111001111"];
+function digs(x,y,s,col,n){X.fillStyle=col;X.beginPath();for(let i=0;i<s.length&&i<(n||9);i++){const g=DIG[+s[i]]||DIG[0];for(let b=0;b<15;b++)if(g[b]==="1")X.rect(x+i*4+b%3,y+Math.floor(b/3),1,1);}X.fill();}
+function alleyLockerDoor(x,y,i){const c=i%2,r=Math.floor(i/2);return c?[x+5,y-32+r*10,12]:[x-20,y-32+r*10,13];}
 // ---- per-frame scene parts
 let ART_LT=0,ART_ON=null,ART_VIS=[];
 function artVisible(d,vx0,vy0,vw,vh){const hw=Math.max(d.w/2+8,d.kind==="slum_lamp"?36:0);return d.x+hw>vx0&&d.x-hw<vx0+vw&&d.y+18>vy0&&d.y-d.h-8<vy0+vh;} // drawn extent incl. glow, shadow, reflections and the lamp's floor light
 // a tall object hiding a character fades to 0.35 in 0.12s and comes back in 0.2s (shadow stays)
-function artFade(ds){const dt=Math.max(0,Math.min(0.1,G.t-ART_LT));ART_LT=G.t;const ch=[];
+function artFade(ds,mz){const dt=Math.max(0,Math.min(0.1,G.t-ART_LT));ART_LT=G.t;const ch=[];
   for(const u of [P,...ALLIES])if(u&&!u.down)ch.push([u.x-14,u.y-62,u.x+14,u.y,u.y]);
   for(const e of EN){const s=e.r*1.4;ch.push([e.x-s,e.y-e.r*2.6,e.x+s,e.y,e.y]);}
-  for(const d of ds){if(!d.tall)continue;const x0=d.x-d.w/2,x1=d.x+d.w/2,y0=d.y-d.h,y1=d.y-2;let hid=false;
-    for(const c of ch)if(c[4]<d.y&&c[2]>x0&&c[0]<x1&&c[3]>y0&&c[1]<y1){hid=true;break;}
-    d.al=hid?Math.max(0.35,d.al-0.65/0.12*dt):Math.min(1,d.al+0.65/0.2*dt);}}
+  for(const d of ds){if(!d.tall&&!mz)continue;const x0=d.x-d.w/2,x1=d.x+d.w/2,y0=d.y-d.h,y1=d.y-2;let hid=false;
+    if(d.tall)for(const c of ch)if(c[4]<d.y&&c[2]>x0&&c[0]<x1&&c[3]>y0&&c[1]<y1){hid=true;break;}
+    d.al=hid?Math.max(0.35,d.al-0.65/0.12*dt):Math.min(1,d.al+0.65/0.2*dt);
+    if(mz)for(const z of mz)if(z[2]>x0&&z[0]<x1&&z[3]>y0&&z[1]<d.y+4){d.al=Math.min(d.al,0.35);break;}}} // map-art zones with markFade: anything over a falling mark stays ≤0.35 for the whole telegraph
 // bounding boxes of attack telegraphs: floor lights under them drop to 25%
 function teleBoxes(){const b=[];for(const e of EN){if(e.wind>0&&e.ca!==undefined){const x2=e.x+Math.cos(e.ca)*170,y2=e.y+Math.sin(e.ca)*170,r=e.r;b.push([Math.min(e.x,x2)-r,Math.min(e.y,y2)-r,Math.max(e.x,x2)+r,Math.max(e.y,y2)+r]);}
     if(e.fuse>0){const R=(e.p&&e.p.radius)||48;b.push([e.x-R,e.y-R*0.7,e.x+R,e.y+R*0.7]);}}
@@ -2602,6 +2732,9 @@ function drawArtFloor(A,vx0,vy0,vw,vh,seed,tb){const F=A.floor,PW=96,PH=48,TOP=6
 // ground layer: lamp pools, reflections, low fog, back rain, splashes (before hazards and telegraphs)
 const RAIN2=(()=>{const r=srand(23);return Array.from({length:96},(_,i)=>({x:r()*W,y:r()*H,l:6+r()*8,s:180+r()*120,a:i<72?(r()<0.5?0:1):0}));})();
 function drawArtRain(A,front,vx0,vy0,vw,vh){const n=A.rain.back;
+  if(A.rainA){const ra=A.rainA,rl=A.rainL,rs=A.rainS; // zone-tuned rain: length / speed remapped from the shared streak table, own opacities
+    const dr=(i0,i1,pred,col)=>{ctx.strokeStyle=col;ctx.beginPath();for(let i=i0;i<i1;i++){const r=RAIN2[i];if(!pred(r))continue;const l=rl[0]+(r.l-6)/8*(rl[1]-rl[0]),sp=rs[0]+(r.s-180)/120*(rs[1]-rs[0]),y=(r.y+G.t*sp)%H,x=(r.x+y*0.18)%W,X=vx0+x/W*vw,Y=vy0+y/H*vh;ctx.moveTo(X,Y);ctx.lineTo(X+l*0.18,Y+l);}ctx.stroke();};
+    if(front)dr(n,n+A.rain.front,()=>true,`rgba(176,194,212,${ra[2]})`);else{dr(0,n,r=>r.a===0,`rgba(176,194,212,${ra[0]})`);dr(0,n,r=>r.a===1,`rgba(176,194,212,${ra[1]})`);}return;}
   const draw=(i0,i1,pred,col)=>{ctx.strokeStyle=col;ctx.beginPath();for(let i=i0;i<i1;i++){const r=RAIN2[i];if(!pred(r))continue;const y=(r.y+G.t*r.s)%H,x=(r.x+y*0.18)%W,X=vx0+x/W*vw,Y=vy0+y/H*vh;ctx.moveTo(X,Y);ctx.lineTo(X+r.l*0.18,Y+r.l);}ctx.stroke();};
   if(front)draw(n,n+A.rain.front,()=>true,"rgba(176,194,212,.075)");
   else{draw(0,n,r=>r.a===0,"rgba(176,194,212,.11)");draw(0,n,r=>r.a===1,"rgba(176,194,212,.15)");}}
@@ -2625,7 +2758,7 @@ function drawArtGround(A,ds,vx0,vy0,vw,vh,seed,tb){const t=G.t;
     ctx.moveTo(sx-1,sy);ctx.lineTo(sx-w,sy-u);ctx.moveTo(sx+1,sy);ctx.lineTo(sx+w,sy-u);}
   ctx.stroke();}
 // skyline window groups breathe between 70% and 100% (never off)
-function artSky(A){const k=[];for(let g=0;g<A.skyLights;g++){const per=4+hh(g,9,1)*5;k.push(0.85+0.15*Math.sin(G.t*6.283/per+g*1.7));}return k;}
+function artSky(A){const k=[];for(let g=0;g<A.skyLights;g++){const per=A.skyPer?A.skyPer[0]+hh(g,9,1)*A.skyPer[1]:4+hh(g,9,1)*5;k.push(0.85+0.15*Math.sin(G.t*6.283/per+g*1.7));}return k;}
 // hazard: puddle in map-art zones — the yellow-green rim IS the hit ellipse (rx = r, ry = 0.45r, same as updateHazards)
 function drawArtPuddle(h,idx,ds){const t=G.t,R=h.radius||26,ry=R*0.45,x=h.x,y=h.y;
   let lit=0.4;for(const d of ds)if(d.light&&Math.hypot(d.x-x,d.y-y)<120){lit=1;break;}
@@ -2639,6 +2772,68 @@ function drawArtPuddle(h,idx,ds){const t=G.t,R=h.radius||26,ry=R*0.45,x=h.x,y=h.
   ctx.strokeStyle="rgba(182,232,140,.6)";ctx.beginPath();ctx.ellipse(x,y,R,ry,0,0,7);ctx.stroke(); // danger rim = hit test
   const ba=0.575+0.125*Math.sin(t*3.491+idx);ctx.strokeStyle=`rgba(182,232,140,${ba})`;ctx.lineWidth=2;ctx.beginPath();
   for(let q=0;q<4;q++){const a0=0.35+q*Math.PI/2;ctx.moveTo(x+Math.cos(a0)*R,y+Math.sin(a0)*ry);ctx.ellipse(x,y,R,ry,0,a0,a0+0.32);}ctx.stroke();ctx.lineWidth=1;}
+/* ---- alley: 128×24 ceramic bands, warm short reflections, one fog sheet, falling-block telegraph */
+function drawAlleyFloor(A,vx0,vy0,vw,vh,seed,tb){const F=A.floor,PW=128,PH=24,TOP=62;
+  const fx0=Math.max(0,vx0),fy0=Math.max(TOP,vy0),fx1=Math.min(WW,vx0+vw),fy1=Math.min(WH,vy0+vh);if(fx1<=fx0||fy1<=fy0)return;
+  ctx.fillStyle=F.panel[0];ctx.fillRect(fx0,fy0,fx1-fx0,fy1-fy0);
+  const r0=Math.max(0,Math.floor((vy0-TOP)/PH)),r1=Math.floor((Math.min(WH,vy0+vh)-TOP)/PH),alt=[],seams=[],steps=[],hl=[],glows=[];
+  for(let r=r0;r<=r1;r++){const off=(r&1)?64:0,py=TOP+r*PH,c0=Math.floor((Math.max(0,vx0)+off)/PW),c1=Math.floor((Math.min(WW,vx0+vw)+off)/PW);
+    for(let c=c0;c<=c1;c++){const px=c*PW-off;
+      if(hh(c,r,seed)<0.45)alt.push([px,py]);
+      seams.push([px,py,1,PH],[px,py,PW,1]);steps.push([px+1,py+1,PW-1,1]);
+      hl.push([px+2,py+2,6+Math.floor(hh(r,c,seed)*7),1]); // short lit line at the band end (6-12px)
+      if(hh(c,r,seed+7)<0.03){const L=16+Math.floor(hh(c,r,seed+8)*17),gx=px+4+Math.floor(hh(c,r,seed+9)*(PW-8-L));glows.push([gx,py,L]);}}} // ≤3% lit joints, 16-32px
+  ctx.fillStyle=F.panel[1];for(const p of alt)ctx.fillRect(p[0]+1,p[1]+1,PW-1,PH-1);
+  ctx.fillStyle=F.base;for(const s of seams)ctx.fillRect(s[0],s[1],s[2],s[3]);
+  ctx.fillStyle="#110D14";for(const s of steps)ctx.fillRect(s[0],s[1],s[2],s[3]);
+  ctx.fillStyle="#2A2130";for(const s of hl)ctx.fillRect(s[0],s[1],s[2],s[3]);
+  ctx.globalAlpha=F.seamA;ctx.fillStyle=F.seam;for(const s of seams)ctx.fillRect(s[0],s[1],s[2],s[3]);ctx.globalAlpha=1;
+  // drain slits 24×3: one per base-screen cell, in its middle half (any screen holds at most 4)
+  const cx0=Math.floor(vx0/W),cx1=Math.floor((vx0+vw)/W),cy0=Math.floor(vy0/H),cy1=Math.floor((vy0+vh)/H),bars=[];ctx.fillStyle="#0B080D";ctx.beginPath();
+  for(let cy=cy0;cy<=cy1;cy++)for(let cx=cx0;cx<=cx1;cx++){const sx=Math.round(cx*W+W/4+hh(cx,cy,seed+11)*W/2),sy=Math.round(cy*H+H/4+hh(cx,cy,seed+12)*H/2);if(sy<90||sy>WH-20||sx<20||sx>WW-44)continue;
+    ctx.rect(sx,sy,24,3);for(let i=0;i<5;i++)bars.push([sx+3+i*4,sy+1]);}
+  ctx.fill();ctx.fillStyle="#241C28";ctx.beginPath();for(const b of bars)ctx.rect(b[0],b[1],2,1);ctx.fill();
+  for(const g of glows){const near=Math.hypot(g[0]+g[2]/2-P.x,g[1]-P.y)<48?0.5:1;ctx.fillStyle=`rgba(${F.glow},${F.glowA*near*teleK(tb,g[0],g[1]-2,g[0]+g[2],g[1]+2)})`;ctx.fillRect(g[0],g[1],g[2],1);}}
+function drawAlleyGround(A,ds,vx0,vy0,vw,vh,seed,tb){const t=G.t;
+  // short warm reflections fixed to each lit object (max 4, 2-3 bands of 1px within 12px, 0.04-0.09, 3-4.5s, ±8% width, ±15% alpha)
+  const cx=vx0+vw/2,cy=vy0+vh/2,L=ds.filter(d=>d.light).sort((a,b)=>Math.hypot(a.x-cx,a.y-cy)-Math.hypot(b.x-cx,b.y-cy)).slice(0,A.refl);
+  for(const d of L){const per=3+d.s*1.5,ph=Math.sin((t+d.ph)*6.283/per),nb=2+(d.v%2),wv=d.lw*(1+0.08*ph),near=Math.hypot(d.x-P.x,d.y+7-P.y)<48?0.5:1,k=teleK(tb,d.x-wv/2,d.y+3,d.x+wv/2,d.y+12)*near;
+    for(let i=0;i<nb;i++){const a=[0.078,0.062,0.047][i]*(1+0.15*ph)*k,w=wv*(1-i*0.22);ctx.fillStyle=`rgba(${d.light},${a})`;ctx.fillRect(Math.round(d.x-w/2+(i%2?2:-1)),Math.round(d.y+3+i*4),Math.round(w),1);}}
+  // one low fog sheet 160×24
+  const ns=Math.max(1,Math.round(WW*WH/(W*H)));let shown=0;
+  for(let i=0;i<ns&&shown<A.fog;i++){const w=160,h=24,fy=100+hh(i,4,seed)*(WH-140),fx=((hh(i,5,seed)*(WW+w)+t*3)%(WW+w))-w;
+    if(fx+w<vx0||fx>vx0+vw||fy+h<vy0||fy-h>vy0+vh)continue;shown++;const a=0.025+hh(i,6,seed)*0.01;
+    ctx.save();ctx.translate(fx+w/2,fy);ctx.scale(1,h/w);const g=ctx.createRadialGradient(0,0,0,0,0,w/2);g.addColorStop(0,`rgba(155,135,144,${a})`);g.addColorStop(1,"rgba(155,135,144,0)");ctx.fillStyle=g;ctx.beginPath();ctx.arc(0,0,w/2,0,7);ctx.fill();ctx.restore();}
+  drawArtRain(A,false,vx0,vy0,vw,vh);
+  // splashes (max 10, 0.22-0.32s, 2-5px)
+  const CW=160,CH=120,i0=Math.floor(vx0/CW),i1=Math.floor((vx0+vw)/CW),j0=Math.floor(vy0/CH),j1=Math.floor((vy0+vh)/CH);let sn=0;ctx.strokeStyle="rgba(176,194,212,.2)";ctx.beginPath();
+  for(let j=j0;j<=j1;j++)for(let i=i0;i<=i1;i++){if(sn>=A.rain.splash)break;const per=0.9+hh(i,j,seed+20)*0.8,life=0.22+hh(i,j,seed+21)*0.1,tt=t+hh(i,j,seed+22)*per,cyc=Math.floor(tt/per),age=tt-cyc*per;if(age>=life)continue;
+    const sx=i*CW+hh(i,j,cyc)*CW,sy=j*CH+hh(j,i,cyc+1)*CH;if(sy<70||sy>WH-4||sx<4||sx>WW-4)continue;sn++;const k=age/life,w=2+k*3,u=1.5+k*1.5;
+    ctx.moveTo(sx-1,sy);ctx.lineTo(sx-w,sy-u);ctx.moveTo(sx+1,sy);ctx.lineTo(sx+w,sy-u);}
+  ctx.stroke();}
+// falling: the final hit ellipse (rx = R, ry = 0.5R, same as updateHazards) is fixed from the first frame; an inner ring grows to it over the existing 1.1s
+const FALL_SEEN=new WeakMap();let FALL_HIT=[];
+function drawAlleyFalling(h){const R=h.radius||30,ry=R*0.5,t=G.t;let seen=FALL_SEEN.get(h);if(!seen)FALL_SEEN.set(h,seen=new Map());
+  const now=new Set(h.marks);for(const[m,s]of seen)if(!now.has(m)){if(s.t<0.12)FALL_HIT.push({x:s.x,y:s.y,t0:t,R});seen.delete(m);} // a mark that just landed leaves ≤4 chips for 0.18s
+  for(const m of h.marks){seen.set(m,{x:m.x,y:m.y,t:m.t});const x=m.x,y=m.y,k=Math.max(0,Math.min(1,1-m.t/1.1));
+    ctx.fillStyle="rgba(255,90,90,.08)";ctx.beginPath();ctx.ellipse(x,y,R,ry,0,0,7);ctx.fill();
+    if(k>0.03){ctx.strokeStyle="rgba(255,90,90,.55)";ctx.lineWidth=1.5;ctx.beginPath();ctx.ellipse(x,y,R*k,ry*k,0,0,7);ctx.stroke();}
+    ctx.strokeStyle="rgba(255,90,90,.8)";ctx.lineWidth=2;ctx.beginPath();ctx.ellipse(x,y,R,ry,0,0,7); // boundary: the 2px line is centred on the hit edge
+    ctx.moveTo(x+R,y);ctx.lineTo(x+R-7,y);ctx.moveTo(x-R,y);ctx.lineTo(x-R+7,y);ctx.moveTo(x,y-ry);ctx.lineTo(x,y-ry+4);ctx.moveTo(x,y+ry);ctx.lineTo(x,y+ry-4);ctx.stroke();ctx.lineWidth=1; // inward ticks
+    ctx.fillStyle=`rgba(0,0,0,${0.12+0.22*k})`;ctx.beginPath();ctx.ellipse(x,y,5+5*k,2+2*k,0,0,7);ctx.fill();
+    const bx=Math.round(x),by=Math.round(y-m.t*90);if(m.t>0.06){fR("rgba(200,184,192,.22)",bx-6,by-22,1,8);fR("rgba(200,184,192,.22)",bx+5,by-24,1,10);} // two short descent streaks
+    alleyBlock(bx,by);} // same descent rate as before, but it touches the ground exactly when the hit fires
+  FALL_HIT=FALL_HIT.filter(f=>t-f.t0>=0&&t-f.t0<0.18);
+  for(const f of FALL_HIT){const k=(t-f.t0)/0.18;ctx.fillStyle=`rgba(150,128,140,${1-k})`;
+    for(let i=0;i<4;i++){const a=0.6+i*Math.PI/2,dd=f.R*(0.15+0.45*k);ctx.fillRect(Math.round(f.x+Math.cos(a)*dd)-1,Math.round(f.y+Math.sin(a)*dd*0.5-3*Math.sin(k*Math.PI))-1,2,2);}}}
+// 20×12 precision carrier block: top, side, closed fixing grooves, amber centre band (base point = bottom centre)
+function alleyBlock(x,by){fP("#2E2430",[x+7,by,x+7,by-8,x+10,by-12,x+10,by-4]);fR("#4A3D4A",x-10,by-8,17,8);fP("#6A5868",[x-10,by-8,x+7,by-8,x+10,by-12,x-7,by-12]);
+  fR("#A08A94",x-10,by-8,17,1);fR("#A08A94",x-10,by-8,1,8);fR(ART_A.j,x-10,by-1,17,1);
+  fR(ART_A.j,x-7,by-7,1,6);fR(ART_A.j,x+4,by-7,1,6);fR("#5E4C5A",x-7,by-7,1,1);fR("#5E4C5A",x+4,by-7,1,1);
+  fR(`rgba(${ART_A.am},.9)`,x-6,by-5,10,2);}
+const ART_FX={alley:{floor:drawAlleyFloor,ground:drawAlleyGround}};
+// falling marks as fade zones: ellipse box plus the block's drop column
+function fallZones(){const z=[];for(const h of HAZ)if(h.type==="falling"){const R=h.radius||30;for(const m of h.marks){z.push([m.x-R,m.y-R*0.5,m.x+R,m.y+R*0.5],[m.x-11,m.y-m.t*90-13,m.x+11,m.y]);}}return z;}
 function pixBlob(cx,cy,r,seed,t){const s=3;for(let gy=-r;gy<=0;gy+=s)for(let gx=-r;gx<=r;gx+=s){const d=(gx*gx)/(r*r)+(gy*gy)/(r*r*0.8);if(d>1)continue;
   const h=Math.sin(gx*12.9+gy*78.2+seed)*43758.5,fr=h-Math.floor(h);if(fr<0.08&&Math.floor(t*10+fr*10)%3===0)continue;
   ctx.fillRect(cx+gx+(fr>0.93?Math.round(Math.sin(t*30+fr*9)*3):0),cy+gy,s,s);}}
@@ -2814,12 +3009,12 @@ function drawDive(){
   updateCam();ctx.fillStyle="#07060d";ctx.fillRect(0,0,W,H);ctx.save();applyCam();
   const vw=W/CAM.z,vh=H/CAM.z,vx0=CAM.x-vw/2,vy0=CAM.y-vh/2; // visible part of the world
   const A=OFM()?null:R.art,deco=decoNow(),aSeed=A?((RUN&&RUN.kind==="run"?1000+RUN.seg*7+RUN.zi*131:5+FLOOR*17)|0):0,sk=A?artSky(A):null;
-  ART_ON=A;ART_VIS=A?deco.filter(d=>artVisible(d,vx0,vy0,vw,vh)):[];const tb=A?teleBoxes():null;if(A)artFade(ART_VIS);
+  ART_ON=A;ART_VIS=A?deco.filter(d=>artVisible(d,vx0,vy0,vw,vh)):[];const tb=A?teleBoxes():null;if(A)artFade(ART_VIS,A.markFade?fallZones():null);
   const g=ctx.createLinearGradient(0,0,0,70);g.addColorStop(0,R.sky[0]);g.addColorStop(1,R.sky[1]);ctx.fillStyle=g;ctx.fillRect(0,0,WW,70);
   // backdrop skyline of the region, washed toward monochrome (repeated along the wide map)
   for(let ox=0;ox<WW+10;ox+=W)for(let bi=0;bi<SKYLINE.length;bi++){const b=SKYLINE[bi],h=b.h*0.35,y0=62-h,wa=sk?.45*sk[bi%sk.length]:.45;ctx.fillStyle="#0c0a12";ctx.fillRect(b.x+ox,y0,b.w,h+8);
-    for(const w of b.win){if(!w.lit||w.y>h)continue;ctx.fillStyle=w.c?R.acc:R.acc2;ctx.globalAlpha=wa;ctx.fillRect(b.x+ox+w.x,y0+w.y,2,2);ctx.globalAlpha=1;}}
-  if(A)drawArtFloor(A,vx0,vy0,vw,vh,aSeed,tb); // map-art zones: paving instead of the grid
+    for(const w of b.win){if(!w.lit||w.y>h)continue;ctx.fillStyle=w.c?R.acc:R.acc2;ctx.globalAlpha=wa;ctx.fillRect(b.x+ox+w.x,y0+w.y,A&&A.skyWin?Math.max(2,Math.min(A.skyWin,b.w-w.x)):2,2);ctx.globalAlpha=1;}}
+  if(A)(A.fx?ART_FX[A.fx].floor:drawArtFloor)(A,vx0,vy0,vw,vh,aSeed,tb); // map-art zones: paving instead of the grid (zone painter when it has one)
   else{
   ctx.fillStyle=R.ground;ctx.fillRect(0,62,WW,WH-62);
   ctx.strokeStyle=R.grid;ctx.globalAlpha=.5;ctx.lineWidth=1;
@@ -2828,7 +3023,7 @@ function drawDive(){
   ctx.globalAlpha=1;}
   // map edge
   ctx.strokeStyle=R.acc;ctx.globalAlpha=.35;ctx.lineWidth=2;ctx.strokeRect(2,63,WW-4,WH-65);ctx.globalAlpha=1;ctx.lineWidth=1;
-  if(A)drawArtGround(A,ART_VIS,vx0,vy0,vw,vh,aSeed,tb);
+  if(A)(A.fx?ART_FX[A.fx].ground:drawArtGround)(A,ART_VIS,vx0,vy0,vw,vh,aSeed,tb);
   for(const b of GLITCH){if(((G.t*b.f+b.p)%1)<b.on*(0.4+g0)){ctx.fillStyle=`hsla(${hueOf(R.acc)+b.dh},80%,60%,${0.08+g0*0.2})`;ctx.fillRect(vx0+b.x/W*vw+(Math.random()-.5)*6*g0,vy0+b.y/H*vh,b.w,b.h);}}
   drawHazards();
   if(OFM()&&!gray)drawTele();
