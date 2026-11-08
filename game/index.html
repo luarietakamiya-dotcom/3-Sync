@@ -578,7 +578,7 @@ async function loadData(){
   for(const m of mt.materials)MATS[m.id]={nm:m.name,base:m.price,zone:m.zone,boss:!!m.boss};
   for(const e of en.enemies){ENEMIES[e.id]=e;if(e.missionOnly)SPECIAL[e.id]={nm:e.name,minF:e.minFloor||1,desc:e.desc||""};}
   ZONES=mp.zones;BGS=mp.backgrounds||{};
-  for(const k in BG_ART)if(BGS[k]){BGS[k].art=BG_ART[k];BGS[k].deco=Object.keys(BG_ART[k].objs);} // map-art settings (slum only for now)
+  for(const k in BG_ART)if(BGS[k]){BGS[k].art=BG_ART[k];} // map-art settings (configured zones)
   try{const md=await get("data/modes.json");MODES={...MODES,...md};}catch(err){console.warn("modes.json",err);}
   MODES.overflow={...OF_DEF,...(MODES.overflow||{})};
   try{const d=await get("data/npcs.json");
@@ -1321,6 +1321,7 @@ function updateHazards(dt){
 function drawHazards(){
   const t=G.t,A=MODE==="dive"&&!OFM()&&ART_ON;let hi=-1;
   for(const h of HAZ){hi++;
+    if(A&&A.zone==="front"&&(h.type==="rift"||h.type==="noise")){drawFrontHazard(h,hi);continue;}
     if(h.type==="puddle"&&A&&A.puddle){drawArtPuddle(h,hi,ART_VIS);continue;} // map-art zones: new water surface, same hit ellipse
     if(h.type==="puddle"){ctx.fillStyle="rgba(150,230,120,.22)";ctx.beginPath();ctx.ellipse(h.x,h.y,h.radius||26,(h.radius||26)*0.45,0,0,7);ctx.fill();
       ctx.fillStyle="rgba(190,255,150,.55)";for(let i=0;i<3;i++){const k=(t*0.8+i*0.33)%1;ctx.fillRect(h.x+Math.sin(i*2.1+h.x)*12,h.y-k*6,2,2);}}
@@ -2319,7 +2320,7 @@ function ofDismantle(id){const it=itemById(id);if(!it||MODE!=="town"||!S.overflo
 function genDeco(seed){const r=srand(seed),a=[],n=Math.round(11*WW*WH/(W*H));for(let i=0;i<n;i++){a.push({x:20+r()*(WW-40),y:80+r()*(WH-96),k:Math.floor(r()*3),s:r()});}return a.filter(d=>Math.hypot(d.x-WW/2,d.y-WH/2-40)>70&&d.x>70);}
 const DECO_CACHE={};
 function decoNow(){const seed=(RUN&&RUN.kind==="run"?1000+RUN.seg*7+RUN.zi*131:5+FLOOR*17)+"_"+WW+"x"+WH,bg=zoneOf(FLOOR).backgroundId,A=BGS[bg]&&BGS[bg].art;
-  if(A){const key=seed+"_"+bg+"_a"+ART_VER+"_"+hazKey();return DECO_CACHE[key]||(DECO_CACHE[key]=genArtDeco(parseInt(seed),A));} // map-art zones: zone id, art version and the puddles they avoid are part of the key
+  if(A&&!OFM()){const key=seed+"_"+bg+"_a"+(bg==="front"?FRONT_ART_VER:ART_VER)+"_"+hazKey();return DECO_CACHE[key]||(DECO_CACHE[key]=genArtDeco(parseInt(seed),A));} // map-art zones: zone id, art version and the puddles they avoid are part of the key
   return DECO_CACHE[seed]||(DECO_CACHE[seed]=genDeco(parseInt(seed)));} // each run segment looks different
 const GLITCH=(()=>{const r=srand(9);return Array.from({length:40},()=>({x:r()*W,y:r()*H,w:4+r()*40,h:1+r()*5,f:0.5+r()*3,p:r(),on:0.1+r()*0.3,dh:r()*80}));})();
 function shadow(x,y,rx){ctx.fillStyle="rgba(0,0,0,.35)";ctx.beginPath();ctx.ellipse(x,y,rx,rx*0.38,0,0,7);ctx.fill();}
@@ -2342,7 +2343,8 @@ function drawDeco(d,R){
 // Settings come from R.art (merged into BGS at load). Zones without art keep the old genDeco / grid / rain.
 // objs: w×h = drawn size, fd = footprint depth (footprint width = 80% of w), wt = draw weight, edge = outer band only,
 // max = per base screen, near/nd = preferred neighbours and base-point distance, light = casts a ground reflection.
-const ART_VER=1;
+// Version only front placement, keeping other zones' seeded layouts unchanged.
+const ART_VER=2,FRONT_ART_VER=2;
 const BG_ART={slum:{
   objs:{
     slum_shack:{w:64,h:56,fd:20,wt:14,edge:1,max:2},
@@ -2357,6 +2359,19 @@ const BG_ART={slum:{
   minDist:{"slum_shack":100,"slum_lamp":110},tallH:50,tallGap:80,edgeBand:80,centerGap:24,maxScreen:14,maxTall:4,
   floor:{base:"#101821",panel:["#131D28","#17212C"],seam:"#2A3948",seamA:0.28,glow:"101,200,208",glowA:0.1},
   rain:{back:72,front:24,splash:12},refl:4,fog:2,skyLights:8,puddle:true}};
+BG_ART.front={zone:"front",objs:{
+ front_crystal:{w:42,h:64,fd:18,wt:12,edge:1,max:2,light:"196,170,240",lw:24},
+ front_geode:{w:34,h:58,fd:14,wt:8,edge:1,max:1,light:"255,154,208",lw:20},
+ front_cluster:{w:48,h:34,fd:18,wt:18,max:3},
+ front_torii:{w:80,h:72,fd:18,wt:6,edge:1,max:1},
+ front_pillar:{w:38,h:70,fd:16,wt:10,edge:1,max:2},
+ front_shrine:{w:44,h:40,fd:18,wt:12,max:2,near:["front_pillar","front_torii"],nd:[64,96],light:"169,152,205",lw:16},
+ front_pave:{w:56,h:22,fd:20,wt:12,max:2},
+ front_shard:{w:36,h:36,fd:14,wt:14,max:2,near:["front_crystal","front_cluster"],nd:[60,96]},
+ front_holo:{w:34,h:46,fd:12,wt:8,edge:1,max:2,light:"197,139,240",lw:18}},
+ minDist:{front_crystal:110,front_geode:110,front_torii:140,front_pillar:110},tallH:41,tallGap:96,edgeBand:96,centerGap:40,maxScreen:14,maxTall:4,
+ floor:{kind:"front",base:"#0E0B14",panel:["#1A1524","#1D1828","#211B2D"],seam:"#0E0B14",seamA:1,glow:"206,220,255",glowA:.04},
+ rain:{back:0,front:0,splash:0},refl:2,fog:2,skyLights:3,puddle:false};
 const ART_C={b:"#18212D",f:"#263444",t:"#35495A",j:"#101823",e:"#60788A",m:"#2E3F50",teal:"101,200,208",warm:"216,174,114"};
 function hh(a,b,c){let h=Math.imul((a|0)^0x9E3779B9,0x85EBCA6B)^Math.imul((b|0)+0x632BE5AB,0xC2B2AE35)^Math.imul((c|0)+0x27D4EB2F,0x165667B1);h=Math.imul(h^h>>>15,0x2C1B3C6D);h^=h>>>13;h=Math.imul(h,0x297A2D39);h^=h>>>16;return(h>>>0)/4294967296;}
 let HAZ_KEY_SRC=null,HAZ_KEY="";
@@ -2374,7 +2389,7 @@ function artFits(A,c,placed,mate){
   const o=A.objs[c.kind];
   if(c.x0<=70||c.x1>WW-20||c.y0<80||c.y1>WH-16||c.y-c.h<36)return false; // left strip, map edge, skyline band
   {const sx=WW/2,sy=WH/2+40,px=Math.max(c.x0,Math.min(c.x1,sx)),py=Math.max(c.y0,Math.min(c.y1,sy));if(Math.hypot(px-sx,py-sy)<=70)return false;} // start position
-  for(const h of HAZ){if(h.x===undefined)continue;const rr=h.radius||(h.type==="puddle"?26:40),rx=rr+12,ry=rr*(h.type==="puddle"?0.45:0.5)+12, // hazard ellipse + 12px
+  for(const h of HAZ){if(h.x===undefined)continue;const rr=A.zone==="front"&&h.type==="rift"?80:h.radius||(h.type==="puddle"?26:40),rx=rr+12,ry=rr*(h.type==="puddle"?0.45:0.5)+12, // hazard ellipse + 12px
     px=Math.max(c.x0,Math.min(c.x1,h.x)),py=Math.max(c.y0,Math.min(c.y1,h.y));if(((px-h.x)/rx)**2+((py-h.y)/ry)**2<1)return false;}
   const edge=artEdge(A,c.x,c.y-c.fd/2);
   if((o.edge||c.h>40)&&!edge)return false; // tall things go to the outer band; the centre keeps low objects
@@ -2424,12 +2439,14 @@ function artBody(d,f,sc){const key=d.kind+"|"+d.v+"|"+sc;let e=ART_CACHE.get(key
   c.width=Math.ceil(cw*sc);c.height=Math.ceil(ch*sc);const g=c.getContext("2d");g.scale(sc,sc);
   X=g;try{f.st(ox,oy,d);}finally{X=ctx;}
   e={c,ox,oy,cw:c.width/sc,ch:c.height/sc,b:c.width*c.height*4};ART_CACHE.set(key,e);ART_CACHE_BYTES+=e.b;
-  for(const[k,v]of ART_CACHE){if(ART_CACHE_BYTES<=ART_CACHE_CAP)break;if(v===e)continue;ART_CACHE.delete(k);ART_CACHE_BYTES-=v.b;}
+  for(const[k,v]of ART_CACHE){if(ART_CACHE_BYTES+FLOOR_CACHE_BYTES<=ART_CACHE_CAP)break;if(v===e)continue;ART_CACHE.delete(k);ART_CACHE_BYTES-=v.b;}
   return e;}
 function drawArtDeco(d,f){const x=Math.round(d.x),y=Math.round(d.y),t=G.t+d.ph,m=ctx.getTransform(),sc=Math.round(Math.hypot(m.a,m.b)*100)/100;
   f.sh(x,y);if(d.al<1){ctx.save();ctx.globalAlpha=d.al;}
   const e=artBody(d,f,sc),sm=ctx.imageSmoothingEnabled;ctx.imageSmoothingEnabled=false;ctx.drawImage(e.c,x-e.ox,y-e.oy,e.cw,e.ch);ctx.imageSmoothingEnabled=sm;
-  f.dy(x,y,t,d);if(d.al<1)ctx.restore();}
+  f.dy(x,y,t,d);
+  if(d.kind==="front_holo"&&ART_VIS.filter(o=>o.kind.startsWith("front_")).indexOf(d)<2&&!frontNearHaz(x,y-d.h/2,12)&&t%10<.12){ctx.save();ctx.beginPath();ctx.rect(x-d.w/4,y-d.h*.6,d.w/2,2);ctx.clip();ctx.drawImage(e.c,x-e.ox+2,y-e.oy,e.cw,e.ch);ctx.restore();}
+  if(d.al<1)ctx.restore();}
 const HOLO_TXT=["住区","食堂","24H","給水","充電","共用","診療","洗濯"];
 const ART_DRAW={
   slum_shack:{sh:(x,y)=>shadow(x+2,y,32),st(x,y,d){const C=ART_C,wk=0.9;
@@ -2558,6 +2575,134 @@ const ART_DRAW={
   },dy(x,y,t,d){const C=ART_C,wk=0.5+0.5*Math.sin(t*0.898),sel=Math.floor(t/2.4)%6; // window 90-100% over 7s; selection moves every 2.4s
     fR(`rgba(${C.warm},${0.035*wk})`,x-11,y-36,13,22);gL(C.teal,0.95,x+6+(sel%2)*3,y-31+Math.floor(sel/2)*3,2,1,1);}},
 };
+// Front materials and faceted parts. All moving parts use the shared 16 MiB LRU.
+const FRONT_C={b:"#1C152B",f:"#30213F",t:"#503B62",j:"#0E0B17",e:"#8C78A5",glass:"#66547B",light:"#A998CD"};
+function frontFacet(x,y,w,h){const C=FRONT_C;
+ fP(C.j,[x-w*.5,y-h*.6,x-w*.15,y-h,x+w*.48,y-h*.75,x+w*.5,y-h*.2,x,y,x-w*.5,y-h*.18]);
+ fP(C.t,[x-w*.45,y-h*.6,x-w*.15,y-h*.94,x+w*.05,y-h*.52,x,y-1]);
+ fP(C.f,[x+w*.05,y-h*.52,x+w*.43,y-h*.72,x+w*.46,y-h*.22,x,y-1]);
+ fP(C.glass,[x-w*.15,y-h*.94,x+w*.43,y-h*.72,x+w*.05,y-h*.52]);
+ fP(C.e,[x-w*.42,y-h*.6,x-w*.36,y-h*.62,x-w*.1,y-h*.15,x-w*.15,y-h*.13]);
+ fP(C.light,[x-w*.12,y-h*.83,x-w*.06,y-h*.79,x+w*.02,y-h*.57,x-w*.03,y-h*.6]);
+ fR(C.b,x-2,y-h*.4,3,2);
+}
+function frontFoot(x,y,w){const C=FRONT_C;fP(C.b,[x-w/2,y-4,x+w*.3,y-7,x+w/2,y-2,x+w*.2,y,x-w*.5,y-1]);fP(C.t,[x-w/2,y-5,x+w*.3,y-8,x+w/2,y-4,x-w*.2,y-2]);fR(C.e,x-w*.2,y-4,4,1);}
+function frontArm(x,y,dx,dy){const C=FRONT_C;fP(C.b,[x-2,y-3,x+dx-2,y+dy-3,x+dx+2,y+dy,x+2,y]);fP(C.t,[x-2,y-5,x+dx-2,y+dy-5,x+dx+2,y+dy-3,x+2,y-3]);fR(C.e,x+dx-2,y+dy-3,3,2);}
+function frontPart(d,key,x,y,w,h,angle=0){const e=artBody({kind:"front_part_"+key,v:0,w,h}, {st:(a,b)=>frontFacet(a,b,w-4,h-3)},1);
+ ctx.save();ctx.translate(x,y);ctx.rotate(angle);ctx.drawImage(e.c,-e.ox,-e.oy,e.cw,e.ch);ctx.restore();}
+// Clean marble parts and translucent crystals, baked through the shared LRU.
+const FRONT_STONE={b:'#2A2238',f:'#4B4260',t:'#7D7398',e:'#B9AED0'};
+function frontStone(x,y,w,h){const C=FRONT_STONE;fP(C.b,[x-w/2,y,x+w/2-4,y,x+w/2,y-4,x+w/2,y-h-4,x+w/2-4,y-h,x-w/2,y-h]);fR(C.f,x-w/2,y-h,w-4,h);fP(C.t,[x-w/2,y-h,x-w/2+4,y-h-4,x+w/2,y-h-4,x+w/2-4,y-h]);fR(C.e,x-w/2,y-h,w-4,1);}
+function frontPillarBlock(x,y,w,h){const C=FRONT_STONE;
+ fP(C.b,[x-w/2+3,y,x+w/2-3,y,x+w/2,y-3,x+w/2,y-h+3,x+w/2-3,y-h,x-w/2+3,y-h,x-w/2,y-h+3,x-w/2,y-3]);
+ fR(C.f,x-w/2+4,y-h,w-8,h);fP(C.t,[x-w/2,y-h+3,x-w/2+4,y-h,x+w/2-4,y-h,x+w/2,y-h+3]);fR(C.e,x-w/2+4,y-h,w-8,1);
+}
+function frontGem(x,y,w,h){
+ const ps=[[x-w*.5,y-h*.6],[x-w*.15,y-h],[x+w*.48,y-h*.75],[x+w*.5,y-h*.2],[x,y],[x-w*.5,y-h*.18]],c=[x+w*.05,y-h*.52];
+ const grad=X.createLinearGradient(x-w/2,y-h,x+w/2,y);grad.addColorStop(0,'#E8DFFF');grad.addColorStop(.52,'#A998CD');grad.addColorStop(1,'#FF9AD0');fP(grad,ps.flat());
+ const cols=['rgba(232,223,255,.38)','rgba(232,223,255,.22)','rgba(96,67,139,.42)','rgba(255,154,208,.38)','rgba(94,69,132,.46)','rgba(232,223,255,.25)'];
+ ps.forEach((p,i)=>fP(cols[i],[...p,...ps[(i+1)%6],...c]));
+ fP('rgba(232,223,255,.32)',[x-w*.27,y-h*.7,x+w*.26,y-h*.65,x+w*.14,y-h*.28,x-w*.1,y-h*.18]);
+ X.strokeStyle='#FFFFFF';X.lineWidth=.7;X.beginPath();X.moveTo(...ps[0]);X.lineTo(...ps[1]);X.lineTo(...ps[2]);X.stroke();
+}
+// Every animated component is cached; frames only translate images or change alpha.
+function frontLayer(key,x,y,w,h,paint,alpha=1){const m=ctx.getTransform(),sc=Math.round(Math.hypot(m.a,m.b)*100)/100,e=artBody({kind:'front_layer_'+key,v:0,w,h},{st:paint},sc);ctx.save();ctx.globalAlpha*=alpha;ctx.drawImage(e.c,x-e.ox,y-e.oy,e.cw,e.ch);ctx.restore();}
+function frontShade(x,y,w){fP('rgba(0,0,0,.3)',[x-w/2,y-2,x+w/2-3,y-4,x+w/2,y,x-w/2+3,y+2]);}
+let FRONT_CRYSTAL_MASK=null;
+function frontCrystalMask(){if(!FRONT_CRYSTAL_MASK){const p=new Path2D();p.moveTo(-19,-40);p.lineTo(-9,-64);p.lineTo(8,-49);p.lineTo(9,-17);p.lineTo(-5,-5);p.lineTo(-19,-15);p.closePath();FRONT_CRYSTAL_MASK=p;}return FRONT_CRYSTAL_MASK;}
+function frontGeodeGem(x,y){const ps=[[x-4,y-56],[x+13,y-47],[x+14,y-28],[x+1,y-20],[x-12,y-42]],c=[x+2,y-38];
+ const g=X.createLinearGradient(x-12,y-56,x+14,y-20);g.addColorStop(0,'#E8DFFF');g.addColorStop(.5,'#A998CD');g.addColorStop(1,'#FF9AD0');fP(g,ps.flat());
+ ps.forEach((p,i)=>fP(['rgba(232,223,255,.4)','rgba(92,68,132,.3)','rgba(255,154,208,.2)','rgba(232,223,255,.2)','rgba(232,223,255,.3)'][i],[...p,...ps[(i+1)%5],...c]));
+}
+const frontNewDraw={
+ front_crystal:{sh:(x,y)=>frontShade(x,y,38),st(x,y){frontFoot(x,y,36);frontGem(x-5,y-5,28,59);frontGem(x+12,y-5,15,30);},dy(x,y,t){frontLayer('crystalInner',x,y,42,64,(a,b)=>fP('rgba(232,223,255,.28)',[a-12,b-43,a-3,b-49,a+1,b-22,a-4,b-13]),.85+.15*(.5+.5*Math.sin(t*2*Math.PI/7)));const q=((t%9)+9)%9;if(q<.6){
+    ctx.save();ctx.translate(x,y);ctx.clip(frontCrystalMask());
+    frontLayer('crystalSweep',-34+q/.6*52,0,48,64,(a,b)=>fP('rgba(255,255,255,.5)',[a,b-64,a+3,b-64,a+23,b,a+20,b]));ctx.restore();
+  }}},
+ front_geode:{sh:(x,y)=>frontShade(x,y,30),st(x,y){const C=FRONT_STONE;X.fillStyle=C.f;X.beginPath();X.ellipse(x,y-4,15,4,0,0,7);X.fill();fR(C.f,x-15,y-8,30,4);X.fillStyle=C.t;X.beginPath();X.ellipse(x,y-8,15,4,0,0,7);X.fill();},dy(x,y,t){const yy=y+2*Math.sin(t*Math.PI/3);frontLayer('geode',x,yy,34,58,(a,b)=>{X.save();X.translate(a,b-38);X.rotate(10*Math.PI/180);frontGeodeGem(0,38);X.restore();});const face=Math.floor(t/1.2)%5;frontLayer('geodeFace'+face,x,yy,34,58,(a,b)=>{X.save();X.translate(a,b-38);X.rotate(10*Math.PI/180);const ps=[[-4,-18],[13,-9],[14,10],[1,18],[-12,-4]];fP('rgba(255,225,248,.28)',[...ps[face],...ps[(face+1)%5],2,0]);X.restore();});}},
+ front_cluster:{sh:(x,y)=>frontShade(x,y,46),st(x,y){frontStone(x,y,47,5);for(const [dx,dy,w,h]of[[-17,-4,10,15],[-8,-5,13,28],[4,-4,12,21],[15,-4,12,25],[0,-3,10,13],[20,-3,7,12]])frontGem(x+dx,y+dy,w,h);},dy(x,y,t){for(let i=0;i<2;i++)frontLayer('clusterStar'+i,x,y,48,34,(a,b)=>{const sx=a+(i?13:-10),sy=b-(i?29:33);fR('#FFF4FF',sx-2,sy,4,1);fR('#FFF4FF',sx,sy-2,1,4);},Math.max(0,Math.sin(t*Math.PI/2+i*Math.PI))*.85);}},
+ front_torii:{sh:(x,y)=>frontShade(x,y,76),st(x,y){frontStone(x-26,y,18,8);frontStone(x+27,y,18,8);frontStone(x-26,y-7,11,48);frontStone(x+27,y-7,11,23);frontStone(x+25,y-32,11,23);frontStone(x,y-43,64,7);frontStone(x,y-47,10,12);fR('#2A2238',x-2,y-57,1,5);fR('#2A2238',x+1,y-55,2,1);},dy(x,y,t){frontLayer('toriiCap',x,y+1.5*Math.sin(t*Math.PI/4),80,72,(a,b)=>{X.save();X.translate(a,b-62);X.rotate(4*Math.PI/180);frontStone(0,0,78,3);X.restore();});}},
+ front_pillar:{sh:(x,y)=>frontShade(x,y,34),st(x,y){frontStone(x,y,36,7);frontPillarBlock(x,y-7,13,56);frontPillarBlock(x,y-7,27,17);frontPillarBlock(x,y-46,29,17);frontStone(x,y-63,36,4);frontGem(x+1,y-51,10,12);},dy(x,y,t){frontLayer('pillarMiddle',x+1.5*Math.sin(t*Math.PI/4),y,38,70,(a,b)=>frontPillarBlock(a,b-26,30,17));frontLayer('pillarInlay',x,y,38,70,(a,b)=>frontGem(a+1,b-51,10,12),.8+.2*(.5+.5*Math.sin(t*Math.PI/2.5)));}},
+ front_shrine:{sh:(x,y)=>frontShade(x,y,42),st(x,y){frontStone(x,y,42,6);frontStone(x,y-6,30,19);fR('#2A2238',x-9,y-23,16,16);frontStone(x-13,y-6,5,19);frontStone(x+12,y-6,5,19);frontGem(x,y-9,11,13);},dy(x,y,t){frontLayer('shrineRoof',x,y+1.5*Math.sin(t*Math.PI/3),44,40,(a,b)=>{fP('#4B4260',[a-20,b-30,a+1,b-39,a+23,b-30,a+19,b-27,a-17,b-27]);fP('#7D7398',[a-20,b-30,a+1,b-39,a+5,b-38,a+23,b-30]);fR('#B9AED0',a-17,b-30,36,1);});frontLayer('shrineHeart',x,y,44,40,(a,b)=>frontGem(a,b-9,11,13),.7+.3*(.5+.5*Math.sin(t*Math.PI/2.5)));}},
+ front_pave:{sh:(x,y)=>frontShade(x,y,54),st(x,y){frontStone(x,y,54,5);for(const [dx,dy,w]of[[-16,-3,20],[6,-3,20],[-16,-12,20],[6,-12,20]])frontStone(x+dx,y+dy,w,4);},dy(x,y,t){frontLayer('paveEdge',x,y+Math.sin(t*Math.PI/3.5),56,22,(a,b)=>frontStone(a+23,b-8,10,5));}},
+ front_shard:{sh:(x,y)=>frontShade(x,y,34),st(x,y){frontStone(x,y,34,5);},dy(x,y,t){frontLayer('shardStones',x,y+2*Math.sin(t*Math.PI/3),36,36,(a,b)=>{frontStone(a-10,b-14,13,12);fR('#B9AED0',a-15,b-22,8,2);frontStone(a+9,b-24,14,7);fP('#B9AED0',[a+3,b-31,a+9,b-35,a+16,b-31]);});frontLayer('shardGem',x,y+2*Math.sin(t*Math.PI/2.5+2),36,36,(a,b)=>frontGem(a+7,b-9,12,14));}}
+};
+
+Object.assign(ART_DRAW,frontNewDraw,{
+ front_lens:{sh:(x,y)=>shadow(x,y,21),st(x,y){frontFoot(x,y,37);frontArm(x-12,y-4,2,-22);frontArm(x+13,y-5,4,-17);
+ fP(FRONT_C.e,[x-22,y-35,x-12,y-50,x+9,y-52,x+23,y-37,x+18,y-18,x+3,y-13,x-16,y-22,x-19,y-28,x-12,y-26,x+2,y-19,x+13,y-23,x+17,y-36,x+7,y-45,x-10,y-44,x-16,y-34]);
+ fP("rgba(169,152,205,.17)",[x-14,y-34,x-9,y-43,x+7,y-44,x+16,y-35,x+12,y-24,x+2,y-20,x-12,y-27]);fR(FRONT_C.b,x-23,y-34,7,5);},dy(x,y,t,d){frontPart(d,"lens",x+1,y-27,12,13,t*Math.PI/6);}},
+ front_holo:{sh:(x,y)=>shadow(x,y,12),st(x,y){frontFoot(x,y,25);fP(FRONT_C.e,[x-6,y-5,x,y-38,x+3,y-39,x-3,y-5]);fP(FRONT_C.f,[x-16,y-42,x+4,y-46,x+7,y-31,x-12,y-28]);fP(FRONT_C.t,[x-7,y-25,x+16,y-30,x+13,y-17,x-4,y-13]);fR(FRONT_C.light,x-11,y-40,10,1);},dy(x,y,t,d){ctx.fillStyle="#C58BF0";ctx.font="5px monospace";ctx.fillText(["ERR0R","NULL","？？？","404"][(Math.floor(t/6)+d.v)%4],x-11,y-34);gL("197,139,240",.6,x+4,y-21,6,1,1);}}
+});
+function frontNearHaz(x,y,pad){return HAZ.some(h=>h.x!==undefined&&((x-h.x)/((h.type==="rift"?80:h.radius||40)+pad))**2+((y-h.y)/((h.type==="rift"?40:(h.radius||40)*.5)+pad))**2<1);}
+// Shared floor cache: byte accounting includes the existing object cache.
+const FLOOR_CACHE=new Map(),FLOOR_CHUNK=256,FLOOR_CACHE_CAP=6*1024*1024,FLOOR_CACHE_MAX=24;
+let FLOOR_CACHE_BYTES=0,FLOOR_FRAME=-1,FLOOR_BUILT=0,FLOOR_LEVEL='';
+function floorCacheTrim(incoming=0){
+ while(FLOOR_CACHE.size&&(FLOOR_CACHE.size>=FLOOR_CACHE_MAX||FLOOR_CACHE_BYTES+incoming>FLOOR_CACHE_CAP||ART_CACHE_BYTES+FLOOR_CACHE_BYTES+incoming>ART_CACHE_CAP)){
+ const [k,e]=FLOOR_CACHE.entries().next().value;FLOOR_CACHE.delete(k);FLOOR_CACHE_BYTES-=e.b;}
+ while(ART_CACHE.size&&ART_CACHE_BYTES+FLOOR_CACHE_BYTES+incoming>ART_CACHE_CAP){const[k,e]=ART_CACHE.entries().next().value;ART_CACHE.delete(k);ART_CACHE_BYTES-=e.b;}}
+function floorHazKey(){return hazKey()+'|'+HAZ.filter(h=>h.x!==undefined).map(h=>[h.type,h.x,h.y,h.radius||40].join(',')).join(';');}
+function drawCachedFloor(A,x,y,w,h,seed,paint){
+ const m=ctx.getTransform(),sc=Math.max(.25,Math.round(Math.max(Math.hypot(m.a,m.b),Math.hypot(m.c||0,m.d||m.a)) *4)/4);
+ const level=[A.zone,seed,floorHazKey(),ART_VER,WW,WH].join('|'),key=level+'|'+sc,initial=FLOOR_LEVEL!==level;
+ FLOOR_LEVEL=level;if(FLOOR_FRAME!==G.t){FLOOR_FRAME=G.t;FLOOR_BUILT=0;}
+ const left=Math.max(0,x),top=Math.max(62,y),right=Math.min(WW,x+w),bottom=Math.min(WH,y+h);if(right<=left||bottom<=top)return;
+ ctx.save();ctx.beginPath();ctx.rect(left,top,right-left,bottom-top);ctx.clip();
+ for(let cy=Math.floor(top/256);cy<Math.ceil(bottom/256);cy++)for(let cx=Math.floor(left/256);cx<Math.ceil(right/256);cx++){
+ const k=key+'|'+cx+','+cy,px=cx*256,py=cy*256;let e=FLOOR_CACHE.get(k);
+ if(e){FLOOR_CACHE.delete(k);FLOOR_CACHE.set(k,e);}
+ else if(initial||FLOOR_BUILT<2){const size=Math.ceil(256*sc),bytes=size*size*4;
+ if(bytes<=FLOOR_CACHE_CAP){floorCacheTrim(bytes);const c=document.createElement('canvas');c.width=c.height=size;const g=c.getContext('2d');g.scale(sc,sc);g.translate(-px,-py);paint(g,px,py,256,256);e={c,b:bytes};FLOOR_CACHE.set(k,e);FLOOR_CACHE_BYTES+=bytes;FLOOR_BUILT++;}}
+ if(e)ctx.drawImage(e.c,px,py,256,256);else{ctx.save();ctx.beginPath();ctx.rect(px,py,256,256);ctx.clip();paint(ctx,px,py,256,256);ctx.restore();}}
+ ctx.restore();}
+function frontFloorVertex(c,r,seed){return[c*128+(hh(c,r,seed)-.5)*16,62+r*80+(hh(c,r,seed+1)-.5)*16];}
+let FRONT_FLOOR_PLAN=null;
+function frontFloorPlan(seed){const key=[seed,WW,WH,W,H].join('|');if(FRONT_FLOOR_PLAN&&FRONT_FLOOR_PLAN.key===key)return FRONT_FLOOR_PLAN;
+ const last=Math.max(2,Math.floor((WH-78)/80)),count=Math.min(4,Math.max(2,Math.floor((last-1)*80/(H+160))+1)),veins=[];
+ for(let i=0;i<count;i++){const r=1+Math.round(i*(last-1)/(count-1)),c=Math.max(0,Math.floor(hh(i,44,seed)*Math.max(1,Math.floor(WW/128)-3))),n=2+(hh(i,45,seed)>.5?1:0),ps=[];
+ for(let j=0;j<=n;j++)ps.push(frontFloorVertex(c+j,r,seed));veins.push({ps,c,r});}
+ const rows=Array.from({length:last},(_,i)=>i+1).filter(r=>Math.abs(62+r*80-(WH/2+40))>78);
+ return FRONT_FLOOR_PLAN={key,veins,step:rows[Math.floor(hh(seed,46,0)*rows.length)]};}
+// Zero throughout the padded hazard ellipse, with a soft 12px fade outside it.
+function floorHazAlpha(x,y,margin=0){let a=1;for(const h of HAZ){if(h.x===undefined||!['rift','noise'].includes(h.type))continue;const r=h.type==='rift'?80:h.radius||40,rx=r+16+margin,ry=r*.5+16+margin,q=Math.hypot((x-h.x)/rx,(y-h.y)/ry);a=Math.min(a,Math.max(0,Math.min(1,(q-1)*Math.min(rx,ry)/12)));}return a;}
+function floorLine(g,a,b,color,width=1){g.strokeStyle=color;g.lineWidth=width;g.beginPath();g.moveTo(...a);g.lineTo(...b);g.stroke();}
+// Sample high detail strokes at <=2px; conservative padding keeps the entire stroke quiet.
+function frontFloorDetail(g,a,b,color,width=1){const len=Math.hypot(b[0]-a[0],b[1]-a[1]),n=Math.ceil(len/2);for(let i=0;i<n;i++){const p=[a[0]+(b[0]-a[0])*i/n,a[1]+(b[1]-a[1])*i/n],q=[a[0]+(b[0]-a[0])*(i+1)/n,a[1]+(b[1]-a[1])*(i+1)/n];if(floorHazAlpha(...p)===1&&floorHazAlpha(...q)===1)floorLine(g,p,q,color,width);}}
+function drawFrontFloorStatic(g,A,x,y,w,h,seed){const F=A.floor,plan=frontFloorPlan(seed);g.save();g.beginPath();g.rect(x,y,w,h);g.clip();g.fillStyle=F.base;g.fillRect(x,y,w,h);
+ for(let r=Math.max(0,Math.floor((y-70)/80));r<Math.ceil((y+h-54)/80);r++)for(let c=Math.floor((x-8)/128);c<Math.ceil((x+w+8)/128);c++){
+ const a=frontFloorVertex(c,r,seed),b=frontFloorVertex(c+1,r,seed),d=frontFloorVertex(c,r+1,seed),e=frontFloorVertex(c+1,r+1,seed),m=[(a[0]+b[0]+d[0]+e[0])/4,(a[1]+b[1]+d[1]+e[1])/4],faces=hh(c,r,seed+3)<.5?[[a,b,e],[a,e,d]]:[[a,b,m,d],[b,e,m],[e,d,m]];
+ faces.forEach((ps,i)=>{const inset=i===0&&plan.veins.some(v=>v.c===c&&v.r===r)&&ps.every(p=>floorHazAlpha(...p)===1)&&floorHazAlpha(...m)===1&&!HAZ.some(h=>{if(h.x===undefined||!['rift','noise'].includes(h.type))return false;const rr=h.type==='rift'?80:h.radius||40;return Math.max(...ps.map(p=>p[0]))>h.x-rr-16&&Math.min(...ps.map(p=>p[0]))<h.x+rr+16&&Math.max(...ps.map(p=>p[1]))>h.y-rr*.5-16&&Math.min(...ps.map(p=>p[1]))<h.y+rr*.5+16;});
+ g.fillStyle=inset?'#241F38':F.panel[((c+r+i)%3+3)%3];g.beginPath();ps.forEach((p,j)=>j?g.lineTo(...p):g.moveTo(...p));g.closePath();g.fill();g.strokeStyle=F.seam;g.lineWidth=1;g.stroke();
+ const p=ps[0],q=ps[1];frontFloorDetail(g,p,[p[0]+(q[0]-p[0])*.6,p[1]+(q[1]-p[1])*.6],inset?'#5E5680':'#362D48');
+ if(inset){const mid=[ps.reduce((n,p)=>n+p[0],0)/ps.length,ps.reduce((n,p)=>n+p[1],0)/ps.length];ps.forEach(p=>frontFloorDetail(g,p,mid,'#3F3858'));}
+ if(hh(c*3+i,r,seed+55)<.05){const L=10+14*hh(c,i,seed+56),len=Math.hypot(q[0]-p[0],q[1]-p[1]),ux=(q[0]-p[0])/len,uy=(q[1]-p[1])/len;for(const off of [10,13])frontFloorDetail(g,[m[0]-L/2*ux-uy*off,m[1]-L/2*uy+ux*off],[m[0]+L/2*ux-uy*off,m[1]+L/2*uy+ux*off],'#15111D');}});
+ floorLine(g,[d[0],d[1]+1],[e[0],e[1]+1],'#120E19');
+ if(r===plan.step){floorLine(g,[a[0],a[1]+2],[b[0],b[1]+2],'#120E1A',4);frontFloorDetail(g,a,b,'#3A3150');}}
+ for(const v of plan.veins)for(let i=1;i<v.ps.length;i++)frontFloorDetail(g,v.ps[i-1],v.ps[i],'#3B3A5C');g.restore();}
+function drawFrontFloorDynamic(A,x,y,w,h,seed,tb){ctx.save();ctx.beginPath();ctx.rect(Math.max(0,x),Math.max(62,y),Math.max(0,Math.min(WW,x+w)-Math.max(0,x)),Math.max(0,Math.min(WH,y+h)-Math.max(62,y)));ctx.clip();
+ for(const v of frontFloorPlan(seed).veins){let s=0;for(let j=1;j<v.ps.length;j++){const a=v.ps[j-1],b=v.ps[j],len=Math.hypot(b[0]-a[0],b[1]-a[1]),n=Math.ceil(len/10);
+ for(let i=0;i<n;i++){const p=[a[0]+(b[0]-a[0])*i/n,a[1]+(b[1]-a[1])*i/n],q=[a[0]+(b[0]-a[0])*(i+1)/n,a[1]+(b[1]-a[1])*(i+1)/n],mx=(p[0]+q[0])/2,my=(p[1]+q[1])/2;
+ if(mx<x-10||mx>x+w+10||my<y-10||my>y+h+10)continue;
+ const quiet=Math.min(floorHazAlpha(...p,7),floorHazAlpha(...q,7),floorHazAlpha(mx,my,7)),alpha=(.04+.07*Math.max(0,Math.sin(2*Math.PI*((s+(i+.5)*len/n)/120-G.t/6.5))))*quiet*teleK(tb,Math.min(p[0],q[0])-2,Math.min(p[1],q[1])-2,Math.max(p[0],q[0])+2,Math.max(p[1],q[1])+2)*(Math.hypot(mx-P.x,my-P.y)<48?.5:1);
+ if(quiet===0)continue;floorLine(ctx,p,q,`rgba(206,220,255,${alpha*.35})`,3);floorLine(ctx,p,q,`rgba(206,220,255,${alpha})`);}
+ s+=len;}}ctx.restore();}
+function drawFrontFloor(A,x,y,w,h,seed,tb){drawCachedFloor(A,x,y,w,h,seed,(g,px,py,pw,ph)=>drawFrontFloorStatic(g,A,px,py,pw,ph,seed));drawFrontFloorDynamic(A,x,y,w,h,seed,tb);}
+function drawFrontGround(A,ds,x,y,w,h,seed,tb){const t=G.t;
+ for(const d of ds.filter(d=>d.light).slice(0,A.refl)){ctx.fillStyle=`rgba(${d.light},${.035*teleK(tb,d.x-12,d.y,d.x+12,d.y+6)})`;ctx.fillRect(d.x-d.lw/2,d.y+3,d.lw,2);}
+ for(let i=0;i<A.fog;i++){const fw=140+hh(i,1,seed)*40,fh=20+hh(i,2,seed)*8,fx=x+((hh(i,3,seed)*w+t*(2+i))%(w+fw))-fw,fy=y+hh(i,4,seed)*h;ctx.save();ctx.translate(fx+fw/2,fy);ctx.scale(1,fh/fw);const g=ctx.createRadialGradient(0,0,0,0,0,fw/2);g.addColorStop(0,"rgba(142,120,166,.03)");g.addColorStop(1,"rgba(142,120,166,0)");ctx.fillStyle=g;ctx.beginPath();ctx.arc(0,0,fw/2,0,7);ctx.fill();ctx.restore();}
+ for(let i=0;i<12;i++){const px=x+hh(i,7,seed)*w+Math.sin(t*.7+i)*2,py=y+((hh(i,8,seed)*h-t*(3+hh(i,9,seed)*3))%h+h)%h;if(frontNearHaz(px,py,12))continue;ctx.fillStyle=`rgba(180,164,202,${.1+hh(i,10,seed)*.1})`;ctx.fillRect(px,py,1+(i%2),1);}}
+function drawFrontHazard(h,idx){const r=h.type==="rift"?80:h.radius||40,ry=r*.5,x=h.x,y=h.y,k=1-h.t/(h.cd||3.2),q=Math.max(0,(k-.7)/.3);
+ ctx.save();ctx.lineWidth=1;ctx.beginPath();ctx.ellipse(x,y,r,ry,0,0,7);ctx.fillStyle=h.type==="rift"?"rgba(197,139,240,.035)":"rgba(197,139,240,.08)";ctx.fill();
+ ctx.strokeStyle=`rgba(197,139,240,${h.type==="rift"?.5+.4*q:.65})`;ctx.stroke();
+ // Dark under-stroke only where this boundary crosses another hazard's interior.
+ for(const other of HAZ){if(other===h||other.x===undefined)continue;const rr=other.type==="rift"?80:other.radius||40;ctx.save();ctx.beginPath();ctx.ellipse(other.x,other.y,rr,rr*.5,0,0,7);ctx.clip();ctx.strokeStyle="#100D19";ctx.lineWidth=3;ctx.beginPath();ctx.ellipse(x,y,r,ry,0,0,7);ctx.stroke();ctx.restore();}
+ ctx.strokeStyle=`rgba(197,139,240,${h.type==="rift"?.5+.4*q:.65})`;ctx.beginPath();ctx.ellipse(x,y,r,ry,0,0,7);ctx.stroke();
+ if(h.type==="rift"&&WAVES.some(w=>w.x===x&&w.y===y&&w.c==="197,139,240"&&w.t<.12)){ctx.strokeStyle="rgba(197,139,240,.95)";ctx.stroke();}
+ if(h.type==="noise"){ctx.save();ctx.clip();for(let i=0;i<10;i++){const a=hh(i,idx,Math.floor(G.t/.12))*6.283,rr=Math.sqrt(hh(idx,i,Math.floor(G.t/.12)+1))*.85;ctx.fillStyle=i%2?"rgba(255,79,168,.28)":"rgba(63,224,255,.28)";ctx.fillRect(x+Math.cos(a)*r*rr,y+Math.sin(a)*ry*rr,1+i%4,1);}ctx.restore();ctx.strokeStyle="#C58BF0";ctx.beginPath();ctx.moveTo(x-8,y);ctx.lineTo(x-4,y-3);ctx.lineTo(x-1,y+3);ctx.moveTo(x+3,y+3);ctx.lineTo(x+6,y-3);ctx.lineTo(x+9,y);ctx.stroke();}
+ else{ctx.fillStyle="#0E0B17";ctx.beginPath();ctx.ellipse(x,y,16,4,0,0,7);ctx.fill();ctx.strokeStyle="#80559E";ctx.stroke();ctx.fillStyle="#FF4FA8";ctx.fillRect(x-9,y-1,18,1);if(q>0){ctx.strokeStyle=`rgba(197,139,240,${q*.6})`;ctx.beginPath();ctx.ellipse(x,y,r*(.3+.7*q),ry*(.3+.7*q),0,0,7);ctx.stroke();}}
+ ctx.strokeStyle=`rgba(197,139,240,${h.type==="noise"?.65:.5+.4*q})`;ctx.beginPath();for(let i=0;i<4;i++){const a=i*Math.PI/2;ctx.moveTo(x+Math.cos(a)*(r-2),y+Math.sin(a)*(ry-2));ctx.lineTo(x+Math.cos(a)*(r-7),y+Math.sin(a)*(ry-7));if(h.type==="noise"){ctx.moveTo(x+Math.cos(a)*(r-9),y+Math.sin(a)*(ry-9));ctx.lineTo(x+Math.cos(a)*(r-12),y+Math.sin(a)*(ry-12));}}ctx.stroke();ctx.restore();}
+
 // ---- per-frame scene parts
 let ART_LT=0,ART_ON=null,ART_VIS=[];
 function artVisible(d,vx0,vy0,vw,vh){const hw=Math.max(d.w/2+8,d.kind==="slum_lamp"?36:0);return d.x+hw>vx0&&d.x-hw<vx0+vw&&d.y+18>vy0&&d.y-d.h-8<vy0+vh;} // drawn extent incl. glow, shadow, reflections and the lamp's floor light
@@ -2565,8 +2710,9 @@ function artVisible(d,vx0,vy0,vw,vh){const hw=Math.max(d.w/2+8,d.kind==="slum_la
 function artFade(ds){const dt=Math.max(0,Math.min(0.1,G.t-ART_LT));ART_LT=G.t;const ch=[];
   for(const u of [P,...ALLIES])if(u&&!u.down)ch.push([u.x-14,u.y-62,u.x+14,u.y,u.y]);
   for(const e of EN){const s=e.r*1.4;ch.push([e.x-s,e.y-e.r*2.6,e.x+s,e.y,e.y]);}
-  for(const d of ds){if(!d.tall)continue;const x0=d.x-d.w/2,x1=d.x+d.w/2,y0=d.y-d.h,y1=d.y-2;let hid=false;
+  for(const d of ds){if(!d.tall&&!(ART_ON&&ART_ON.zone==="front"&&d.h>40))continue;const x0=d.x-d.w/2,x1=d.x+d.w/2,y0=d.y-d.h,y1=d.y-2;let hid=false;
     for(const c of ch)if(c[4]<d.y&&c[2]>x0&&c[0]<x1&&c[3]>y0&&c[1]<y1){hid=true;break;}
+    if(ART_ON&&ART_ON.zone==="front")for(const h of HAZ){const r=h.type==="rift"?80:h.radius||40;if(x1>h.x-r&&x0<h.x+r&&y1>h.y-r*.5&&y0<h.y+r*.5){hid=true;d.al=.35;}}
     d.al=hid?Math.max(0.35,d.al-0.65/0.12*dt):Math.min(1,d.al+0.65/0.2*dt);}}
 // bounding boxes of attack telegraphs: floor lights under them drop to 25%
 function teleBoxes(){const b=[];for(const e of EN){if(e.wind>0&&e.ca!==undefined){const x2=e.x+Math.cos(e.ca)*170,y2=e.y+Math.sin(e.ca)*170,r=e.r;b.push([Math.min(e.x,x2)-r,Math.min(e.y,y2)-r,Math.max(e.x,x2)+r,Math.max(e.y,y2)+r]);}
@@ -2575,7 +2721,7 @@ function teleBoxes(){const b=[];for(const e of EN){if(e.wind>0&&e.ca!==undefined
   return b;}
 const teleK=(tb,x0,y0,x1,y1)=>{for(const b of tb)if(x1>b[0]&&x0<b[2]&&y1>b[1]&&y0<b[3])return 0.25;return 1;};
 // paving: 96×48 panels, rows offset by 48, some split into 48×48; only the visible part, batched by colour
-function drawArtFloor(A,vx0,vy0,vw,vh,seed,tb){const F=A.floor,PW=96,PH=48,TOP=62;
+function drawArtFloor(A,vx0,vy0,vw,vh,seed,tb){if(A.zone==="front")return drawFrontFloor(A,vx0,vy0,vw,vh,seed,tb);const F=A.floor,PW=96,PH=48,TOP=62;
   const fx0=Math.max(0,vx0),fy0=Math.max(TOP,vy0),fx1=Math.min(WW,vx0+vw),fy1=Math.min(WH,vy0+vh);if(fx1<=fx0||fy1<=fy0)return;
   ctx.fillStyle=F.panel[0];ctx.fillRect(fx0,fy0,fx1-fx0,fy1-fy0); // the common panel shade is the backdrop; only the other shade is filled per panel
   const r0=Math.max(0,Math.floor((vy0-TOP)/PH)),r1=Math.floor((Math.min(WH,vy0+vh)-TOP)/PH),pa=[[],[]],seams=[],steps=[],hl=[],plates=[],glows=[];
@@ -2605,7 +2751,7 @@ function drawArtRain(A,front,vx0,vy0,vw,vh){const n=A.rain.back;
   const draw=(i0,i1,pred,col)=>{ctx.strokeStyle=col;ctx.beginPath();for(let i=i0;i<i1;i++){const r=RAIN2[i];if(!pred(r))continue;const y=(r.y+G.t*r.s)%H,x=(r.x+y*0.18)%W,X=vx0+x/W*vw,Y=vy0+y/H*vh;ctx.moveTo(X,Y);ctx.lineTo(X+r.l*0.18,Y+r.l);}ctx.stroke();};
   if(front)draw(n,n+A.rain.front,()=>true,"rgba(176,194,212,.075)");
   else{draw(0,n,r=>r.a===0,"rgba(176,194,212,.11)");draw(0,n,r=>r.a===1,"rgba(176,194,212,.15)");}}
-function drawArtGround(A,ds,vx0,vy0,vw,vh,seed,tb){const t=G.t;
+function drawArtGround(A,ds,vx0,vy0,vw,vh,seed,tb){if(A.zone==="front")return drawFrontGround(A,ds,vx0,vy0,vw,vh,seed,tb);const t=G.t;
   // lamp light pools on the floor
   for(const d of ds)if(d.kind==="slum_lamp"){const k=teleK(tb,d.x-34,d.y-6,d.x+34,d.y+12);ctx.fillStyle=`rgba(101,200,208,${0.045*k})`;ctx.beginPath();ctx.ellipse(d.x,d.y+3,34,9,0,0,7);ctx.fill();ctx.beginPath();ctx.ellipse(d.x,d.y+3,18,5,0,0,7);ctx.fill();}
   // short reflection bands under lit objects, fixed to the light (max 4, nearest the view centre)
@@ -2817,7 +2963,8 @@ function drawDive(){
   ART_ON=A;ART_VIS=A?deco.filter(d=>artVisible(d,vx0,vy0,vw,vh)):[];const tb=A?teleBoxes():null;if(A)artFade(ART_VIS);
   const g=ctx.createLinearGradient(0,0,0,70);g.addColorStop(0,R.sky[0]);g.addColorStop(1,R.sky[1]);ctx.fillStyle=g;ctx.fillRect(0,0,WW,70);
   // backdrop skyline of the region, washed toward monochrome (repeated along the wide map)
-  for(let ox=0;ox<WW+10;ox+=W)for(let bi=0;bi<SKYLINE.length;bi++){const b=SKYLINE[bi],h=b.h*0.35,y0=62-h,wa=sk?.45*sk[bi%sk.length]:.45;ctx.fillStyle="#0c0a12";ctx.fillRect(b.x+ox,y0,b.w,h+8);
+  if(A&&A.zone==="front"){for(let i=0;i<3;i++){const sx=vx0+(i+.5)*vw/3;ctx.fillStyle=`rgba(169,152,205,${.12*(.85+.15*Math.sin(G.t*6.283/(6+i*2)))})`;ctx.fillRect(sx,37+i*5,2,18);}}
+  else for(let ox=0;ox<WW+10;ox+=W)for(let bi=0;bi<SKYLINE.length;bi++){const b=SKYLINE[bi],h=b.h*0.35,y0=62-h,wa=sk?.45*sk[bi%sk.length]:.45;ctx.fillStyle="#0c0a12";ctx.fillRect(b.x+ox,y0,b.w,h+8);
     for(const w of b.win){if(!w.lit||w.y>h)continue;ctx.fillStyle=w.c?R.acc:R.acc2;ctx.globalAlpha=wa;ctx.fillRect(b.x+ox+w.x,y0+w.y,2,2);ctx.globalAlpha=1;}}
   if(A)drawArtFloor(A,vx0,vy0,vw,vh,aSeed,tb); // map-art zones: paving instead of the grid
   else{
@@ -2829,7 +2976,7 @@ function drawDive(){
   // map edge
   ctx.strokeStyle=R.acc;ctx.globalAlpha=.35;ctx.lineWidth=2;ctx.strokeRect(2,63,WW-4,WH-65);ctx.globalAlpha=1;ctx.lineWidth=1;
   if(A)drawArtGround(A,ART_VIS,vx0,vy0,vw,vh,aSeed,tb);
-  for(const b of GLITCH){if(((G.t*b.f+b.p)%1)<b.on*(0.4+g0)){ctx.fillStyle=`hsla(${hueOf(R.acc)+b.dh},80%,60%,${0.08+g0*0.2})`;ctx.fillRect(vx0+b.x/W*vw+(Math.random()-.5)*6*g0,vy0+b.y/H*vh,b.w,b.h);}}
+  for(const b of GLITCH){if(((G.t*b.f+b.p)%1)<b.on*(0.4+g0)){ctx.fillStyle=`hsla(${hueOf(R.acc)+b.dh},80%,60%,${0.08+g0*0.2})`;ctx.fillRect(vx0+b.x/W*vw+((A&&A.zone==="front"?hh(b.x,b.y,Math.floor(G.t*12)):Math.random())-.5)*6*g0,vy0+b.y/H*vh,b.w,b.h);}}
   drawHazards();
   if(OFM()&&!gray)drawTele();
   for(const l of G.loot||[]){const by=Math.sin(G.t*3+l.ph)*3,yy=l.y-12+by;shadow(l.x,l.y,7);ctx.save();ctx.shadowColor=R.acc2;ctx.shadowBlur=12;ctx.fillStyle=R.acc2;
