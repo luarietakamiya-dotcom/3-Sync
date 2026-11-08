@@ -1,0 +1,1 @@
+PASS: syntax; 100 reproducible seeds, byte-identical baseline deco; seam vein lengths/count/density; outcrop spacing; spawn-safe step; hazard alpha; finite draw arguments; 2/frame lazy generation; 24 chunk / 6MiB / shared 16MiB caps; scale fallback; OFM routing

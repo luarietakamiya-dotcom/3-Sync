@@ -2344,7 +2344,7 @@ function drawDeco(d,R){
 // objs: w×h = drawn size, fd = footprint depth (footprint width = 80% of w), wt = draw weight, edge = outer band only,
 // max = per base screen, near/nd = preferred neighbours and base-point distance, light = casts a ground reflection.
 // Version only front placement, keeping other zones' seeded layouts unchanged.
-const ART_VER=1,FRONT_ART_VER=2;
+const ART_VER=2,FRONT_ART_VER=2;
 const BG_ART={slum:{
   objs:{
     slum_shack:{w:64,h:56,fd:20,wt:14,edge:1,max:2},
@@ -2370,7 +2370,7 @@ BG_ART.front={zone:"front",objs:{
  front_shard:{w:36,h:36,fd:14,wt:14,max:2,near:["front_crystal","front_cluster"],nd:[60,96]},
  front_holo:{w:34,h:46,fd:12,wt:8,edge:1,max:2,light:"197,139,240",lw:18}},
  minDist:{front_crystal:110,front_geode:110,front_torii:140,front_pillar:110},tallH:41,tallGap:96,edgeBand:96,centerGap:40,maxScreen:14,maxTall:4,
- floor:{base:"#100D19",panel:["#161020","#1C1428"],seam:"#463153",seamA:.2,glow:"169,152,205",glowA:.025},
+ floor:{kind:"front",base:"#0E0B14",panel:["#1A1524","#1D1828","#211B2D"],seam:"#0E0B14",seamA:1,glow:"206,220,255",glowA:.04},
  rain:{back:0,front:0,splash:0},refl:2,fog:2,skyLights:3,puddle:false};
 const ART_C={b:"#18212D",f:"#263444",t:"#35495A",j:"#101823",e:"#60788A",m:"#2E3F50",teal:"101,200,208",warm:"216,174,114"};
 function hh(a,b,c){let h=Math.imul((a|0)^0x9E3779B9,0x85EBCA6B)^Math.imul((b|0)+0x632BE5AB,0xC2B2AE35)^Math.imul((c|0)+0x27D4EB2F,0x165667B1);h=Math.imul(h^h>>>15,0x2C1B3C6D);h^=h>>>13;h=Math.imul(h,0x297A2D39);h^=h>>>16;return(h>>>0)/4294967296;}
@@ -2439,7 +2439,7 @@ function artBody(d,f,sc){const key=d.kind+"|"+d.v+"|"+sc;let e=ART_CACHE.get(key
   c.width=Math.ceil(cw*sc);c.height=Math.ceil(ch*sc);const g=c.getContext("2d");g.scale(sc,sc);
   X=g;try{f.st(ox,oy,d);}finally{X=ctx;}
   e={c,ox,oy,cw:c.width/sc,ch:c.height/sc,b:c.width*c.height*4};ART_CACHE.set(key,e);ART_CACHE_BYTES+=e.b;
-  for(const[k,v]of ART_CACHE){if(ART_CACHE_BYTES<=ART_CACHE_CAP)break;if(v===e)continue;ART_CACHE.delete(k);ART_CACHE_BYTES-=v.b;}
+  for(const[k,v]of ART_CACHE){if(ART_CACHE_BYTES+FLOOR_CACHE_BYTES<=ART_CACHE_CAP)break;if(v===e)continue;ART_CACHE.delete(k);ART_CACHE_BYTES-=v.b;}
   return e;}
 function drawArtDeco(d,f){const x=Math.round(d.x),y=Math.round(d.y),t=G.t+d.ph,m=ctx.getTransform(),sc=Math.round(Math.hypot(m.a,m.b)*100)/100;
   f.sh(x,y);if(d.al<1){ctx.save();ctx.globalAlpha=d.al;}
@@ -2635,16 +2635,59 @@ Object.assign(ART_DRAW,frontNewDraw,{
  front_holo:{sh:(x,y)=>shadow(x,y,12),st(x,y){frontFoot(x,y,25);fP(FRONT_C.e,[x-6,y-5,x,y-38,x+3,y-39,x-3,y-5]);fP(FRONT_C.f,[x-16,y-42,x+4,y-46,x+7,y-31,x-12,y-28]);fP(FRONT_C.t,[x-7,y-25,x+16,y-30,x+13,y-17,x-4,y-13]);fR(FRONT_C.light,x-11,y-40,10,1);},dy(x,y,t,d){ctx.fillStyle="#C58BF0";ctx.font="5px monospace";ctx.fillText(["ERR0R","NULL","？？？","404"][(Math.floor(t/6)+d.v)%4],x-11,y-34);gL("197,139,240",.6,x+4,y-21,6,1,1);}}
 });
 function frontNearHaz(x,y,pad){return HAZ.some(h=>h.x!==undefined&&((x-h.x)/((h.type==="rift"?80:h.radius||40)+pad))**2+((y-h.y)/((h.type==="rift"?40:(h.radius||40)*.5)+pad))**2<1);}
-function drawFrontFloor(A,x,y,w,h,seed,tb){const F=A.floor;ctx.save();ctx.beginPath();ctx.rect(Math.max(0,x),Math.max(62,y),Math.min(w,WW-Math.max(0,x)),Math.min(h,WH-Math.max(62,y)));ctx.clip();ctx.fillStyle=F.base;ctx.fillRect(x,y,w,h);
- const vertex=(c,r)=>[c*128+(hh(c,r,seed)-.5)*16,62+r*80+(hh(c,r,seed+1)-.5)*16];
- const poly=(ps,col)=>{ctx.fillStyle=col;ctx.beginPath();ps.forEach((p,i)=>i?ctx.lineTo(...p):ctx.moveTo(...p));ctx.closePath();ctx.fill();ctx.strokeStyle="rgba(70,49,83,.2)";ctx.stroke();};
- for(let r=Math.max(0,Math.floor((y-70)/80));r<Math.ceil((y+h-54)/80);r++)for(let c=Math.floor((x-8)/128);c<Math.ceil((x+w+8)/128);c++){
- const a=vertex(c,r),b=vertex(c+1,r),d=vertex(c,r+1),e=vertex(c+1,r+1),m=[(a[0]+b[0]+d[0]+e[0])/4,(a[1]+b[1]+d[1]+e[1])/4];
- const faces=hh(c,r,seed+3)<.5?[[a,b,e],[a,e,d]]:[[a,b,m,d],[b,e,m],[e,d,m]];
- faces.forEach((p,i)=>poly(p,F.panel[(c+r+i)&1]));ctx.strokeStyle="#23182F";ctx.beginPath();ctx.moveTo(a[0]+1,a[1]+2);ctx.lineTo(b[0],b[1]+2);ctx.stroke();
- ctx.fillStyle="#30223A";ctx.fillRect(a[0]+3,a[1]+3,9,1);
- if(hh(c,r,seed+7)<.01&&!frontNearHaz(a[0]+10,a[1],16)){ctx.fillStyle=`rgba(${F.glow},${F.glowA*teleK(tb,a[0],a[1],a[0]+16,a[1]+2)})`;ctx.fillRect(a[0]+4,a[1],8+hh(c,r,seed+8)*8,1);}}
+// Shared floor cache: byte accounting includes the existing object cache.
+const FLOOR_CACHE=new Map(),FLOOR_CHUNK=256,FLOOR_CACHE_CAP=6*1024*1024,FLOOR_CACHE_MAX=24;
+let FLOOR_CACHE_BYTES=0,FLOOR_FRAME=-1,FLOOR_BUILT=0,FLOOR_LEVEL='';
+function floorCacheTrim(incoming=0){
+ while(FLOOR_CACHE.size&&(FLOOR_CACHE.size>=FLOOR_CACHE_MAX||FLOOR_CACHE_BYTES+incoming>FLOOR_CACHE_CAP||ART_CACHE_BYTES+FLOOR_CACHE_BYTES+incoming>ART_CACHE_CAP)){
+ const [k,e]=FLOOR_CACHE.entries().next().value;FLOOR_CACHE.delete(k);FLOOR_CACHE_BYTES-=e.b;}
+ while(ART_CACHE.size&&ART_CACHE_BYTES+FLOOR_CACHE_BYTES+incoming>ART_CACHE_CAP){const[k,e]=ART_CACHE.entries().next().value;ART_CACHE.delete(k);ART_CACHE_BYTES-=e.b;}}
+function floorHazKey(){return hazKey()+'|'+HAZ.filter(h=>h.x!==undefined).map(h=>[h.type,h.x,h.y,h.radius||40].join(',')).join(';');}
+function drawCachedFloor(A,x,y,w,h,seed,paint){
+ const m=ctx.getTransform(),sc=Math.max(.25,Math.round(Math.max(Math.hypot(m.a,m.b),Math.hypot(m.c||0,m.d||m.a)) *4)/4);
+ const level=[A.zone,seed,floorHazKey(),ART_VER,WW,WH].join('|'),key=level+'|'+sc,initial=FLOOR_LEVEL!==level;
+ FLOOR_LEVEL=level;if(FLOOR_FRAME!==G.t){FLOOR_FRAME=G.t;FLOOR_BUILT=0;}
+ const left=Math.max(0,x),top=Math.max(62,y),right=Math.min(WW,x+w),bottom=Math.min(WH,y+h);if(right<=left||bottom<=top)return;
+ ctx.save();ctx.beginPath();ctx.rect(left,top,right-left,bottom-top);ctx.clip();
+ for(let cy=Math.floor(top/256);cy<Math.ceil(bottom/256);cy++)for(let cx=Math.floor(left/256);cx<Math.ceil(right/256);cx++){
+ const k=key+'|'+cx+','+cy,px=cx*256,py=cy*256;let e=FLOOR_CACHE.get(k);
+ if(e){FLOOR_CACHE.delete(k);FLOOR_CACHE.set(k,e);}
+ else if(initial||FLOOR_BUILT<2){const size=Math.ceil(256*sc),bytes=size*size*4;
+ if(bytes<=FLOOR_CACHE_CAP){floorCacheTrim(bytes);const c=document.createElement('canvas');c.width=c.height=size;const g=c.getContext('2d');g.scale(sc,sc);g.translate(-px,-py);paint(g,px,py,256,256);e={c,b:bytes};FLOOR_CACHE.set(k,e);FLOOR_CACHE_BYTES+=bytes;FLOOR_BUILT++;}}
+ if(e)ctx.drawImage(e.c,px,py,256,256);else{ctx.save();ctx.beginPath();ctx.rect(px,py,256,256);ctx.clip();paint(ctx,px,py,256,256);ctx.restore();}}
  ctx.restore();}
+function frontFloorVertex(c,r,seed){return[c*128+(hh(c,r,seed)-.5)*16,62+r*80+(hh(c,r,seed+1)-.5)*16];}
+let FRONT_FLOOR_PLAN=null;
+function frontFloorPlan(seed){const key=[seed,WW,WH,W,H].join('|');if(FRONT_FLOOR_PLAN&&FRONT_FLOOR_PLAN.key===key)return FRONT_FLOOR_PLAN;
+ const last=Math.max(2,Math.floor((WH-78)/80)),count=Math.min(4,Math.max(2,Math.floor((last-1)*80/(H+160))+1)),veins=[];
+ for(let i=0;i<count;i++){const r=1+Math.round(i*(last-1)/(count-1)),c=Math.max(0,Math.floor(hh(i,44,seed)*Math.max(1,Math.floor(WW/128)-3))),n=2+(hh(i,45,seed)>.5?1:0),ps=[];
+ for(let j=0;j<=n;j++)ps.push(frontFloorVertex(c+j,r,seed));veins.push({ps,c,r});}
+ const rows=Array.from({length:last},(_,i)=>i+1).filter(r=>Math.abs(62+r*80-(WH/2+40))>78);
+ return FRONT_FLOOR_PLAN={key,veins,step:rows[Math.floor(hh(seed,46,0)*rows.length)]};}
+// Zero throughout the padded hazard ellipse, with a soft 12px fade outside it.
+function floorHazAlpha(x,y,margin=0){let a=1;for(const h of HAZ){if(h.x===undefined||!['rift','noise'].includes(h.type))continue;const r=h.type==='rift'?80:h.radius||40,rx=r+16+margin,ry=r*.5+16+margin,q=Math.hypot((x-h.x)/rx,(y-h.y)/ry);a=Math.min(a,Math.max(0,Math.min(1,(q-1)*Math.min(rx,ry)/12)));}return a;}
+function floorLine(g,a,b,color,width=1){g.strokeStyle=color;g.lineWidth=width;g.beginPath();g.moveTo(...a);g.lineTo(...b);g.stroke();}
+// Sample high detail strokes at <=2px; conservative padding keeps the entire stroke quiet.
+function frontFloorDetail(g,a,b,color,width=1){const len=Math.hypot(b[0]-a[0],b[1]-a[1]),n=Math.ceil(len/2);for(let i=0;i<n;i++){const p=[a[0]+(b[0]-a[0])*i/n,a[1]+(b[1]-a[1])*i/n],q=[a[0]+(b[0]-a[0])*(i+1)/n,a[1]+(b[1]-a[1])*(i+1)/n];if(floorHazAlpha(...p)===1&&floorHazAlpha(...q)===1)floorLine(g,p,q,color,width);}}
+function drawFrontFloorStatic(g,A,x,y,w,h,seed){const F=A.floor,plan=frontFloorPlan(seed);g.save();g.beginPath();g.rect(x,y,w,h);g.clip();g.fillStyle=F.base;g.fillRect(x,y,w,h);
+ for(let r=Math.max(0,Math.floor((y-70)/80));r<Math.ceil((y+h-54)/80);r++)for(let c=Math.floor((x-8)/128);c<Math.ceil((x+w+8)/128);c++){
+ const a=frontFloorVertex(c,r,seed),b=frontFloorVertex(c+1,r,seed),d=frontFloorVertex(c,r+1,seed),e=frontFloorVertex(c+1,r+1,seed),m=[(a[0]+b[0]+d[0]+e[0])/4,(a[1]+b[1]+d[1]+e[1])/4],faces=hh(c,r,seed+3)<.5?[[a,b,e],[a,e,d]]:[[a,b,m,d],[b,e,m],[e,d,m]];
+ faces.forEach((ps,i)=>{const inset=i===0&&plan.veins.some(v=>v.c===c&&v.r===r)&&ps.every(p=>floorHazAlpha(...p)===1)&&floorHazAlpha(...m)===1&&!HAZ.some(h=>{if(h.x===undefined||!['rift','noise'].includes(h.type))return false;const rr=h.type==='rift'?80:h.radius||40;return Math.max(...ps.map(p=>p[0]))>h.x-rr-16&&Math.min(...ps.map(p=>p[0]))<h.x+rr+16&&Math.max(...ps.map(p=>p[1]))>h.y-rr*.5-16&&Math.min(...ps.map(p=>p[1]))<h.y+rr*.5+16;});
+ g.fillStyle=inset?'#241F38':F.panel[((c+r+i)%3+3)%3];g.beginPath();ps.forEach((p,j)=>j?g.lineTo(...p):g.moveTo(...p));g.closePath();g.fill();g.strokeStyle=F.seam;g.lineWidth=1;g.stroke();
+ const p=ps[0],q=ps[1];frontFloorDetail(g,p,[p[0]+(q[0]-p[0])*.6,p[1]+(q[1]-p[1])*.6],inset?'#5E5680':'#362D48');
+ if(inset){const mid=[ps.reduce((n,p)=>n+p[0],0)/ps.length,ps.reduce((n,p)=>n+p[1],0)/ps.length];ps.forEach(p=>frontFloorDetail(g,p,mid,'#3F3858'));}
+ if(hh(c*3+i,r,seed+55)<.05){const L=10+14*hh(c,i,seed+56),len=Math.hypot(q[0]-p[0],q[1]-p[1]),ux=(q[0]-p[0])/len,uy=(q[1]-p[1])/len;for(const off of [10,13])frontFloorDetail(g,[m[0]-L/2*ux-uy*off,m[1]-L/2*uy+ux*off],[m[0]+L/2*ux-uy*off,m[1]+L/2*uy+ux*off],'#15111D');}});
+ floorLine(g,[d[0],d[1]+1],[e[0],e[1]+1],'#120E19');
+ if(r===plan.step){floorLine(g,[a[0],a[1]+2],[b[0],b[1]+2],'#120E1A',4);frontFloorDetail(g,a,b,'#3A3150');}}
+ for(const v of plan.veins)for(let i=1;i<v.ps.length;i++)frontFloorDetail(g,v.ps[i-1],v.ps[i],'#3B3A5C');g.restore();}
+function drawFrontFloorDynamic(A,x,y,w,h,seed,tb){ctx.save();ctx.beginPath();ctx.rect(Math.max(0,x),Math.max(62,y),Math.max(0,Math.min(WW,x+w)-Math.max(0,x)),Math.max(0,Math.min(WH,y+h)-Math.max(62,y)));ctx.clip();
+ for(const v of frontFloorPlan(seed).veins){let s=0;for(let j=1;j<v.ps.length;j++){const a=v.ps[j-1],b=v.ps[j],len=Math.hypot(b[0]-a[0],b[1]-a[1]),n=Math.ceil(len/10);
+ for(let i=0;i<n;i++){const p=[a[0]+(b[0]-a[0])*i/n,a[1]+(b[1]-a[1])*i/n],q=[a[0]+(b[0]-a[0])*(i+1)/n,a[1]+(b[1]-a[1])*(i+1)/n],mx=(p[0]+q[0])/2,my=(p[1]+q[1])/2;
+ if(mx<x-10||mx>x+w+10||my<y-10||my>y+h+10)continue;
+ const quiet=Math.min(floorHazAlpha(...p,7),floorHazAlpha(...q,7),floorHazAlpha(mx,my,7)),alpha=(.04+.07*Math.max(0,Math.sin(2*Math.PI*((s+(i+.5)*len/n)/120-G.t/6.5))))*quiet*teleK(tb,Math.min(p[0],q[0])-2,Math.min(p[1],q[1])-2,Math.max(p[0],q[0])+2,Math.max(p[1],q[1])+2)*(Math.hypot(mx-P.x,my-P.y)<48?.5:1);
+ if(quiet===0)continue;floorLine(ctx,p,q,`rgba(206,220,255,${alpha*.35})`,3);floorLine(ctx,p,q,`rgba(206,220,255,${alpha})`);}
+ s+=len;}}ctx.restore();}
+function drawFrontFloor(A,x,y,w,h,seed,tb){drawCachedFloor(A,x,y,w,h,seed,(g,px,py,pw,ph)=>drawFrontFloorStatic(g,A,px,py,pw,ph,seed));drawFrontFloorDynamic(A,x,y,w,h,seed,tb);}
 function drawFrontGround(A,ds,x,y,w,h,seed,tb){const t=G.t;
  for(const d of ds.filter(d=>d.light).slice(0,A.refl)){ctx.fillStyle=`rgba(${d.light},${.035*teleK(tb,d.x-12,d.y,d.x+12,d.y+6)})`;ctx.fillRect(d.x-d.lw/2,d.y+3,d.lw,2);}
  for(let i=0;i<A.fog;i++){const fw=140+hh(i,1,seed)*40,fh=20+hh(i,2,seed)*8,fx=x+((hh(i,3,seed)*w+t*(2+i))%(w+fw))-fw,fy=y+hh(i,4,seed)*h;ctx.save();ctx.translate(fx+fw/2,fy);ctx.scale(1,fh/fw);const g=ctx.createRadialGradient(0,0,0,0,0,fw/2);g.addColorStop(0,"rgba(142,120,166,.03)");g.addColorStop(1,"rgba(142,120,166,0)");ctx.fillStyle=g;ctx.beginPath();ctx.arc(0,0,fw/2,0,7);ctx.fill();ctx.restore();}
