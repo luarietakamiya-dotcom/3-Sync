@@ -1,0 +1,2 @@
+PASS: syntax; 100 deterministic seeds and byte-identical baseline deco; floor does not change deco; static time invariance; electric quiet zones; finite arguments; 2/frame lazy generation; 24 chunks / 6MiB / shared 16MiB; scale fallback; hazard dimensions invalidate, falling marks do not
+PASS: 1x static full-map and chunked raster equivalence, including stage lips and allocation bands
