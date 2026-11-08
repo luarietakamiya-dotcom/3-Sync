@@ -1940,6 +1940,39 @@ function returnHome(){
 const OFM=()=>!!(RUN&&RUN.kind==="overflow");
 const OFC=()=>MODES.overflow||OF_DEF;
 const OF_AR={x0:12,y0:62,x1:628,y1:354}; // movable area (= unit clamp); the HUD band above y=62 is excluded
+// One attempt per page lifetime, including failures; retrying a run never reloads the art.
+const OF_BG_DIM=0.2;
+let OF_BG_PROMISE=null,OF_BG_CANVAS=null,OF_STARTING=false;
+function ofPreloadBackground(){
+  if(OF_BG_PROMISE)return OF_BG_PROMISE;
+  OF_BG_PROMISE=new Promise(resolve=>{
+    let image=null,settled=false;
+    const finish=reason=>{
+      if(settled)return;settled=true;clearTimeout(timer);
+      if(image){image.onload=null;image.onerror=null;}
+      if(reason){OF_BG_CANVAS=null;console.warn("龍脈溢界の背景を読み込めません。汎用背景を使用します。",reason);}
+      resolve();
+    };
+    const timer=setTimeout(()=>finish("timeout (3s)"),3000);
+    try{
+      image=new Image();
+      image.onerror=()=>finish("image error");
+      image.onload=async()=>{
+        try{
+          await image.decode();
+          if(settled)return; // A late decode must not replace the timeout fallback.
+          const canvas=document.createElement("canvas");canvas.width=640;canvas.height=360;
+          const bg=canvas.getContext("2d");
+          bg.drawImage(image,0,0,640,360);
+          bg.fillStyle=`rgba(0,0,0,${OF_BG_DIM})`;bg.fillRect(0,0,640,360);
+          OF_BG_CANVAS=canvas;finish();
+        }catch(e){finish("decode/bake error");}
+      };
+      image.src="assets/arena/ryumyaku_arena.webp";
+    }catch(e){finish("image setup error");}
+  });
+  return OF_BG_PROMISE;
+}
 const OF_TNM={circle:"円",grid:"マス目",fan:"扇",donut:"ドーナツ",line:"直線",all:"龍脈決壊"};
 const OF_SK=["of_lu_null","of_lu_gray","of_ht_cut","of_ht_guard","of_ht_regen","of_ht_full","of_mi_evade","of_mi_dash"];
 let TELE=[],TFX=[],TELE_ID=1;
@@ -2183,8 +2216,12 @@ function drawOfMarks(u){if(u.down)return;const m=[];if(u.ofNull>0)m.push(["遮",
   ctx.font="8px DotGothic16, monospace";ctx.textAlign="center";m.forEach(([t,c],i)=>{const x=u.x-(m.length-1)*5+i*10;ctx.fillStyle="rgba(10,8,18,.75)";ctx.fillRect(x-4.5,u.y-82,9,10);ctx.fillStyle=c;ctx.fillText(t,x,u.y-74);});ctx.textAlign="left";}
 
 /* --- flow: start → 6 waves (5s rest between, HP/CD carried) → 星骸龍 → result --- */
-function ofStartRun(stage){
-  if(!S.overflowUnlocked)return;
+async function ofStartRun(stage){
+  if(!S.overflowUnlocked||OF_STARTING)return;
+  OF_STARTING=true;
+  const entryMode=MODE,entryOpen=OPEN,entryRun=RUN,entryTab=GATE_TAB;
+  try{await ofPreloadBackground();}finally{OF_STARTING=false;}
+  if(!S.overflowUnlocked||MODE!==entryMode||OPEN!==entryOpen||RUN!==entryRun||GATE_TAB!==entryTab)return;
   const C=OFC();stage=Math.max(0,Math.min(ofMaxStage(),Math.floor(+stage||0)));
   RUN={kind:"overflow",stage,wave:0,t:0,heat:{},hpM:1,atkM:1,rewM:1,shards:0,frags:0,gear:0,cores:0,auto:0,paid:false,done:false};
   MODE="dive";OPEN=null;SND.syncUntil=0;FLOOR=C.boss.floor;WW=W;WH=H;HAZ=[];
@@ -2261,6 +2298,7 @@ function ofZoneInfo(){const C=OFC(),fr=S.dragonFragments;
 let OF_STAGE=0,OF_CONFIRM=null;
 const fragTxt=()=>Object.keys(FRAG_T).map(k=>FRAG_T[k]+" "+(S.dragonFragments[k]||0)).join("・");
 function ofGateHtml(){
+  void ofPreloadBackground();
   if(!S.overflowUnlocked)return `<div class="note">🔒 ボスラッシュで5体のボスをすべて倒すと開放</div>`;
   const b=S.ofBest,mx=ofMaxStage();OF_STAGE=Math.max(0,Math.min(OF_STAGE,mx));
   return `<p class="note">新御霊市の地下を巡るヨーデル粒子――龍脈。その記録容量が、ボスラッシュによって限界を超えた。溢れ出す強敵のコピーを分解し、龍脈オーバーフローの個体『星骸龍』を鎮めよう。</p>
@@ -3513,8 +3551,11 @@ function drawDive(){
   const R=BGS[zoneOf(FLOOR).backgroundId]||Object.values(BGS)[0],g0=OFM()?0.1:distortion(),fi=floorIn(FLOOR),gray=OFM()&&G.ofSlow&&G.ofSlow.t>0;
   updateCam();ctx.fillStyle="#07060d";ctx.fillRect(0,0,W,H);ctx.save();applyCam();
   const vw=W/CAM.z,vh=H/CAM.z,vx0=CAM.x-vw/2,vy0=CAM.y-vh/2; // visible part of the world
-  const A=OFM()?null:R.art,deco=decoNow(),aSeed=A?((RUN&&RUN.kind==="run"?1000+RUN.seg*7+RUN.zi*131:5+FLOOR*17)|0):0,sk=A?artSky(A):null;
+  const ofBackground=OFM()&&OF_BG_CANVAS;
+  const A=OFM()?null:R.art,deco=OFM()?[]:decoNow(),aSeed=A?((RUN&&RUN.kind==="run"?1000+RUN.seg*7+RUN.zi*131:5+FLOOR*17)|0):0,sk=A?artSky(A):null;
   BORDER_SCANS=0;ART_ON=A;ART_VIS=A?deco.filter(d=>artVisible(d,vx0,vy0,vw,vh)):[];const tb=A?teleBoxes():null;if(A)artFade(ART_VIS,A.markFade?fallZones():null);
+  if(ofBackground)ctx.drawImage(ofBackground,0,0);
+  else{
   const g=ctx.createLinearGradient(0,0,0,70);g.addColorStop(0,R.sky[0]);g.addColorStop(1,R.sky[1]);ctx.fillStyle=g;ctx.fillRect(0,0,WW,70);
   // backdrop skyline of the region, washed toward monochrome (repeated along the wide map)
   if(A&&A.zone==="front"){for(let i=0;i<3;i++){const sx=vx0+(i+.5)*vw/3;ctx.fillStyle=`rgba(169,152,205,${.12*(.85+.15*Math.sin(G.t*6.283/(6+i*2)))})`;ctx.fillRect(sx,37+i*5,2,18);}}
@@ -3531,6 +3572,7 @@ function drawDive(){
   ctx.strokeStyle=R.acc;ctx.globalAlpha=.35;ctx.lineWidth=2;ctx.strokeRect(2,63,WW-4,WH-65);ctx.globalAlpha=1;ctx.lineWidth=1;
   if(A)(A.fx?ART_FX[A.fx].ground:drawArtGround)(A,ART_VIS,vx0,vy0,vw,vh,aSeed,tb);
   for(const b of GLITCH){if(((G.t*b.f+b.p)%1)<b.on*(0.4+g0)){ctx.fillStyle=`hsla(${hueOf(R.acc)+b.dh},80%,60%,${0.08+g0*0.2})`;ctx.fillRect(vx0+b.x/W*vw+((A&&A.zone==="front"?hh(b.x,b.y,Math.floor(G.t*12)):A===BG_ART.border?hh(Math.floor(G.t*12),b.x,13):Math.random())-.5)*6*g0,vy0+b.y/H*vh,b.w,b.h);}}
+  } // background only: hazards, telegraphs, units, effects and HUD retain their order
   drawHazards();
   if(OFM()&&!gray)drawTele();
   for(const l of G.loot||[]){const by=Math.sin(G.t*3+l.ph)*3,yy=l.y-12+by;shadow(l.x,l.y,7);ctx.save();ctx.shadowColor=R.acc2;ctx.shadowBlur=12;ctx.fillStyle=R.acc2;
