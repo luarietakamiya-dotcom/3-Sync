@@ -1,0 +1,1 @@
+PASS: syntax; 100 deterministic seeds and byte-identical baseline deco; floor does not change deco; static time invariance; all fixed hazard quiet zones; finite arguments; polygon counts and 40px range; 2/frame lazy generation; 24 chunks / 6MiB / shared 16MiB; scale fallback; hazard dimensions invalidate, falling marks do not

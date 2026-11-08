@@ -2320,7 +2320,7 @@ function ofDismantle(id){const it=itemById(id);if(!it||MODE!=="town"||!S.overflo
 function genDeco(seed){const r=srand(seed),a=[],n=Math.round(11*WW*WH/(W*H));for(let i=0;i<n;i++){a.push({x:20+r()*(WW-40),y:80+r()*(WH-96),k:Math.floor(r()*3),s:r()});}return a.filter(d=>Math.hypot(d.x-WW/2,d.y-WH/2-40)>70&&d.x>70);}
 const DECO_CACHE={};
 function decoNow(){const seed=(RUN&&RUN.kind==="run"?1000+RUN.seg*7+RUN.zi*131:5+FLOOR*17)+"_"+WW+"x"+WH,bg=zoneOf(FLOOR).backgroundId,A=BGS[bg]&&BGS[bg].art;
-  if(A){const key=seed+"_"+bg+"_a"+(bg==="alley"?2:ART_VER)+"_"+hazKey();return DECO_CACHE[key]||(DECO_CACHE[key]=genArtDeco(parseInt(seed),A));} // map-art zones: zone id, art version and the puddles they avoid are part of the key
+  if(A){const key=seed+"_"+bg+"_a"+(bg==="alley"?2:1)+"_"+hazKey();return DECO_CACHE[key]||(DECO_CACHE[key]=genArtDeco(parseInt(seed),A));} // map-art zones: zone id, art version and the puddles they avoid are part of the key
   return DECO_CACHE[seed]||(DECO_CACHE[seed]=genDeco(parseInt(seed)));} // each run segment looks different
 const GLITCH=(()=>{const r=srand(9);return Array.from({length:40},()=>({x:r()*W,y:r()*H,w:4+r()*40,h:1+r()*5,f:0.5+r()*3,p:r(),on:0.1+r()*0.3,dh:r()*80}));})();
 function shadow(x,y,rx){ctx.fillStyle="rgba(0,0,0,.35)";ctx.beginPath();ctx.ellipse(x,y,rx,rx*0.38,0,0,7);ctx.fill();}
@@ -2343,7 +2343,7 @@ function drawDeco(d,R){
 // Settings come from R.art (merged into BGS at load). Zones without art keep the old genDeco / grid / rain.
 // objs: w×h = drawn size, fd = footprint depth (footprint width = 80% of w), wt = draw weight, edge = outer band only,
 // max = per base screen, near/nd = preferred neighbours and base-point distance, light = casts a ground reflection.
-const ART_VER=1;
+const ART_VER=2;
 const BG_ART={slum:{
   objs:{
     slum_shack:{w:64,h:56,fd:20,wt:14,edge:1,max:2},
@@ -2371,7 +2371,7 @@ alley:{
     alley_fox:{w:26,h:40,fd:12,wt:8,max:1,near:["alley_lantern"],nd:[40,70]},
     alley_pots:{w:30,h:32,fd:12,wt:14,max:3,near:["alley_shop","alley_case"],nd:[40,72]}},
   minDist:{alley_shop:116,alley_canopy:110,alley_lantern:110},tallH:41,tallGap:90,edgeBand:88,centerGap:26,maxScreen:14,maxTall:4,
-  floor:{base:"#151119",panel:["#1A151E","#201923"],seam:"#48343F",seamA:0.24,glow:"246,168,69",glowA:0.06},
+  floor:{kind:"alley",lane:{w:120,dy:32},mats:{stone:{face:["#1F1C1A","#221F1C","#25211E"],joint:"#0F0D0C",inner:"#100E0D",hl:"#37322C",bevel:"#171513"},central:{face:["#2A2622","#2D2924"],joint:"#110F0E",hl:"#423C34"}},curb:{top:"#3A352F",face:"#141116",w:4},gutter:{base:"#0C0A0E",reflection:"#2A2016",w:4},base:"#151119",panel:["#1A151E","#201923"],seam:"#48343F",seamA:0.24,glow:"246,168,69",glowA:0.06},
   rain:{back:60,front:20,splash:10},rainA:[0.10,0.14,0.07],rainL:[7,13],rainS:[180,280],
   refl:4,fog:1,skyLights:8,skyPer:[5,4],skyWin:4,puddle:false,fx:"alley",markFade:true}};
 const ART_C={b:"#18212D",f:"#263444",t:"#35495A",j:"#101823",e:"#60788A",m:"#2E3F50",teal:"101,200,208",warm:"216,174,114"};
@@ -2445,7 +2445,7 @@ function artBody(d,f,sc){const key=d.kind+"|"+d.v+"|"+sc;let e=ART_CACHE.get(key
   c.width=Math.ceil(cw*sc);c.height=Math.ceil(ch*sc);const g=c.getContext("2d");g.scale(sc,sc);
   X=g;try{f.st(ox,oy,d);}finally{X=ctx;}
   e={c,ox,oy,cw:c.width/sc,ch:c.height/sc,b:c.width*c.height*4};ART_CACHE.set(key,e);ART_CACHE_BYTES+=e.b;
-  for(const[k,v]of ART_CACHE){if(ART_CACHE_BYTES<=ART_CACHE_CAP)break;if(v===e)continue;ART_CACHE.delete(k);ART_CACHE_BYTES-=v.b;}
+  for(const[k,v]of ART_CACHE){if(ART_CACHE_BYTES+FLOOR_CACHE_BYTES<=ART_CACHE_CAP)break;if(v===e)continue;ART_CACHE.delete(k);ART_CACHE_BYTES-=v.b;}
   return e;}
 function drawArtDeco(d,f){const x=Math.round(d.x),y=Math.round(d.y),t=G.t+d.ph,m=ctx.getTransform(),sc=Math.round(Math.hypot(m.a,m.b)*100)/100;
   f.sh(x,y);if(d.al<1){ctx.save();ctx.globalAlpha=d.al;}
@@ -2793,28 +2793,76 @@ function drawArtPuddle(h,idx,ds){const t=G.t,R=h.radius||26,ry=R*0.45,x=h.x,y=h.
   ctx.strokeStyle="rgba(182,232,140,.6)";ctx.beginPath();ctx.ellipse(x,y,R,ry,0,0,7);ctx.stroke(); // danger rim = hit test
   const ba=0.575+0.125*Math.sin(t*3.491+idx);ctx.strokeStyle=`rgba(182,232,140,${ba})`;ctx.lineWidth=2;ctx.beginPath();
   for(let q=0;q<4;q++){const a0=0.35+q*Math.PI/2;ctx.moveTo(x+Math.cos(a0)*R,y+Math.sin(a0)*ry);ctx.ellipse(x,y,R,ry,0,a0,a0+0.32);}ctx.stroke();ctx.lineWidth=1;}
+// Shared floor cache: byte accounting includes the existing object cache.
+const FLOOR_CACHE=new Map(),FLOOR_CHUNK=256,FLOOR_CACHE_CAP=6*1024*1024,FLOOR_CACHE_MAX=24;
+let FLOOR_CACHE_BYTES=0,FLOOR_FRAME=-1,FLOOR_BUILT=0,FLOOR_LEVEL='';
+function floorCacheTrim(incoming=0){
+ while(FLOOR_CACHE.size&&(FLOOR_CACHE.size>=FLOOR_CACHE_MAX||FLOOR_CACHE_BYTES+incoming>FLOOR_CACHE_CAP||ART_CACHE_BYTES+FLOOR_CACHE_BYTES+incoming>ART_CACHE_CAP)){
+ const [k,e]=FLOOR_CACHE.entries().next().value;FLOOR_CACHE.delete(k);FLOOR_CACHE_BYTES-=e.b;}
+ while(ART_CACHE.size&&ART_CACHE_BYTES+FLOOR_CACHE_BYTES+incoming>ART_CACHE_CAP){const[k,e]=ART_CACHE.entries().next().value;ART_CACHE.delete(k);ART_CACHE_BYTES-=e.b;}}
+function floorHazKey(){return hazKey()+'|'+HAZ.filter(h=>h.type!=='falling'&&h.x!==undefined).map(h=>[h.type,h.x,h.y,h.radius||40,...(h.type==='electric'?[h.w||70,h.h||26]:[])].join(',')).join(';');}
+function drawCachedFloor(A,x,y,w,h,seed,paint){
+ const m=ctx.getTransform(),sc=Math.max(.25,Math.round(Math.max(Math.hypot(m.a,m.b),Math.hypot(m.c||0,m.d||m.a)) *4)/4);
+ const level=[A.floor.kind||A.fx||A.zone,seed,floorHazKey(),ART_VER,WW,WH].join('|'),key=level+'|'+sc,initial=FLOOR_LEVEL!==level;
+ FLOOR_LEVEL=level;if(FLOOR_FRAME!==G.t){FLOOR_FRAME=G.t;FLOOR_BUILT=0;}
+ const left=Math.max(0,x),top=Math.max(62,y),right=Math.min(WW,x+w),bottom=Math.min(WH,y+h);if(right<=left||bottom<=top)return;
+ ctx.save();ctx.beginPath();ctx.rect(left,top,right-left,bottom-top);ctx.clip();
+ for(let cy=Math.floor(top/256);cy<Math.ceil(bottom/256);cy++)for(let cx=Math.floor(left/256);cx<Math.ceil(right/256);cx++){
+ const k=key+'|'+cx+','+cy,px=cx*256,py=cy*256;let e=FLOOR_CACHE.get(k);
+ if(e){FLOOR_CACHE.delete(k);FLOOR_CACHE.set(k,e);}
+ else if(initial||FLOOR_BUILT<2){const size=Math.ceil(256*sc),bytes=size*size*4;
+ if(bytes<=FLOOR_CACHE_CAP){floorCacheTrim(bytes);const c=document.createElement('canvas');c.width=c.height=size;const g=c.getContext('2d');g.scale(sc,sc);g.translate(-px,-py);paint(g,px,py,256,256);e={c,b:bytes};FLOOR_CACHE.set(k,e);FLOOR_CACHE_BYTES+=bytes;FLOOR_BUILT++;}}
+ if(e)ctx.drawImage(e.c,px,py,256,256);else{ctx.save();ctx.beginPath();ctx.rect(px,py,256,256);ctx.clip();paint(ctx,px,py,256,256);ctx.restore();}}
+ ctx.restore();}
+
 /* ---- alley: 128×24 ceramic bands, warm short reflections, one fog sheet, falling-block telegraph */
-function drawAlleyFloor(A,vx0,vy0,vw,vh,seed,tb){const F=A.floor,PW=128,PH=24,TOP=62;
-  const fx0=Math.max(0,vx0),fy0=Math.max(TOP,vy0),fx1=Math.min(WW,vx0+vw),fy1=Math.min(WH,vy0+vh);if(fx1<=fx0||fy1<=fy0)return;
-  ctx.fillStyle=F.panel[0];ctx.fillRect(fx0,fy0,fx1-fx0,fy1-fy0);
-  const r0=Math.max(0,Math.floor((vy0-TOP)/PH)),r1=Math.floor((Math.min(WH,vy0+vh)-TOP)/PH),alt=[],seams=[],steps=[],hl=[],glows=[];
-  for(let r=r0;r<=r1;r++){const off=(r&1)?64:0,py=TOP+r*PH,c0=Math.floor((Math.max(0,vx0)+off)/PW),c1=Math.floor((Math.min(WW,vx0+vw)+off)/PW);
-    for(let c=c0;c<=c1;c++){const px=c*PW-off;
-      if(hh(c,r,seed)<0.45)alt.push([px,py]);
-      seams.push([px,py,1,PH],[px,py,PW,1]);steps.push([px+1,py+1,PW-1,1]);
-      hl.push([px+2,py+2,6+Math.floor(hh(r,c,seed)*7),1]); // short lit line at the band end (6-12px)
-      if(hh(c,r,seed+7)<0.03){const L=16+Math.floor(hh(c,r,seed+8)*17),gx=px+4+Math.floor(hh(c,r,seed+9)*(PW-8-L));glows.push([gx,py,L]);}}} // ≤3% lit joints, 16-32px
-  ctx.fillStyle=F.panel[1];for(const p of alt)ctx.fillRect(p[0]+1,p[1]+1,PW-1,PH-1);
-  ctx.fillStyle=F.base;for(const s of seams)ctx.fillRect(s[0],s[1],s[2],s[3]);
-  ctx.fillStyle="#110D14";for(const s of steps)ctx.fillRect(s[0],s[1],s[2],s[3]);
-  ctx.fillStyle="#2A2130";for(const s of hl)ctx.fillRect(s[0],s[1],s[2],s[3]);
-  ctx.globalAlpha=F.seamA;ctx.fillStyle=F.seam;for(const s of seams)ctx.fillRect(s[0],s[1],s[2],s[3]);ctx.globalAlpha=1;
-  // drain slits 24×3: one per base-screen cell, in its middle half (any screen holds at most 4)
-  const cx0=Math.floor(vx0/W),cx1=Math.floor((vx0+vw)/W),cy0=Math.floor(vy0/H),cy1=Math.floor((vy0+vh)/H),bars=[];ctx.fillStyle="#0B080D";ctx.beginPath();
-  for(let cy=cy0;cy<=cy1;cy++)for(let cx=cx0;cx<=cx1;cx++){const sx=Math.round(cx*W+W/4+hh(cx,cy,seed+11)*W/2),sy=Math.round(cy*H+H/4+hh(cx,cy,seed+12)*H/2);if(sy<90||sy>WH-20||sx<20||sx>WW-44)continue;
-    ctx.rect(sx,sy,24,3);for(let i=0;i<5;i++)bars.push([sx+3+i*4,sy+1]);}
-  ctx.fill();ctx.fillStyle="#241C28";ctx.beginPath();for(const b of bars)ctx.rect(b[0],b[1],2,1);ctx.fill();
-  for(const g of glows){const near=Math.hypot(g[0]+g[2]/2-P.x,g[1]-P.y)<48?0.5:1;ctx.fillStyle=`rgba(${F.glow},${F.glowA*near*teleK(tb,g[0],g[1]-2,g[0]+g[2],g[1]+2)})`;ctx.fillRect(g[0],g[1],g[2],1);}}
+function alleyFloorPlan(seed){return {top:WH/2+40+(hh(seed,91,0)-.5)*32-60};}
+// The lane is the anchor of the 24px grid, shared by old and new materials.
+function alleyFloorQuiet(x,y){return !HAZ.some(h=>{
+ if(h.type==='electric')return x>=h.x-17&&x<=h.x+(h.w||70)+17&&y>=h.y-17&&y<=h.y+(h.h||26)+17;
+ if(!['puddle','noise','rift'].includes(h.type))return false;
+ const r=h.radius||(h.type==='puddle'?26:h.type==='rift'?80:40),sy=h.type==='puddle'?.45:.5;
+ // A conservative expanded ellipse contains the entire hit shape +16px offset.
+ const pad=16*Math.SQRT2+1;return ((x-h.x)/(r+pad))**2+((y-h.y)/(r*sy+pad))**2<=1;
+});}
+function alleyFloorLight(g,x,y,w,color){g.fillStyle=color;for(let i=0;i<w;i++)if(alleyFloorQuiet(x+i,y))g.fillRect(x+i,y,1,1);}
+let ALLEY_STEPS_KEY='',ALLEY_STEPS=[];
+function alleyFloorSteps(A,seed,deco){const key=[seed,WW,WH,floorHazKey()].join('|');if(key===ALLEY_STEPS_KEY)return ALLEY_STEPS;
+ const top=alleyFloorPlan(seed).top,center=top+60;ALLEY_STEPS_KEY=key;ALLEY_STEPS=[];
+ // Read the same deterministic deco coordinates; never write to deco or its RNG.
+ const ds=deco||genArtDeco(seed,A);for(const d of ds){if(!['alley_lantern','alley_fox'].includes(d.kind))continue;
+ // A fox next to a lantern shares that lantern's single group.
+ if(d.kind==='alley_fox'&&ds.some(l=>l.kind==='alley_lantern'&&Math.hypot(l.x-d.x,l.y-d.y)<=80))continue;
+ const dir=d.y<center?1:-1,n=3+Math.floor(hh(d.x,d.y,seed+31)*3);
+ for(let i=0;i<n;i++){const size=18+Math.floor(hh(i,d.x,seed+32)*9),x=d.x+[[0,10],[-21,10],[21,10],[-11,24],[11,24]][i][0],y=d.y+dir*[[0,10],[-21,10],[21,10],[-11,24],[11,24]][i][1],v=5+(hh(i,d.y,seed+33)<.5?0:1),pts=[];
+ for(let j=0;j<v;j++){const angle=-Math.PI/2+j*Math.PI*2/v,rad=size/2*(.84+.16*hh(i+j,d.x,seed+34));pts.push([x+Math.cos(angle)*rad,y+Math.sin(angle)*rad]);}
+ ALLEY_STEPS.push({pts,face:A.floor.mats.stone.face[i%3]});}}
+ return ALLEY_STEPS;}
+function drawAlleyFloorStatic(g,A,vx,vy,vw,vh,seed,deco){const F=A.floor,top=alleyFloorPlan(seed).top;
+ g.save();g.beginPath();g.rect(Math.max(0,vx),Math.max(62,vy),Math.max(0,Math.min(WW,vx+vw)-Math.max(0,vx)),Math.max(0,Math.min(WH,vy+vh)-Math.max(62,vy)));g.clip();g.fillStyle=F.base;g.fillRect(vx,vy,vw,vh);
+ for(let r=Math.floor((vy-top)/24);top+r*24<vy+vh;r++){const y=top+r*24,lane=r>=0&&r<5,central=r===2,w=lane?(central?96:32):128,off=(r&1)?w/2:0;
+ for(let c=Math.floor((vx+off)/w);c*w-off<vx+vw;c++){const x=c*w-off,h=hh(c,r,seed),M=central?F.mats.central:F.mats.stone;
+ g.fillStyle=lane?M.joint:F.base;g.fillRect(x,y,w,24);
+ if(lane){const j=central?1:2;if(!central){g.fillStyle=M.inner;g.fillRect(x+1,y+1,w-1,23);}g.fillStyle=M.face[Math.floor(h*M.face.length)];g.fillRect(x+j,y+j,w-j,24-j);
+ if(!central){g.fillStyle=M.bevel;g.fillRect(x+2,y+23,w-2,1);}
+ alleyFloorLight(g,x+j+1,y+j,central?12+Math.floor(h*13):6+Math.floor(h*9),M.hl);
+ }else{g.fillStyle=F.panel[h<.45?1:0];g.fillRect(x+1,y+1,w-1,23);g.fillStyle='#110D14';g.fillRect(x+1,y+1,w-1,1);
+ g.globalAlpha=F.seamA;g.fillStyle=F.seam;g.fillRect(x,y,w,1);g.fillRect(x,y,1,24);g.globalAlpha=1;
+ alleyFloorLight(g,x+2,y+2,6+Math.floor(hh(r,c,seed)*7),'#2A2130');}}}
+ for(const y of [top-8,top+120]){const upper=y<top,c=upper?y+4:y,dr=upper?y:y+4;
+ g.fillStyle=F.gutter.base;g.fillRect(vx,dr,vw,4);alleyFloorLight(g,vx,dr+3,Math.ceil(vw),F.gutter.reflection);
+ g.fillStyle=F.curb.face;g.fillRect(vx,c,vw,4);for(let j=0;j<2;j++)alleyFloorLight(g,vx,c+j,Math.ceil(vw),F.curb.top);}
+ for(const st of alleyFloorSteps(A,seed,deco)){if(!st.pts.some(p=>p[0]>=vx-26&&p[0]<=vx+vw+26&&p[1]>=vy-26&&p[1]<=vy+vh+26))continue;
+ g.beginPath();st.pts.forEach((p,i)=>i?g.lineTo(...p):g.moveTo(...p));g.closePath();g.fillStyle=st.face;g.fill();
+ const p=st.pts[0];alleyFloorLight(g,p[0]-2,p[1]+1,5,F.mats.stone.hl);}
+ g.restore();}
+function drawAlleyFloorDynamic(A,vx,vy,vw,vh,seed,tb){const F=A.floor,top=alleyFloorPlan(seed).top;
+ ctx.save();ctx.beginPath();ctx.rect(Math.max(0,vx),Math.max(62,vy),Math.max(0,Math.min(WW,vx+vw)-Math.max(0,vx)),Math.max(0,Math.min(WH,vy+vh)-Math.max(62,vy)));ctx.clip();
+ // Existing shop-front glow only; no new animation and no glow on the shrine lane.
+ for(let r=Math.floor((vy-top)/24);top+r*24<vy+vh;r++){const y=top+r*24;if(y>=top-8&&y<top+128)continue;const off=(r&1)?64:0;
+ for(let c=Math.floor((vx+off)/128);c*128-off<vx+vw;c++){if(hh(c,r,seed+7)>=.02)continue;const L=16+Math.floor(hh(c,r,seed+8)*17),x=c*128-off+4+Math.floor(hh(c,r,seed+9)*(120-L)),near=Math.hypot(x+L/2-P.x,y-P.y)<48?.5:1;
+ alleyFloorLight(ctx,x,y,L,`rgba(${F.glow},${F.glowA*near*teleK(tb,x,y-2,x+L,y+2)})`);}}ctx.restore();}
+function drawAlleyFloor(A,x,y,w,h,seed,tb,deco){drawCachedFloor(A,x,y,w,h,seed,(g,x,y,w,h)=>drawAlleyFloorStatic(g,A,x,y,w,h,seed,deco));drawAlleyFloorDynamic(A,x,y,w,h,seed,tb);}
 function drawAlleyGround(A,ds,vx0,vy0,vw,vh,seed,tb){const t=G.t;
   // short warm reflections fixed to each lit object (max 4, 2-3 bands of 1px within 12px, 0.04-0.09, 3-4.5s, ±8% width, ±15% alpha)
   const cx=vx0+vw/2,cy=vy0+vh/2,L=ds.filter(d=>d.light).sort((a,b)=>Math.hypot(a.x-cx,a.y-cy)-Math.hypot(b.x-cx,b.y-cy)).slice(0,A.refl);
@@ -3035,7 +3083,7 @@ function drawDive(){
   // backdrop skyline of the region, washed toward monochrome (repeated along the wide map)
   for(let ox=0;ox<WW+10;ox+=W)for(let bi=0;bi<SKYLINE.length;bi++){const b=SKYLINE[bi],h=b.h*0.35,y0=62-h,wa=sk?.45*sk[bi%sk.length]:.45;ctx.fillStyle="#0c0a12";ctx.fillRect(b.x+ox,y0,b.w,h+8);
     for(const w of b.win){if(!w.lit||w.y>h)continue;ctx.fillStyle=w.c?R.acc:R.acc2;ctx.globalAlpha=wa;ctx.fillRect(b.x+ox+w.x,y0+w.y,A&&A.skyWin?Math.max(2,Math.min(A.skyWin,b.w-w.x)):2,2);ctx.globalAlpha=1;}}
-  if(A)(A.fx?ART_FX[A.fx].floor:drawArtFloor)(A,vx0,vy0,vw,vh,aSeed,tb); // map-art zones: paving instead of the grid (zone painter when it has one)
+  if(A)(A.fx?ART_FX[A.fx].floor:drawArtFloor)(A,vx0,vy0,vw,vh,aSeed,tb,deco); // map-art zones: paving instead of the grid (zone painter when it has one)
   else{
   ctx.fillStyle=R.ground;ctx.fillRect(0,62,WW,WH-62);
   ctx.strokeStyle=R.grid;ctx.globalAlpha=.5;ctx.lineWidth=1;
