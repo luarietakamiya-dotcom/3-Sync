@@ -521,6 +521,19 @@ function buildTree(cid){
         const id=add(`${cid}:ring${tag}${bi}_${j}`,{br:own,x:Math.cos(a)*r,y:Math.sin(a)*r,nm:`${Bx.nm}連結`,eff:{[k]:v},kind:"small",cost:1,max:1});link(p,id);p=id;}
       link(p,Bn.id);}
   });
+  // Resolve only ring positions, in stable insertion order. A small margin keeps
+  // floating-point convergence safely above the 34px clearance requirement.
+  const all=Object.values(nodes),rings=all.filter(n=>n.id.includes(":ring")),clearance=34.5;
+  for(let pass=0;pass<64;pass++){
+    for(const n of rings)for(const other of all){
+      if(n===other)continue;
+      const dx=n.x-other.x,dy=n.y-other.y,d=Math.hypot(dx,dy);
+      if(d>=clearance)continue;
+      // Coincident points have a deterministic fallback direction.
+      const ux=d?dx/d:1,uy=d?dy/d:0,push=clearance-d;
+      n.x+=ux*push;n.y+=uy*push;
+    }
+  }
   for(const id in nodes)nodes[id].adj=[...adj[id]];
   return{nodes,root,count:Object.keys(nodes).length-1};
 }
