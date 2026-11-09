@@ -2,7 +2,7 @@
 <html lang="ja">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
 <meta name="theme-color" content="#0e0c15">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
@@ -12,7 +12,7 @@
 <link rel="apple-touch-icon" href="icons/app/icon-180.png">
 <style>
 :root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
-body{margin:0;font-size:14px;-webkit-text-size-adjust:100%}
+body{margin:0;font-size:14px;touch-action:manipulation;-webkit-text-size-adjust:100%}
 img{max-width:100%}
 [hidden]{display:none!important}
 </style>
@@ -40,7 +40,7 @@ body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset
 .top{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--bg);padding-block:6px;display:flex;flex-direction:column;gap:8px}
 .hud{display:flex;justify-content:space-between;align-items:flex-end;gap:10px}
 .money{font-family:var(--f-display);font-size:1.6rem;color:var(--gold);font-variant-numeric:tabular-nums;line-height:1}
-.money small{font-family:var(--f-body);font-size:.72rem;color:var(--muted);margin-left:6px}
+.money small{white-space:nowrap;font-family:var(--f-body);font-size:.72rem;color:var(--muted);margin-left:6px}
 .lv{text-align:right;font-size:.8rem;color:var(--muted);min-width:0}
 .lv b{font-family:var(--f-display);font-weight:400;color:var(--ink);font-size:1rem}
 .bar{height:5px;background:var(--line);border-radius:3px;overflow:hidden;margin-top:4px;width:120px;margin-left:auto}
@@ -622,6 +622,9 @@ const pick=a=>a[Math.floor(Math.random()*a.length)];
 const cost=(base,k)=>Math.ceil(base*Math.pow(1.15,k));
 function fmt(x){x=Math.floor(x);if(x<10000)return x.toLocaleString("ja-JP");
   for(const[v,u]of[[1e16,"京"],[1e12,"兆"],[1e8,"億"],[1e4,"万"]])if(x>=v)return(x/v).toFixed(x/v<100?2:1).replace(/\.?0+$/,"")+u;}
+// Keep money in 万 at one decimal without changing combat/stat formatting or larger units.
+function fmtMoney(x){return x>=1e4&&x<1e8?(Math.floor(x)/1e4).toFixed(1)+"万":fmt(x);}
+
 let tt;function toast(m){const t=$("toast");t.textContent=m;t.classList.add("show");clearTimeout(tt);tt=setTimeout(()=>t.classList.remove("show"),2600);}
 function log(m){const l=$("log"),d=document.createElement("div");d.textContent=m;l.prepend(d);while(l.children.length>3)l.lastChild.remove();}
 const esc=s=>String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
@@ -716,7 +719,7 @@ function makeItem(lvl,boss){
 const sellValue=it=>Math.ceil(6*it.lvl*RAR[it.rar].m*RAR[it.rar].m*(1+it.plus*0.5));
 const enhCost=it=>Math.ceil(25*it.lvl*Math.pow(1.7,it.plus)*RAR[it.rar].m);
 function gainItem(it){
-  if(S.inv.length>=INV_MAX){const v=sellValue(it);addMoney(v);log(`もちものがいっぱい：${it.name}を¥${fmt(v)}で売却`);return;}
+  if(S.inv.length>=INV_MAX){const v=sellValue(it);addMoney(v);log(`もちものがいっぱい：${it.name}を¥${fmtMoney(v)}で売却`);return;}
   S.inv.push(it);log(`${RAR[it.rar].nm}「${it.name}」を手に入れた`);
   if(it.rar==="e"||it.rar==="l")toast(`${RAR[it.rar].nm}！「${it.name}」`);
   const c=S.ch[S.char];if(!c.eq[it.slot])c.eq[it.slot]=it.id;
@@ -1146,7 +1149,7 @@ function makeLoot(){const area=WW*WH/(W*H),n=Math.round(1+area*1.1),out=[];
   for(let i=0;i<n;i++){let x,y,g=0;do{x=50+Math.random()*(WW-100);y=100+Math.random()*(WH-130);}while(Math.hypot(x-P.x,y-P.y)<180&&g++<30);out.push({x,y,ph:Math.random()*7});}return out;}
 function takeLoot(l,full){const Z=G.zone,zm=zoneMats(Z),sc=scaleOf(FLOOR);const m=zm.length?pick(zm):null,n=1+Math.floor(Math.random()*2);if(m)addMat(m,FLOOR,n);
   if(full){const coin=Math.round(15*sc.xp);addMoney(coin);const st=statsOf(P.cid,P);P.hp=Math.min(st.hp,P.hp+st.hp*0.08);G.sync=Math.min(100,G.sync+8);
-    FX.push({x:l.x,y:l.y-20,txt:`${m?MATS[m].nm+"×"+n+" ・ ":""}+¥${fmt(coin)}`,c:"gold",t:1.2});burst(l.x,l.y,190,10);sfx("coin");}}
+    FX.push({x:l.x,y:l.y-20,txt:`${m?MATS[m].nm+"×"+n+" ・ ":""}+¥${fmtMoney(coin)}`,c:"gold",t:1.2});burst(l.x,l.y,190,10);sfx("coin");}}
 function pickPool(Z){const fi=floorIn(FLOOR),pool=Z.enemyPool.filter(p=>ENEMIES[p.id]&&(!p.minFloor||fi>=p.minFloor));
   let t=pool.reduce((a,p)=>a+(p.weight||1),0),r=Math.random()*t;for(const p of pool){if((r-=(p.weight||1))<0)return p.id;}return pool[0].id;}
 // enemy strength: zone base × growth per floor inside the zone (maps.json zones[].scaling). Pure function, also used by tools/balance-sim.mjs
@@ -1409,7 +1412,7 @@ function killEnemy(e){
   const st=statsOf(S.char),boss=e.boss,k=e.lastHit&&!e.lastHit.down?e.lastHit:P,ks=statsOf(k.cid,k),Z=zoneOf(FLOOR),sc=scaleOf(FLOOR),mul=e.summoned?0.35:1,d=e.def;
   burst(e.x,e.y,e.hue,boss?40:10);sfx(boss?"bossKill":"kill");
   shareXp(Math.ceil((d.expReward||3)*sc.xp*mul));
-  const coin=Math.round((d.moneyReward||0)*sc.xp*mul);if(coin>0){addMoney(coin);if(boss)FX.push({x:e.x,y:e.y-30,txt:"+¥"+fmt(coin),c:"gold",t:1});}
+  const coin=Math.round((d.moneyReward||0)*sc.xp*mul);if(coin>0){addMoney(coin);if(boss)FX.push({x:e.x,y:e.y-30,txt:"+¥"+fmtMoney(coin),c:"gold",t:1});}
   G.sync=Math.min(100,G.sync+(boss?20:4)*statsOf(P.cid).syncM);
   if(ks.sp.has("pinkNoise")){k.streak=Math.min(10,(k.streak||0)+1);k.streakT=3;}
   if(ks.sp.has("killHaste")||ks.gsp.killHaste||ks.ofx.killHaste>0)k.haste=3;
@@ -1421,7 +1424,7 @@ function killEnemy(e){
     if(Math.random()<Math.min(1,dr.chance*(1+(bon.mat||0)))*mul){const n=(dr.min||1)+Math.floor(Math.random()*((dr.max||dr.min||1)-(dr.min||1)+1));addMat(dr.id,FLOOR,n);if(dr.id==="crystal")progress("collect");}
   }
   if(boss&&Z.clearReward){const cr=Z.clearReward;addMoney(cr.money||0);for(const it of cr.items||[])if(MATS[it.id])addMat(it.id,FLOOR,it.n||1);
-    FX.push({scr:1,x:W/2,y:H/2-70,txt:`${Z.name} 制覇！ +¥${fmt(cr.money||0)}`,c:"gold",t:2.4,big:0});}
+    FX.push({scr:1,x:W/2,y:H/2-70,txt:`${Z.name} 制覇！ +¥${fmtMoney(cr.money||0)}`,c:"gold",t:2.4,big:0});}
   if(e.p.split&&e.gen<e.p.split){for(const dx of[-10,10]){const c=mkEnemy(e.t,e.x+dx,e.y);c.gen=e.gen+1;c.r=e.r*0.75;c.mhp=c.hp=e.mhp*0.45;c.dmg=e.dmg*0.7;c.spd=e.spd*1.15;EN.push(c);}}
   if(RUN&&RUN.kind==="run"){const C=MODES.run,ec=C.elite||{};
     if(e.elite){addMoney(coin*((ec.money||5)-1));gainItem(makeItem(FLOOR+2,true));
@@ -1739,7 +1742,7 @@ function updateDive(dt){
 }
 function floorChoice(){
   const next=FLOOR+1,wasBest=S.best;S.best=Math.max(S.best,next);const Zn=zoneOf(next),newZone=zoneIdx(next)!==zoneIdx(FLOOR)&&next>wasBest,fi=floorIn(FLOOR);
-  let s=`持ち帰り中の素材の価値 約¥${fmt(bagValue())}。帰還すると倉庫に入る。`;
+  let s=`持ち帰り中の素材の価値 約¥${fmtMoney(bagValue())}。帰還すると倉庫に入る。`;
   if(fi===5)s+=` ゲートから第${next}層に直接来られるようになった。`;
   if(fi===9)s+=` 次の層はボス「${ENEMIES[zoneOf(next).bossId].name}」。3人で戦う。`;
   if(newZone)s+=` 新しいエリア「${Zn.name}」（推奨Lv${Zn.recommendedLevel}）が開いた！`;
@@ -1887,7 +1890,7 @@ function runSegment(){
       FX.push({scr:1,x:W/2,y:H/2-50,txt:heal?`安全地帯：HP回復`:"安全地帯（消耗：回復なし）",c:"ok",t:2.2,big:1});
       if(S.yog<3&&!heatOn("noYog")&&Math.random()<0.3){S.yog++;FX.push({scr:1,x:W/2,y:H/2-20,txt:"ヨーグルトを拾った",c:"ok",t:2});}sfx("heal");}
     else{const zm=zoneMats(Z),n=3+Math.floor(Math.random()*3),sc=scaleOf(FLOOR);for(let i=0;i<n;i++)if(zm.length)addMat(pick(zm),FLOOR,1+Math.floor(Math.random()*2));
-      const coin=Math.round(40*sc.xp);addMoney(coin);FX.push({scr:1,x:W/2,y:H/2-50,txt:`粒子だまり：素材${n}種 +¥${fmt(coin)}`,c:"gold",t:2.4,big:1});sfx("coin");}
+      const coin=Math.round(40*sc.xp);addMoney(coin);FX.push({scr:1,x:W/2,y:H/2-50,txt:`粒子だまり：素材${n}種 +¥${fmtMoney(coin)}`,c:"gold",t:2.4,big:1});sfx("coin");}
   }
   if(heatOn("swarm")&&G.spawnLeft>0&&!G.boss){G.spawnLeft=Math.round(G.spawnLeft*1.5);G.maxAlive+=2;}
   if(G.state==="fight"&&!G.boss)prePlace();
@@ -1903,7 +1906,7 @@ function runAfterClear(){
   const nextSeg=seg+1,bossNext=nextSeg%(C.bossEvery||10)===0,opts=[];
   if(!bossNext){let g=0;while(opts.length<3&&g++<40){const e=rollEnc(nextSeg);if(!opts.includes(e))opts.push(e);}}
   const z=ZONES[RUN.zi].id,best=S.runBest[z];
-  const s=`${seg}区画突破（自己ベスト ${best?best.seg:0}）。持ち帰り中の素材 約¥${fmt(bagValue())}・共鳴の欠片 +${RUN.shards}。どの道を進む？`;
+  const s=`${seg}区画突破（自己ベスト ${best?best.seg:0}）。持ち帰り中の素材 約¥${fmtMoney(bagValue())}・共鳴の欠片 +${RUN.shards}。どの道を進む？`;
   const btns=bossNext?[["ボスに挑む（区画"+nextSeg+"）","primary",()=>{$("ov").hidden=true;runAdvance();}]]
     :opts.map((e,i)=>{const d=encDef(e);return[`${d.name}：${d.desc}`,i===0?"primary":"",()=>{RUN.next=e;$("ov").hidden=true;runAdvance();}];});
   btns.push(["撤退して帰還","",()=>runRetreat()]);
@@ -2294,7 +2297,7 @@ function ofGear(boss){const it=ofAddSockets(makeItem(50,boss));if(RUN)RUN.gear++
 function ofKill(e){
   const C=OFC(),R=C.reward,d0=ENEMIES[e.ofBase]||e.def,k=e.lastHit&&!e.lastHit.down?e.lastHit:P,ks=statsOf(k.cid,k),boss=e.boss,xm=Math.pow(1.14,(e.ofF||50)-1),mul=boss?1:C.copy.reward;
   burst(e.x,e.y,e.hue,boss?40:14);sfx(boss?"bossKill":"kill");
-  shareXp(Math.ceil((d0.expReward||3)*xm*mul));const coin=Math.round((d0.moneyReward||0)*xm*mul);if(coin>0){addMoney(coin);FX.push({x:e.x,y:e.y-30,txt:"+¥"+fmt(coin),c:"gold",t:1});}
+  shareXp(Math.ceil((d0.expReward||3)*xm*mul));const coin=Math.round((d0.moneyReward||0)*xm*mul);if(coin>0){addMoney(coin);FX.push({x:e.x,y:e.y-30,txt:"+¥"+fmtMoney(coin),c:"gold",t:1});}
   G.sync=Math.min(100,G.sync+(boss?20:4)*statsOf(P.cid).syncM);
   if(ks.sp.has("pinkNoise")){k.streak=Math.min(10,(k.streak||0)+1);k.streakT=3;}
   if(ks.sp.has("killHaste")||ks.gsp.killHaste||ks.ofx.killHaste>0)k.haste=3;
@@ -2309,7 +2312,7 @@ function ofComplete(){
   const b=S.ofBest,better=!b.t||r.t<b.t;b.clears++;if(better)b.t=r.t;b.top=Math.max(b.top,r.stage);
   save(true);markDirty();
   const next=Math.min(C.stageMax,r.stage+1);
-  overlay("龍脈溢界 制覇！",`星骸龍を鎮めた。龍脈は、再び溢れ出そうとしている。 ― 再溢出段階${r.stage} ・ タイム ${fmtTime(r.t)}${better?"（自己ベスト！）":`（ベスト ${fmtTime(b.t)}）`} ・ 龍鱗片 +${r.frags} ・ 龍脈核 +${r.cores} ・ 装備 ${r.gear}個 ・ 共鳴の欠片 +${r.shards} ・ ¥${fmt(R.clearMoney)}${first?" ・ 初回制覇ボーナス 龍脈核+"+R.firstCore:""}${r.auto?` ・ もちもの満杯のため装備${r.auto}個を龍鱗片に分解した`:" ・ もちものが満杯のときは、龍脈産の装備は売らずに龍鱗片へ分解される"}`,
+  overlay("龍脈溢界 制覇！",`星骸龍を鎮めた。龍脈は、再び溢れ出そうとしている。 ― 再溢出段階${r.stage} ・ タイム ${fmtTime(r.t)}${better?"（自己ベスト！）":`（ベスト ${fmtTime(b.t)}）`} ・ 龍鱗片 +${r.frags} ・ 龍脈核 +${r.cores} ・ 装備 ${r.gear}個 ・ 共鳴の欠片 +${r.shards} ・ ¥${fmtMoney(R.clearMoney)}${first?" ・ 初回制覇ボーナス 龍脈核+"+R.firstCore:""}${r.auto?` ・ もちもの満杯のため装備${r.auto}個を龍鱗片に分解した`:" ・ もちものが満杯のときは、龍脈産の装備は売らずに龍鱗片へ分解される"}`,
     [["街へ帰還","primary",()=>{if(RUN===r)returnHome();}],[`再溢出に挑む（段階${next}）`,"",()=>{if(RUN===r)ofStartRun(next);}]]);}
 function ofZoneInfo(){const C=OFC(),fr=S.dragonFragments;
   $("zinfo").innerHTML=`<div class="zrow"><span>再溢出段階 <b style="color:var(--ink)">${RUN.stage}</b></span><span>龍鱗片 +${RUN.frags} ・ 装備 ${RUN.gear} ・ 龍脈核 +${RUN.cores}</span></div>
@@ -3737,7 +3740,7 @@ function claim(m){sfx("coin");
   S.active=S.active.filter(x=>x!==m);
   const xp=Math.ceil(12*Math.pow(1.14,Math.max(0,S.best-1)))*(m.free?2:1);addXp(S.char,xp);
   if(m.free){if(S.yog<3)S.yog++;toast(`「ありがとう！」${m.cl}からヨーグルトをもらった（経験値 +${xp}）`);}
-  else{addMoney(m.rew);let s=`報酬 ¥${fmt(m.rew)} を受け取った`;if(m.bonus){gainItem(makeItem(Math.max(1,S.best),true));s+="。ボーナスの装備も！";}toast(s);}
+  else{addMoney(m.rew);let s=`報酬 ¥${fmtMoney(m.rew)} を受け取った`;if(m.bonus){gainItem(makeItem(Math.max(1,S.best),true));s+="。ボーナスの装備も！";}toast(s);}
   markDirty();save(true);
 }
 
@@ -3752,9 +3755,9 @@ function syncModeUI(){
 }
 function renderHud(){
   const c=S.ch[S.char];
-  $("num").textContent=fmt(S.n);$("lv").textContent="Lv"+c.lv;$("sp").textContent=spFree(S.char);$("cname").textContent=CHARS[S.char].name;
+  $("num").textContent=fmtMoney(S.n);$("lv").textContent="Lv"+c.lv;$("sp").textContent=spFree(S.char);$("cname").textContent=CHARS[S.char].name;
   $("spdot").hidden=!CIDS.some(k=>spFree(k)>0);$("xpbar").style.width=(100*c.xp/xpNeed(c.lv))+"%";
-  const ps=perSec();$("rateTop").textContent=livePaused()?"ライブ休止中（ボス戦）":ps>0?`+${ps<100?ps.toFixed(1).replace(/\.0$/,""):fmt(ps)}/秒`:"";
+  const ps=perSec();$("rateTop").textContent=livePaused()?"ライブ休止中（ボス戦）":ps>0?`+${ps<100?ps.toFixed(1).replace(/\.0$/,""):fmtMoney(ps)}/秒`:"";
   if(MODE==="town"){$("loc").innerHTML=OPEN?`<b>${FACS.find(f=>f.id===OPEN).full}</b>`:"<b>新御霊市・下層 3番街</b>";$("locR").textContent=`最深 第${S.best}層`;}
   else{const Z=zoneOf(FLOOR),left=G.state==="fight"?` ・ のこり ${G.spawnLeft+G.queue.length+EN.length+(G.boss&&!G.bossSpawned?1:0)}`:"",hp=RUN?heatPts(RUN.heat):0;
     if(OFM()){$("loc").innerHTML=`<b>龍脈溢界</b> 再溢出段階${RUN.stage}`;$("locR").textContent=`第${RUN.wave}/${OFC().waves.length}波 ・ ${fmtTime(RUN.t)}${G.state==="fight"?` ・ のこり ${EN.length}`:""}`;}
@@ -3764,7 +3767,7 @@ function renderHud(){
     renderZoneInfo();$("bRetreat").hidden=!RUN;
     $("syncbar").style.width=G.sync+"%";const ready=G.sync>=100&&G.state==="fight"&&!G.syncing;$("bSync").disabled=!ready;$("bSync").classList.toggle("ready",ready);
     $("yogn").textContent=S.yog;$("bYog").disabled=S.yog<=0||G.state!=="fight";
-    $("bag").innerHTML=Object.keys(MATS).filter(k=>S.bag[k]).map(k=>`<span>${MATS[k].nm} <b>×${S.bag[k].n}</b></span>`).join("")+`<span>持ち帰り中 約<b style="color:var(--gold)">¥${fmt(bagValue())}</b></span>`;
+    $("bag").innerHTML=Object.keys(MATS).filter(k=>S.bag[k]).map(k=>`<span>${MATS[k].nm} <b>×${S.bag[k].n}</b></span>`).join("")+`<span>持ち帰り中 約<b style="color:var(--gold)">¥${fmtMoney(bagValue())}</b></span>`;
     $("dmis").innerHTML=S.active.map(m=>`<div class="note">${m.prog>=m.need?"✔ ":""}${esc(m.txt)} <b style="color:var(--ink)">${m.prog}/${m.need}</b></div>`).join("");}
   const st=statsOf(S.char);$("stAtk").textContent=fmt(st.atk);$("stHp").textContent=fmt(st.hp);$("stCrit").textContent=st.crit.toFixed(0)+"%";
   document.querySelectorAll("[data-cost]").forEach(b=>{b.disabled=S.n<+b.dataset.cost||b.dataset.block==="1";});
@@ -3788,12 +3791,12 @@ function renderFac(){
     const keys=Object.keys(MATS).filter(k=>stock(k)>0);
     h+=`<p class="note">「ノイズの欠片かい？ うちは何でも買い取るよ」 売る量は自分で決められる。依頼の納品に使う分は残しておこう。</p>`;
     h+=keys.length?`<div>${keys.map(k=>{const n=stock(k),u=unitPrice(k),need=S.active.filter(m=>m.type==="deliver"&&m.mat===k).reduce((a,m)=>a+m.need,0);
-      return `<div class="matsell"><div><b>${MATS[k].nm}</b> ×${n}<div class="note">1個 約¥${fmt(Math.max(1,u))}${need?` ・ 納品予定 ${need}個`:""}</div></div>
+      return `<div class="matsell"><div><b>${MATS[k].nm}</b> ×${n}<div class="note">1個 約¥${fmtMoney(Math.max(1,u))}${need?` ・ 納品予定 ${need}個`:""}</div></div>
         <div class="row"><button class="btn sm" data-sell="${k}" data-n="1">1個</button>${n>=10?`<button class="btn sm" data-sell="${k}" data-n="10">10個</button>`:""}<button class="btn sm" data-sell="${k}" data-n="${need&&n>need?n-need:n}">${need&&n>need?"余りを全部":"全部"}</button></div></div>`;}).join("")}</div>`
       :`<p class="note">倉庫に素材がない。歪みゲートから潜って集めてこよう。</p>`;
     const yp=yogPrice();
     h+=`<div><h2 style="margin-top:6px">ヨーグルト</h2><p class="note">食べると粒子を補充。HPが半分回復し、侵食が消え、同期ゲージが50%たまる。持てるのは3個まで（いま${S.yog}個）。</p></div>
-      <button class="btn" data-act="buyyog" data-cost="${yp}" data-block="${S.yog>=3?1:0}">ヨーグルトを買う（¥${fmt(yp)}）</button>
+      <button class="btn" data-act="buyyog" data-cost="${yp}" data-block="${S.yog>=3?1:0}">ヨーグルトを買う（¥${fmtMoney(yp)}）</button>
       <button class="btn sm" data-act="sellcommon">ふつうの装備をまとめて売る</button>`;
   }else if(OPEN==="guild"){
     fillBoard();
@@ -3801,12 +3804,12 @@ function renderFac(){
     h+=`<h2>受けている依頼（${S.active.length}/2）</h2><div class="mis">${S.active.length?S.active.map(m=>misCard(m,true)).join(""):`<p class="note">まだ受けていない。</p>`}</div>`;
     h+=`<h2>依頼一覧</h2><div class="mis">${S.board.map(m=>misCard(m,false)).join("")}</div>`;
     const rc=Math.ceil(30*Math.pow(1.12,Math.min(S.best,60)-1));
-    h+=`<button class="btn sm" data-act="reroll" data-cost="${rc}">依頼を入れ替える（¥${fmt(rc)}）</button>`;
+    h+=`<button class="btn sm" data-act="reroll" data-cost="${rc}">依頼を入れ替える（¥${fmtMoney(rc)}）</button>`;
     h+=resHtml();
   }else if(OPEN==="live"){
-    h+=`<p class="note">粒子が不安定な場所で定期ライブを開くと、街が少し落ち着き、お礼が届く。いま毎秒 ¥${fmt(perSec())}。ライブ担当：${liveChars().map(c=>CHARS[c].name+" Lv"+S.ch[c].lv).join("・")}（レベルが高いほど集客が増える）。</p><div class="list">`;
+    h+=`<p class="note">粒子が不安定な場所で定期ライブを開くと、街が少し落ち着き、お礼が届く。いま毎秒 ¥${fmtMoney(perSec())}。ライブ担当：${liveChars().map(c=>CHARS[c].name+" Lv"+S.ch[c].lv).join("・")}（レベルが高いほど集客が増える）。</p><div class="list">`;
     PRODUCERS.forEach((p,i)=>{const k=S.own[p.id]||0,c=cost(p.base,k),show=i===0||(S.own[PRODUCERS[i-1].id]||0)>0||S.total>=p.base*.5;
-      if(show)h+=`<button class="item" data-buy="${p.id}" data-cost="${c}"><span class="name">${p.name}</span><span class="own">${k}</span><span class="desc">${p.desc} ・ 毎秒 ¥${p.rate}</span><span class="cost">¥${fmt(c)}</span></button>`;});
+      if(show)h+=`<button class="item" data-buy="${p.id}" data-cost="${c}"><span class="name">${p.name}</span><span class="own">${k}</span><span class="desc">${p.desc} ・ 毎秒 ¥${p.rate}</span><span class="cost">¥${fmtMoney(c)}</span></button>`;});
     h+=`</div>`;
     const heard=S.heard||[],playing=JUKE||"live";
     h+=`<h3 class="jk-h">ジュークボックス <small>${heard.length}/${JUKE_LIST.length}曲</small></h3><p class="note">ゲームの中で聴いた曲を、ここでいつでも流せる。</p><div class="juke">`+
@@ -3865,7 +3868,7 @@ function storageHtml(){const ks=Object.keys(MATS).filter(k=>stock(k)>0);
 function misCard(m,act){
   if(m.type==="deliver")m.prog=Math.min(m.need,stock(m.mat));
   const done=m.prog>=m.need;
-  const rw=m.free?`<span class="rw free">報酬なし<br><small>感謝の品</small></span>`:`<span class="rw">¥${fmt(m.rew)}${m.bonus?"<br><small>＋ボーナス装備</small>":""}</span>`;
+  const rw=m.free?`<span class="rw free">報酬なし<br><small>感謝の品</small></span>`:`<span class="rw">¥${fmtMoney(m.rew)}${m.bonus?"<br><small>＋ボーナス装備</small>":""}</span>`;
   const btn=act?(m.type==="deliver"?(done?`<button class="btn sm primary" data-deliver="${m.id}">納品する</button>`:`<button class="btn sm" data-drop="${m.id}">やめる</button>`):done?`<button class="btn sm primary" data-claim="${m.id}">報告する</button>`:`<button class="btn sm" data-drop="${m.id}">やめる</button>`)
     :`<button class="btn sm" data-acc="${m.id}" ${S.active.length>=2?"disabled":""}>受ける</button>`;
   return `<div class="mi${done&&act?" done":""}"><div><div class="cl">${esc(m.cl)}${m.free?'<span class="tag" style="color:var(--ok)">無償</span>':""}</div><div class="tx">${esc(m.txt)}</div></div>${rw}
@@ -3887,11 +3890,11 @@ $("fac").addEventListener("click",e=>{
   if(d.ofgo){ofStartRun(Math.min(OF_STAGE,ofMaxStage()));}
   if(d.res){const r=MODES.resonance.find(x=>x.id===d.res),c=r&&resCost(r);if(r&&resLv(r.id)<r.max&&S.shards>=c){S.shards-=c;S.res[r.id]=resLv(r.id)+1;sfx("lvup");toast(`${r.name} Lv${S.res[r.id]}`);bumpStats();markDirty();save(true);}}
   if(d.char){if(d.char!==S.char)TALK=null;S.char=d.char;VIEW=d.char;P.cid=d.char;markDirty();save(true);} // the house shows the other 2 sisters, so the talk starts over
-  if(d.sell){const k=d.sell,n=Math.min(+d.n,stock(d.sell)),v=sellMat(k,n);if(v>0)toast(`${MATS[k].nm}×${n}を ¥${fmt(v)} で売った`);markDirty();save(true);}
+  if(d.sell){const k=d.sell,n=Math.min(+d.n,stock(d.sell)),v=sellMat(k,n);if(v>0)toast(`${MATS[k].nm}×${n}を ¥${fmtMoney(v)} で売った`);markDirty();save(true);}
   if(d.deliver){const m=S.active.find(m=>m.id===+d.deliver);if(m&&stock(m.mat)>=m.need){takeMat(m.mat,m.need);m.prog=m.need;toast(`${MATS[m.mat].nm}を${m.need}個納品した`);claim(m);}}
   if(d.act==="buyyog"){const p=yogPrice();if(S.n>=p&&S.yog<3){S.n-=p;S.yog++;toast("ヨーグルトを買った");markDirty();}}
   if(d.act==="sellcommon"){let v=0,c=0;const eq=new Set(CIDS.flatMap(k=>Object.values(S.ch[k].eq)));S.inv=S.inv.filter(i=>{if(i.rar==="c"&&!eq.has(i.id)){v+=sellValue(i);c++;return false;}return true;});
-    if(!c)toast("売れる「ふつう」装備はない");else{addMoney(v);toast(`${c}個を¥${fmt(v)}で売った`);}markDirty();}
+    if(!c)toast("売れる「ふつう」装備はない");else{addMoney(v);toast(`${c}個を¥${fmtMoney(v)}で売った`);}markDirty();}
   if(d.act==="reroll"){const rc=+b.dataset.cost;if(S.n>=rc){S.n-=rc;S.board=[];fillBoard();markDirty();}}
   if(d.acc){const m=S.board.find(m=>m.id===+d.acc);if(m&&S.active.length<2){S.active.push(m);S.board=S.board.filter(x=>x!==m);fillBoard();toast(`依頼を受けた：${m.txt}`);markDirty();save(true);}}
   if(d.drop){S.active=S.active.filter(m=>m.id!==+d.drop);markDirty();}
@@ -3933,8 +3936,8 @@ function renderPanels(){
       const diff=cvv!==null?v-cvv:null;return `<div class="note">${STN[k]} +${pct?v.toFixed(1)+"%":fmt(v)}${diff!==null?` <span style="color:${diff>=0?"var(--ok)":"var(--danger)"}">(${diff>=0?"+":""}${pct?diff.toFixed(1):Math.round(diff)})</span>`:""}</div>`;}).join("");
     det.innerHTML=`<div class="t">${RAR[it.rar].nm}　${esc(it.name)}${it.plus?" +"+it.plus:""}</div><div class="note">${SLOTS[it.slot].nm} ・ Lv${it.lvl}${ow?` ・ ${CHARS[ow].name}が装備中`:""}</div>${lines}${it.sp?`<div class="note" style="color:var(--gold)">特殊：${GSP[it.sp]}</div>`:""}
       <div class="row" style="margin-top:4px"><button class="btn primary" id="equip" ${mine?"disabled":""}>${mine?"装備中":CHARS[VIEW].name+"が装備する"}</button>
-      <button class="btn" id="enh" data-cost="${enhCost(it)}" data-block="${it.plus>=10?1:0}">強化 +${it.plus+1}（¥${fmt(enhCost(it))}）</button>
-      <button class="btn danger" id="sell" ${ow?"disabled":""}>売る（¥${fmt(sellValue(it))}）</button></div>`;
+      <button class="btn" id="enh" data-cost="${enhCost(it)}" data-block="${it.plus>=10?1:0}">強化 +${it.plus+1}（¥${fmtMoney(enhCost(it))}）</button>
+      <button class="btn danger" id="sell" ${ow?"disabled":""}>売る（¥${fmtMoney(sellValue(it))}）</button></div>`;
     $("equip").onclick=()=>{for(const k of CIDS)if(S.ch[k].eq[it.slot]===it.id)S.ch[k].eq[it.slot]=null;c.eq[it.slot]=it.id;markDirty();};
     $("enh").onclick=()=>{const cc=enhCost(it);if(S.n<cc||it.plus>=10)return;S.n-=cc;it.plus++;toast(`${it.name} +${it.plus} に強化`);markDirty();};
     $("sell").onclick=()=>{addMoney(sellValue(it));S.inv=S.inv.filter(x=>x!==it);selItem=null;markDirty();};
@@ -4123,7 +4126,7 @@ function sanitize(o){
 }
 function applyOffline(){
   const sec=Math.min((Date.now()-S.last)/1000,12*3600),gain=perSec()*sec;
-  if(sec>30&&gain>=1){addMoney(gain);toast(`留守のあいだにライブのお礼 ¥${fmt(gain)} が届いた`);}
+  if(sec>30&&gain>=1){addMoney(gain);toast(`留守のあいだにライブのお礼 ¥${fmtMoney(gain)} が届いた`);}
 }
 function load(){try{let raw=localStorage.getItem(KEY);if(!raw)raw=localStorage.getItem(OLDKEY);if(raw){S=sanitize(JSON.parse(raw));finishLoad();applyOffline();return true;}}catch(e){}return false;}
 const encode=o=>btoa(unescape(encodeURIComponent(JSON.stringify(o))));
