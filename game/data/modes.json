@@ -29,6 +29,124 @@
     "shardsPerBoss": 2,
     "clearBonus": 3
   },
+  "key": {
+    "ranks": [
+      {
+        "mats": {
+          "shard": 700,
+          "rusty_neon": 25,
+          "yogurt_core": 1
+        },
+        "money": 3000
+      },
+      {
+        "mats": {
+          "shard": 750,
+          "lucky_circuit": 30,
+          "crystal": 3,
+          "junk_crown": 1
+        },
+        "money": 15000
+      },
+      {
+        "mats": {
+          "shard": 500,
+          "howl_coil": 30,
+          "crystal": 6,
+          "dj_record": 1
+        },
+        "money": 80000
+      },
+      {
+        "mats": {
+          "shard": 550,
+          "admin_tag": 30,
+          "crystal": 10,
+          "odd": 4,
+          "exec_board": 1
+        },
+        "money": 400000
+      },
+      {
+        "mats": {
+          "shard": 350,
+          "warp_fragment": 30,
+          "core": 3,
+          "odd": 6,
+          "core_crystal": 1
+        },
+        "money": 2000000
+      }
+    ],
+    "nrush": {
+      "waves": 15,
+      "hp": 1.6,
+      "atk": 1.4,
+      "healEvery": 5,
+      "heal": 0.25,
+      "elites": 6,
+      "waveBase": 6,
+      "wavePer": 0.8,
+      "bossChips": [
+        1,
+        1,
+        2,
+        2,
+        3
+      ],
+      "eliteChips": [
+        0.05,
+        0.1,
+        0.12,
+        0.2,
+        0.25
+      ],
+      "first": [
+        8,
+        16,
+        24,
+        32,
+        40
+      ]
+    },
+    "krush": {
+      "hp": 1.6,
+      "atk": 1.4,
+      "healBetween": 0.15,
+      "bossChipChance": 0.3,
+      "clearChips": [
+        1,
+        1,
+        2,
+        2,
+        3
+      ],
+      "first": [
+        8,
+        16,
+        24,
+        32,
+        40
+      ]
+    },
+    "deep": {
+      "from": 55,
+      "bands": [
+        [
+          55,
+          0.0015
+        ],
+        [
+          63,
+          0.003
+        ],
+        [
+          71,
+          0.005
+        ]
+      ]
+    }
+  },
   "overflow": {
     "_doc": "龍脈溢界（5体ボスラッシュ制覇で開放）。waves=各波の[元ボスid,体数]（最後の波が星骸龍）。copy=記録コピーの本物比（本物＝元エリア10層目・ボス扱いHP）。boss=星骸龍（ryumyaku_overflowを第floor層ボス基準で×hp/×atk）。stage=再溢出段階dで敵HP×stageHp^d・攻撃×stageAtk^d。tele=予兆（t=秒、dmg=最大HP比）。teleCut=位相防壁の軽減。reward=報酬。socket=龍脈産装備のスロット（n=1/2/3個の確率、ability=能力用の確率、first=最初のスロットの投入数候補、max=1スロットの投入上限）。",
     "unlock": ["king_yogurt", "junk_queen", "noise_dj", "exec_unit", "distortion_core"],
