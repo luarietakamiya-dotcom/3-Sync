@@ -182,6 +182,19 @@ canvas{display:block;width:100%;height:auto;aspect-ratio:16/9;max-width:100%;tou
 .gi.eq{background:var(--panel2)}
 .detail{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:12px;display:flex;flex-direction:column;gap:6px}
 .detail .t{font-weight:700;color:var(--rc)}
+.cmp{display:none}
+@media (max-width:560px){
+  .cmpwrap.hascmp>.note{display:none}
+  .cmp{display:block;min-width:0;border-top:1px solid var(--line);margin-top:4px;padding-top:8px}
+  .cmp-caption{font-size:.74rem;color:var(--muted);margin-bottom:6px;overflow-wrap:anywhere}
+  .cmp-row{display:grid;grid-template-columns:2.8em 1fr 1fr 3.6em;column-gap:10px;font-size:.84rem;padding-block:3px}
+  .cmp-row>span{min-width:0;overflow-wrap:anywhere}
+  .cmp-row>span:first-child{color:var(--muted)}
+  .cmp-row>span:not(:first-child){text-align:right;font-variant-numeric:tabular-nums;color:var(--ink)}
+  .cmp-row>span:last-child{font-weight:700}
+  .cmp-head{font-size:.7rem}
+  .cmp-head>span:not(:first-child){color:var(--muted);font-weight:400}
+}
 .rc-c{--rc:var(--r-c)}.rc-r{--rc:var(--r-r)}.rc-e{--rc:var(--r-e)}.rc-l{--rc:var(--r-l)}
 
 textarea{width:100%;box-sizing:border-box;min-height:80px;font-family:ui-monospace,monospace;font-size:.72rem;padding:10px;border-radius:10px;border:1px solid var(--line);background:var(--panel);color:var(--ink);word-break:break-all}
@@ -3976,7 +3989,11 @@ function renderPanels(){
     const cur=itemById(c.eq[it.slot]);
     const lines=Object.keys(it.st).map(k=>{const v=ist(it,k),cvv=cur&&cur!==it?ist(cur,k):null,pct=k==="crit"||k==="gain";
       const diff=cvv!==null?v-cvv:null;return `<div class="note">${STN[k]} +${pct?v.toFixed(1)+"%":fmt(v)}${diff!==null?` <span style="color:${diff>=0?"var(--ok)":"var(--danger)"}">(${diff>=0?"+":""}${pct?diff.toFixed(1):Math.round(diff)})</span>`:""}</div>`;}).join("");
-    det.innerHTML=`<div class="t">${it.lock?"🔒 ":""}${RAR[it.rar].nm}　${esc(it.name)}${it.plus?" +"+it.plus:""}</div><div class="note">${SLOTS[it.slot].nm} ・ Lv${it.lvl}${ow?` ・ ${CHARS[ow].name}が装備中`:""}</div>${lines}${it.sp?`<div class="note" style="color:var(--gold)">特殊：${GSP[it.sp]}</div>`:""}
+    const cmpHtml=cur&&cur!==it?`<div class="cmp"><div class="cmp-caption">装備中：${esc(cur.name)}${cur.plus?" +"+cur.plus:""}</div><div class="cmp-row cmp-head"><span>項目</span><span>装備中</span><span>候補</span><span>差分</span></div>${Object.keys(STN).filter(k=>Object.hasOwn(it.st,k)||Object.hasOwn(cur.st,k)).map(k=>{
+      const hasIt=Object.hasOwn(it.st,k),hasCur=Object.hasOwn(cur.st,k),v=hasIt?ist(it,k):0,cvv=hasCur?ist(cur,k):0,pct=k==="crit"||k==="gain",diff=v-cvv;
+      return `<div class="cmp-row"><span>${STN[k]}</span><span>${hasCur?"+"+(pct?cvv.toFixed(1)+"%":fmt(cvv)):"—"}</span><span>${hasIt?"+"+(pct?v.toFixed(1)+"%":fmt(v)):"—"}</span><span style="color:${diff>0?"var(--ok)":diff<0?"var(--danger)":"var(--muted)"}">${diff>0?"+":""}${pct?diff.toFixed(1):Math.round(diff)}</span></div>`;
+    }).join("")}</div>`:"";
+    det.innerHTML=`<div class="t">${it.lock?"🔒 ":""}${RAR[it.rar].nm}　${esc(it.name)}${it.plus?" +"+it.plus:""}</div><div class="note">${SLOTS[it.slot].nm} ・ Lv${it.lvl}${ow?` ・ ${CHARS[ow].name}が装備中`:""}</div><div class="cmpwrap${cmpHtml?" hascmp":""}">${lines}${cmpHtml}</div>${it.sp?`<div class="note" style="color:var(--gold)">特殊：${GSP[it.sp]}</div>`:""}
       <div class="row" style="margin-top:4px"><button class="btn primary" id="equip" ${mine?"disabled":""}>${mine?"装備中":CHARS[VIEW].name+"が装備する"}</button>
       <button class="btn" id="enh" data-cost="${enhCost(it)}" data-block="${it.plus>=10?1:0}">強化 +${it.plus+1}（¥${fmtMoney(enhCost(it))}）</button>
       <button class="btn" id="itemlock">${it.lock?"🔒 ロック中（タップで解除）":"🔓 ロックする"}</button>
