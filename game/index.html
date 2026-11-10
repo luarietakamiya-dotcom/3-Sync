@@ -1536,7 +1536,7 @@ const SND={ac:null,mus:null,se:null,noise:null,tracks:{},cur:null,syncUntil:0,la
 let TITLE=true,JUKE=null; // JUKE: song picked on the RESONANCE jukebox (null = the shop's own song)
 // jukebox list: [bgm key, title, where it plays]. A song shows up once you've heard it in the game.
 const JUKE_LIST=[["title","Over Sync","タイトル"],["town","遠景ピアノ針","街"],["home","HOME SWEET SIGNAL","家"],["shop","JUNK DEALER","怪しい店"],["guild","CONTROL TERMINAL","ヨーデル管理所"],
-  ["live","NEON AFTER MIDNIGHT","RESONANCE"],["dive","DREAD DEPTHS","ノイズラン・龍脈溢界"],["pnr1","バトル１　Pink Noise Rush","探索 1〜25層"],["pnr2","バトル２　Pink Noise Rush","探索 26〜50層"],["boss","ABSOLUTE DOMINION 1","ボス戦"],["runb2","ABSOLUTE DOMINION 2","ノイズラン・ボス２"],["rush","ボス戦　The Final Stand","ボスラッシュ"],["lastboss","ラスボス戦","星骸龍戦"],["sync","3-Sync Error 0","3-Sync発動"]];
+  ["live","NEON AFTER MIDNIGHT","RESONANCE"],["dive","DREAD DEPTHS","ノイズラン・龍脈溢界"],["pnr1","バトル１　Pink Noise Rush","探索 1〜25層"],["pnr2","バトル２　Pink Noise Rush","探索 26〜50層"],["boss","ABSOLUTE DOMINION 1","ボス戦"],["runb2","ABSOLUTE DOMINION 2","ノイズラン・ボス２"],["rush","The Final Stand","ボスラッシュ"],["lastboss","ラスボス戦","星骸龍戦"],["sync","3-Sync Error 0","3-Sync発動"]];
 function sndInit(){
   if(SND.ac){if(SND.ac.state!=="running")SND.ac.resume().catch(()=>{});return;}
   const AC=window.AudioContext||window.webkitAudioContext;if(!AC)return;
