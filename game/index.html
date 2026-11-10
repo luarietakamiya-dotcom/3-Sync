@@ -1948,6 +1948,35 @@ function supLumina(u,t,dt){
 }
 function supAttackFacing(u,t){u.ang=Math.atan2(t.y-u.y,t.x-u.x);}
 function supEffect(u,txt){FX.push({x:u.x,y:u.y-68,txt,c:'cyan',t:1.1});}
+function supShionEvade(u,sp,adt){
+  let threat=null,hold=null;
+  for(const e of supEnemies(u,300)){
+    const dx=u.x-e.x,dy=u.y-e.y,d=Math.hypot(dx,dy);
+    if(e.wind>0||e.charge>0){
+      const a=e.ca===undefined?Math.atan2(dy,dx):e.ca,c=Math.cos(a),s=Math.sin(a);
+      const along=Math.max(0,Math.min(170,dx*c+dy*s)),qx=e.x+c*along,qy=e.y+s*along;
+      const nx=u.x-qx,ny=u.y-qy,dist=Math.hypot(nx,ny),half=e.r+30;
+      if(dist<half&&(!threat||d<threat.d)){
+        // On the centerline, use the perpendicular on Shion's side of the charge.
+        const side=dx*(-s)+dy*c<0?-1:1;
+        const vx=dist>1e-6?nx/dist:-s*side,vy=dist>1e-6?ny/dist:c*side;
+        threat={d,x:qx+vx*(half+14),y:qy+vy*(half+14)};
+      }
+      if(dist>=half&&dist<half+46&&(!hold||d<hold.d))hold={d};
+    }
+    if(e.fuse>0){
+      const radius=(e.p.radius||48)+36;
+      if(d<radius&&(!threat||d<threat.d)){
+        const a=Math.atan2(dy,dx);
+        threat={d,x:e.x+Math.cos(a)*(radius+10),y:e.y+Math.sin(a)*(radius+10)};
+      }
+    }
+  }
+  if(!threat&&!hold){u.evading=false;return false;}
+  if(!u.evading)u.evadeN=(u.evadeN||0)+1;
+  u.evading=true;u.evadeT=(u.evadeT||0)+adt;
+  if(threat)supMoveTo(u,threat.x,threat.y,sp*1.15,adt);return true;
+}
 function supShion(u,t){
   if(supThreat(u))supUse(u,'parry',12,()=>{u.parry=1.5;supEffect(u,'見切り');});if(!t)return;supAttackFacing(u,t);
   const es=supEnemies(u),d=Math.hypot(t.x-u.x,t.y-u.y),end={x:u.x+Math.cos(u.ang)*400,y:u.y+Math.sin(u.ang)*400};
@@ -2015,6 +2044,7 @@ function supUnitTick(u,dt){
   if(u.cid==='eirou')supEirou(u,dt);
   if(supEvade(u,sp,adt)){supClamp(u);return;}
   if(u.iai>0||u.parry>0)return;
+  if(u.cid==='shion'&&supShionEvade(u,sp,adt)){supClamp(u);return;}
   if(u.cid==='lumina')supLumina(u,t,adt);if(u.cid==='shion')supShion(u,t);
   if(u.cid==='eirou'){
     const n=supEnemies(u).sort((a,b)=>Math.hypot(a.x-u.x,a.y-u.y)-Math.hypot(b.x-u.x,b.y-u.y))[0];
