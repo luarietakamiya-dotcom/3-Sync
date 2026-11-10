@@ -617,7 +617,7 @@ async function loadData(){
 }
 // extra gate modes (data/modes.json). RUN = the active mode run (null in normal floor-by-floor dives).
 // 龍脈溢界 (RUN.kind "overflow"): defaults, overridden by data/modes.json "overflow"
-const KEY_DEF={"ranks":[{"mats":{"shard":700,"rusty_neon":25,"yogurt_core":1},"money":3000},{"mats":{"shard":750,"lucky_circuit":30,"crystal":3,"junk_crown":1},"money":15000},{"mats":{"shard":500,"howl_coil":30,"crystal":6,"dj_record":1},"money":80000},{"mats":{"shard":550,"admin_tag":30,"crystal":10,"odd":4,"exec_board":1},"money":400000},{"mats":{"shard":350,"warp_fragment":30,"core":3,"odd":6,"core_crystal":1},"money":2000000}],"nrush":{"waves":15,"hp":1.6,"atk":1.4,"healEvery":5,"heal":0.25,"elites":6,"waveBase":6,"wavePer":0.8,"bossChips":[1,1,2,2,3],"eliteChips":[0.05,0.1,0.12,0.2,0.25],"first":[8,16,24,32,40]},"krush":{"hp":1.6,"atk":1.4,"healBetween":0.15,"bossChipChance":0.3,"clearChips":[1,1,2,2,3],"first":[8,16,24,32,40]},"deep":{"from":55,"bands":[[55,0.0015],[63,0.003],[71,0.005]]}};
+const KEY_DEF={"ranks":[{"mats":{"shard":700,"rusty_neon":25,"yogurt_core":1},"money":3000},{"mats":{"shard":750,"lucky_circuit":30,"crystal":3,"junk_crown":1},"money":15000},{"mats":{"shard":500,"howl_coil":30,"crystal":6,"dj_record":1},"money":80000},{"mats":{"shard":550,"admin_tag":30,"crystal":10,"odd":4,"exec_board":1},"money":400000},{"mats":{"shard":350,"warp_fragment":30,"core":3,"odd":6,"core_crystal":1},"money":2000000}],"nrush":{"waves":15,"hp":[1.6,1.8,2,2.25,2.5],"atk":[1.4,1.5,1.6,1.7,1.8],"healEvery":5,"heal":0.25,"elites":6,"waveBase":6,"wavePer":0.8,"bossChips":[1,1,2,2,3],"eliteChips":[0.05,0.1,0.12,0.2,0.25],"first":[8,16,24,32,40]},"krush":{"hp":[1.6,1.8,2,2.25,2.5],"atk":[1.4,1.5,1.6,1.7,1.8],"healBetween":0.15,"bossChipChance":0.3,"clearChips":[1,1,2,2,3],"first":[8,16,24,32,40]},"deep":{"from":55,"bands":[[55,0.0015],[63,0.003],[71,0.005]]}};
 const KEYC=()=>MODES.key||KEY_DEF;
 const KEY_RANKS=["I","II","III","IV","V"];
 const OF_DEF={unlock:["king_yogurt","junk_queen","noise_dj","exec_unit","distortion_core"],
@@ -2351,7 +2351,7 @@ function startNrush(rank){
 }
 function nrushWave(w){
   const C=KEYC().nrush,rank=RUN.rank,keep=w>1?partyHp():null;RUN.wave=w;FLOOR=(rank-1)*10+9;
-  RUN.hpM=C.hp*(heatOn("hp")?1.6:1);RUN.atkM=C.atk*(heatOn("atk")?1.4:1);
+  RUN.hpM=C.hp[RUN.rank-1]*(heatOn("hp")?1.6:1);RUN.atkM=C.atk[RUN.rank-1]*(heatOn("atk")?1.4:1);
   startFloor();P.x=40;P.y=WH/2+40;P.dest={x:110,y:P.y};
   if(w===C.waves){G.boss=true;G.bossSpawned=false;G.bossId=ZONES[rank-1].bossId;G.spawnLeft=ZONES[rank-1].spawnRules?.bossAdds??2;G.banner=3.2;G.loot=[];ALLIES=CIDS.filter(c=>c!==S.char).map((c,i)=>mkUnit(c,P.x+(i?34:-34),P.y+14,true));}
   else{G.spawnLeft=Math.round(C.waveBase+C.wavePer*(w-1));if(RUN.eliteWaves.includes(w))G.elites=1;if(heatOn("swarm")){G.spawnLeft=Math.round(G.spawnLeft*1.5);G.maxAlive+=2;}prePlace();}
@@ -2374,7 +2374,7 @@ function krushNext(first){
   const C=KEYC().krush;let keep=null;
   if(!first){RUN.cleared++;gainShards(MODES.rush.shardsPerBoss||2);if(Math.random()<C.bossChipChance)gainChips(1);save(true);keep=partyHp();RUN.sync=G.sync;}
   RUN.idx++;if(RUN.idx>=RUN.list.length)return krushComplete();const zi=RUN.list[RUN.idx];FLOOR=zi*10+10;
-  RUN.hpM=C.hp*(heatOn("hp")?1.6:1);RUN.atkM=C.atk*(heatOn("atk")?1.4:1);RUN.rewM=heatMul(RUN.heat);
+  RUN.hpM=C.hp[RUN.rank-1]*(heatOn("hp")?1.6:1);RUN.atkM=C.atk[RUN.rank-1]*(heatOn("atk")?1.4:1);RUN.rewM=heatMul(RUN.heat);
   startFloor();G.bossId=ZONES[zi].bossId;if(heatOn("swarm"))G.spawnLeft=Math.round(G.spawnLeft*1.5);
   if(keep){restoreHp(keep,heatOn("fragile")?0:C.healBetween);G.wipeIn=0.45;}G.sync=RUN.sync||0;
 }
@@ -4253,7 +4253,7 @@ function issueKey(rank){
 }
 function keyGateHtml(){return `<p class="note">キー専用の高難度モード2種。同調チップ（SP+1）が落ちる。侵食度は併用できるがSPドロップは増えない。キーは開始時に消費する。</p>`+heatHtml()+KEY_RANKS.map((nm,i)=>{
   const k=i+1;if(!bossBeaten(i))return `<p class="note">🔒 ランク${nm}（エリア${k}ボス撃破で解放）</p>`;
-  return `<div class="card"><b>ランク${nm} ・ 所持キー ${S.keys[k]}枚</b><p>ノイズ・ラッシュ ランク${nm} ・ 記録：${S.nrBest[k]?fmtTime(S.nrBest[k].t):"―"} ${S.keyClr.nr[i]?"初回クリア済み":""}</p><button class="btn sm primary" data-nrush="${k}"${S.keys[k]?'':' disabled'}>ノイズ・ラッシュ開始</button><p>ボスラッシュ・キー戦 ランク${nm} ${S.keyClr.br[i]?"初回クリア済み":""}</p><button class="btn sm primary" data-krush="${k}"${S.keys[k]?'':' disabled'}>ボスラッシュ・キー戦開始</button></div>`;
+  return `<div class="card"><b>ランク${nm} ・ 所持キー ${S.keys[k]}枚</b><p class="note">敵の強さ（両モード共通）：HP ×${KEYC().nrush.hp[i]}／攻撃 ×${KEYC().nrush.atk[i]}</p><p>ノイズ・ラッシュ ランク${nm} ・ 記録：${S.nrBest[k]?fmtTime(S.nrBest[k].t):"―"} ${S.keyClr.nr[i]?"初回クリア済み":""}</p><button class="btn sm primary" data-nrush="${k}"${S.keys[k]?'':' disabled'}>ノイズ・ラッシュ開始</button><p>ボスラッシュ・キー戦 ランク${nm} ${S.keyClr.br[i]?"初回クリア済み":""}</p><button class="btn sm primary" data-krush="${k}"${S.keys[k]?'':' disabled'}>ボスラッシュ・キー戦開始</button></div>`;
 }).join("");}
 function renderFac(){
   const el=$("fac");if(MODE!=="town")return;
