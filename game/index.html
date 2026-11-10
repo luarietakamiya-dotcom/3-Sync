@@ -2056,6 +2056,9 @@ function supContract(cid){if(S.sup.team.includes(cid))S.sup.team=S.sup.team.filt
 function supGateHtml(){const rate=S.sup.team.reduce((n,k)=>n+SUP_DEF[k].rate,0),ps=perSec(),mins=r=>r<=0?'無期限':(S.n/r/60).toFixed(1)+'分';
   return `<section aria-label="アライアンス"><h2>アライアンス</h2><p class="note">2人まで。出撃ごとに最低30秒前払い／ゲーム内時間で課金。残高0で期限切れ、マップ終了時に帰還。</p><div class="list">${Object.entries(SUP_DEF).map(([id,d])=>`<div class="item" style="cursor:default"><b class="name">${d.name}</b><span class="own">¥${fmtMoney(d.rate)}/秒</span><span class="desc">${d.role}<br>出撃前払い ¥${fmtMoney(d.rate*30)}</span><span class="desc row" style="grid-column:1/-1"><span aria-hidden="true" style="display:inline-block;width:32px;height:64px;background:url(sprites/walk_${id}.png) 0 0 / 384px 64px"></span><button class="btn sm" data-supteam="${id}" aria-pressed="${S.sup.team.includes(id)}">${S.sup.team.includes(id)?'外す':'連れていく'}</button>${id==='lumina'?`<label>行動 <select data-supmode="1"><option value="free" ${S.sup.mode.lumina==='free'?'selected':''}>自由（アタッカー）</option><option value="tank" ${S.sup.mode.lumina==='tank'?'selected':''}>タンク</option></select></label>`:''}<label>狙い <select data-suptgt="${id}">${[['boss','ボス優先'],['adds','雑魚優先'],['assist','主人公と同じ敵']].map(([v,n])=>`<option value="${v}" ${S.sup.tgt[id]===v?'selected':''}>${n}</option>`).join('')}</select></label></span></div>`).join('')}</div><p class="note">合計 ¥${fmtMoney(rate)}/秒 ・ いまの所持金で約${rate?mins(rate-ps):'―'}（ボス戦中 約${rate?mins(rate):'―'}）<br>累計支払 ¥${fmtMoney(S.sup.stat.paid)} ／ 利用 ${Math.floor(S.sup.stat.sec)}人秒</p></section>`;
 }
+function supGateSummaryHtml(){const rate=S.sup.team.reduce((n,k)=>n+SUP_DEF[k].rate,0);
+  return `<section aria-label="アライアンス"><h2>アライアンス</h2><p>編成：${S.sup.team.length?S.sup.team.map(k=>SUP_DEF[k].name).join('・'):'未編成'}</p><p>合計 ¥${fmtMoney(rate)}/秒 ／ 出撃前払い合計 ¥${fmtMoney(rate*30)}</p><p class="note">編成の変更は家で</p></section>`;
+}
 function supRenderBand(){
   let el=$('alliance-band');if(!el&&(MODE!=='dive'||!S.sup.team.length&&!SUP.length))return;
   if(!el){el=document.createElement('div');el.id='alliance-band';el.className='row';el.setAttribute('aria-label','アライアンス');cv.parentNode.parentNode.insertBefore(el,cv.parentNode.nextSibling);
@@ -4129,6 +4132,7 @@ function renderFac(){
   if(OPEN==="home"){
     h+=`<p class="note">ガス代の請求書が冷蔵庫に貼ってある。探索に出る1人を決めよう。残りの2人はライブで稼ぎ、経験値も少し入る。</p><div class="chars">${CIDS.map(c=>`<button data-char="${c}" aria-pressed="${c===S.char}"><span class="face" style="background-image:url(${CHARS[c].src})"></span>${CHARS[c].name}<small>Lv${S.ch[c].lv}</small></button>`).join("")}</div>
       <p class="note">${CHARS[S.char].name}：${CB[S.char].style}。巨大ノイズ戦ではほかの2人も一緒に戦う。</p>${storageHtml()}`;
+    h+=supGateHtml();
   }else if(OPEN==="shop"){
     const keys=Object.keys(MATS).filter(k=>stock(k)>0);
     h+=`<p class="note">「ノイズの欠片かい？ うちは何でも買い取るよ」 売る量は自分で決められる。依頼の納品に使う分は残しておこう。</p>`;
@@ -4161,7 +4165,7 @@ function renderFac(){
     if(JUKE)h+=`<button class="btn sm" data-juke="" style="margin-top:6px">お店の曲に戻す</button>`;
   }else if(OPEN==="gate"){
     const rl=rushList();
-    h+=supGateHtml();
+    h+=supGateSummaryHtml();
     h+=`<div class="gtabs" role="tablist">${[["normal","通常探索"],["run","ノイズ・ラン"],["rush","ボスラッシュ"],["overflow","龍脈溢界"]].map(([k,nm])=>`<button role="tab" data-gtab="${k}" aria-selected="${GATE_TAB===k}">${nm}</button>`).join("")}</div>`;
     if(GATE_TAB==="run"){
       const C=MODES.run;
