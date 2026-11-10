@@ -1529,14 +1529,14 @@ function useYogurt(){
 /* ===== sound ===== */
 // BGM: streamed <audio> routed through WebAudio so it can crossfade (iOS ignores audio.volume).
 // SFX: synthesized on the fly with oscillators/noise — no files needed.
-const BGM_FILES={title:"bgm_title",town:"bgm_town",home:"bgm_home",shop:"bgm_shop",guild:"bgm_guild",live:"bgm_live",dive:"bgm_dive",boss:"bgm_boss",sync:"bgm_sync"};
+const BGM_FILES={title:"bgm_title",town:"bgm_town",home:"bgm_home",shop:"bgm_shop",guild:"bgm_guild",live:"bgm_live",dive:"bgm_dive",boss:"bgm_boss",pnr1:"bgm_pnr1",pnr2:"bgm_pnr2",runb2:"bgm_boss2",rush:"bgm_finalstand",lastboss:"bgm_lastboss",sync:"bgm_sync"};
 const BGM_RESUME=new Set(["title","town","dive"]); // these continue where they left off; the rest restart
 const SYNC_BGM_SEC=20; // how long the 3-Sync song plays after a 3-Sync fires
 const SND={ac:null,mus:null,se:null,noise:null,tracks:{},cur:null,syncUntil:0,last:{}};
 let TITLE=true,JUKE=null; // JUKE: song picked on the RESONANCE jukebox (null = the shop's own song)
 // jukebox list: [bgm key, title, where it plays]. A song shows up once you've heard it in the game.
 const JUKE_LIST=[["title","Over Sync","タイトル"],["town","遠景ピアノ針","街"],["home","HOME SWEET SIGNAL","家"],["shop","JUNK DEALER","怪しい店"],["guild","CONTROL TERMINAL","ヨーデル管理所"],
-  ["live","NEON AFTER MIDNIGHT","RESONANCE"],["dive","DREAD DEPTHS","探索"],["boss","ABSOLUTE DOMINION","ボス戦"],["sync","3-Sync Error 0","3-Sync発動"]];
+  ["live","NEON AFTER MIDNIGHT","RESONANCE"],["dive","DREAD DEPTHS","ノイズラン・龍脈溢界"],["pnr1","バトル１　Pink Noise Rush","探索 1〜25層"],["pnr2","バトル２　Pink Noise Rush","探索 26〜50層"],["boss","ABSOLUTE DOMINION","ボス戦"],["runb2","ABSOLUTE DOMINION — ボス戦２","ノイズラン・ボス２"],["rush","ボス戦　The Final Stand","ボスラッシュ"],["lastboss","ラスボス戦","星骸龍戦"],["sync","3-Sync Error 0","3-Sync発動"]];
 function sndInit(){
   if(SND.ac){if(SND.ac.state!=="running")SND.ac.resume().catch(()=>{});return;}
   const AC=window.AudioContext||window.webkitAudioContext;if(!AC)return;
@@ -1563,7 +1563,12 @@ function wantBgm(){
   if(MODE==="town")return OPEN==="live"&&JUKE?JUKE:OPEN&&OPEN!=="gate"?OPEN:"town";
   if(performance.now()<SND.syncUntil)return"sync";
   if(G.state==="dead")return null;
-  return G.boss?"boss":"dive";
+  if(RUN){
+    if(RUN.kind==="rush")return"rush";
+    if(RUN.kind==="overflow")return G.boss?"lastboss":"dive";
+    if(RUN.kind==="run")return G.boss?((RUN.bossN||1)<=1?"boss":"runb2"):"dive";
+  }
+  return G.boss?"boss":(FLOOR<=25?"pnr1":"pnr2");
 }
 function jukePlay(k){
   if(!SND.ac)sndInit();
@@ -2178,7 +2183,7 @@ function partyHp(){const m={};for(const u of [P,...ALLIES])if(u)m[u.cid]=u.down?
 function restoreHp(m,heal){for(const u of [P,...ALLIES]){if(!u||m[u.cid]===undefined)continue;const mx=statsOf(u.cid,u).hp;u.hp=Math.max(1,mx*Math.min(1,Math.max(m[u.cid]>0?m[u.cid]:0.15,m[u.cid]+heal)));}}
 function startRun(zi){
   supReset();
-  RUN={kind:"run",zi,seg:0,cleared:0,heat:{...S.heat},hpM:1,atkM:1,rewM:1,shards:0,next:null};
+  RUN={kind:"run",zi,seg:0,bossN:0,cleared:0,heat:{...S.heat},hpM:1,atkM:1,rewM:1,shards:0,next:null};
   MODE="dive";OPEN=null;SND.syncUntil=0;runSegment();syncModeUI();syncStage();markDirty();
   log(`ノイズ・ラン開始：${ZONES[zi].name}${heatPts(RUN.heat)?`（侵食度${heatPts(RUN.heat)}）`:""}`);
 }
@@ -2193,6 +2198,7 @@ function runSegment(){
   if(keep&&C.carryHp!==false&&P.hp>0){const r=keep[P.cid];if(r!==undefined)P.hp=Math.max(1,statsOf(P.cid,P).hp*Math.max(0.05,r));}
   const R=Z.spawnRules||{};
   if(enc==="zoneBoss"||enc==="rareBoss"){
+    RUN.bossN=(RUN.bossN||0)+1;
     G.boss=true;G.bossSpawned=false;G.bossId=enc==="zoneBoss"?Z.bossId:makeVariant(pick(ZONES.slice(0,RUN.zi+1).map(z=>z.bossId).filter(id=>ENEMIES[id])));
     G.spawnLeft=R.bossAdds??2;G.banner=3.2;G.loot=[];EN=[];ALLIES=CIDS.filter(c=>c!==S.char).map((c,i)=>mkUnit(c,P.x+(i?34:-34),P.y+14,true));
   }else if(enc==="swarm"){const e=encDef("swarm");G.spawnLeft=Math.round(G.spawnLeft*(e.count||2));G.hpMul=e.hp||0.5;G.maxAlive+=3;G.interval=[G.interval[0]*0.6,G.interval[1]*0.6];}
