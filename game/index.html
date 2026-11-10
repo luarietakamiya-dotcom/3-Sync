@@ -639,7 +639,7 @@ const FREECLIENTS=["迷子の子ども","近所のおばあちゃん","野良猫
 
 const freshCh=()=>({lv:1,xp:0,eq:{w:null,h:null,c:null},nodes:{},builds:Array.from({length:5},(_,i)=>({nm:"ビルド"+(i+1),nodes:null}))});
 const fresh=()=>({n:0,total:0,own:{},ch:{luarie:freshCh(),ht:freshCh(),mimi:freshCh()},inv:[],best:1,uid:1,mid:1,char:"luarie",
-  bag:{},mats:{},yog:1,board:[],active:[],auto:null,zoom:null,speed:1,vol:{bgm:0.6,se:0.7},mute:false,heard:[],shards:0,res:{},heat:{},runBest:{},rushBest:null,overflowUnlocked:false,ofBest:{top:-1,clears:0,t:0},dragonFragments:{atk:0,hp:0,range:0,speed:0,crit:0},ofAuto:{},ally:{},autoSkill:true,last:Date.now(),intro:false,ver:2});
+  bag:{},mats:{},yog:1,board:[],active:[],auto:null,zoom:null,speed:1,vol:{bgm:0.6,se:0.7},mute:false,heard:[],shards:0,res:{},heat:{},runBest:{},rushBest:null,overflowUnlocked:false,ofBest:{top:-1,clears:0,t:0},dragonFragments:{atk:0,hp:0,range:0,speed:0,crit:0},ofAuto:{},ally:{},sup:{team:[],mode:{lumina:"free"},tgt:{lumina:"boss",shion:"boss",eirou:"boss"},stat:{paid:0,sec:0}},autoSkill:true,last:Date.now(),intro:false,ver:2});
 let S=fresh();
 
 /* ================= helpers ================= */
@@ -688,6 +688,7 @@ const partyHas=cid=>MODE==="dive"&&[P,...ALLIES].some(u=>u&&u.cid===cid&&!u.down
 const bossParty=()=>MODE==="dive"&&ALLIES.length>0;
 function fieldOn(cid){if(!nodeSum("ht").sp.has("field"))return false;return cid==="ht"||(bossParty()&&partyHas("ht"));}
 function statsOf(cid,u){
+  if(u&&u.sup)return supStats(u);
   const c=S.ch[cid],b=CB[cid],N=nodeSum(cid),g=gearOf(cid),v=k=>N.s[k]||0,has=k=>N.sp.has(k),gs=k=>Math.min(2,g.sp[k]||0),ox=g.of;
   let atkP=v("atkP")+resV("atk")+ox.atkP,aspd=v("aspd")+ox.aspdP,crit=b.crit+v("crit")+g.crit+resV("crit")+ox.crit,critDmg=v("critDmg"),def=v("def"),stCh=b.stCh+v("stCh"),aoe=b.splash+v("aoe");
   let move=b.move*Math.max(0.4,1+(v("move")+ox.moveP)/100);
@@ -703,11 +704,11 @@ function statsOf(cid,u){
   const atk=(3+c.lv*0.6+g.atk)*b.atk*Math.max(0.2,1+atkP/100)*down;
   const hp=(20+c.lv*4+g.hp)*b.hp*Math.max(0.3,1+(v("hpP")+resV("hp")+ox.hpP)/100);
   let range=RANGE*Math.min(2.2,Math.max(0.6,1+(v("range")+ox.rangeP)/100));if(u&&u.shield>0){const br=(gs("barrierRange")?0.2:0)+ox.barrierRange/100;if(br>0)range*=1+br;} // 龍鱗版はGSPの+20%に加算（乗算しない）
-  return{atk,hp,crit:Math.max(0,Math.min(100,crit)),cdm:b.cdm+critDmg/100,cd:Math.max(0.12,0.38*b.cd/Math.max(0.3,1+aspd/100)),
-    move:Math.max(0.5,move),def:Math.max(0,def),red:Math.min(0.75,Math.max(0,def)/(Math.max(0,def)+80)),dodge:Math.min(75,b.dodge+v("dodge")+bDodge),counter:Math.min(100,v("counter")),
+  return{atk,hp,crit:Math.max(0,Math.min(100,crit)),cdm:b.cdm+critDmg/100,cd:Math.max(0.12,0.38*b.cd/Math.max(0.3,1+aspd/100))/(u&&u.cmdSpeed>0?1.15:1),
+    move:Math.max(0.5,move)*(u&&u.cmdSpeed>0?1.2:1),def:Math.max(0,def),red:Math.min(0.75,Math.max(0,def)/(Math.max(0,def)+80)),dodge:Math.min(75,b.dodge+v("dodge")+bDodge),counter:Math.min(100,v("counter")),
     barrier:hp*Math.min(80,v("barrier"))/100,regen:hp*v("regen")/100,range,aoe,extra:Math.min(4,Math.max(0,v("extra"))),pierce:b.pierce+v("pierce")+2*gs("pierceAll")+bPierce,
     homing:v("homing")>0,multiT:Math.min(3,v("multiT")),followUp:Math.min(60,v("followUp")),stCh:Math.min(90,stCh),stPow:Math.max(0.3,1+v("stPow")/100),weak:v("weak")/100,
-    pool:[...new Set([...b.pool,...N.ail])],drop:0.06*(1+(v("drop")+resV("drop"))/100),luck:v("luck"),syncM:Math.max(0.3,1+(v("syncM")+resV("sync"))/100),gain:(1+g.gain/100)*(1+resV("gain")/100),sp:N.sp,gsp:g.sp,ofx:ox};
+    pool:[...new Set([...b.pool,...N.ail])],drop:0.06*(1+(v("drop")+resV("drop"))/100),luck:v("luck"),syncM:Math.max(0.3,1+(v("syncM")+resV("sync"))/100),gain:(1+g.gain/100)*(1+resV("gain")/100),cmdUnit:u,sp:N.sp,gsp:g.sp,ofx:ox};
 }
 // live: the two members not exploring perform and earn; paused while they fight a boss
 const liveChars=()=>CIDS.filter(c=>c!==S.char);
@@ -831,6 +832,7 @@ function syncStage(){
   vig.hidden=false;
 }
 function enterTown(fromGate){
+  supReset();
   RUN=null;stashBag();MODE="town";WW=W;WH=H;G={state:"town",t:0};EN=[];SHOTS=[];PARTS=[];FX=[];ALLIES=[];MARK=null;OPEN=null;TALK=null;tpReset();
   const g=FACS.find(f=>f.id==="gate");
   P=mkUnit(S.char,fromGate?g.x-20:300,fromGate?STREET_Y+8:300,false);P.ang=Math.PI/2;
@@ -1143,6 +1145,7 @@ function hueOf(hex){const m=/^#?([0-9a-f]{6})$/i.exec(hex||"");if(!m)return 300;
   if(!d)return 0;let h=mx===r?((g-b)/d)%6:mx===g?(b-r)/d+2:(r-g)/d+4;return(h*60+360)%360;}
 const resistOf=(e,k)=>{const r=(e.def&&e.def.statusResist)||{};return Math.min(0.95,r[k]??r.all??0);};
 function enterDive(start){
+  supReset();
   RUN=null;MODE="dive";OPEN=null;FLOOR=start;SND.syncUntil=0;startFloor();syncModeUI();syncStage();markDirty();
   log(`${zoneOf(FLOOR).name}の歪みに潜った`);
 }
@@ -1162,6 +1165,7 @@ function startFloor(){
   $("ov").hidden=true;
   G.loot=boss?[]:makeLoot();
   if(!boss&&!RUN)prePlace();
+  supMap();
   if(boss)G.banner=3.2;else if(fi===9)FX.push({x:W/2,y:120,txt:"この先、ボスの気配",c:"danger",t:2,big:0,scr:1});
 }
 function edgePoint(){const s=Math.floor(Math.random()*4),r=Math.random();
@@ -1236,7 +1240,7 @@ function aimAt(e,tu,speed,lead=false){
 }
 function explode(e){
   const R=e.p.radius||48;e.exploded=true;sfx("explode");e.hp=0;WAVES.push({x:e.x,y:e.y,t:0,c:"255,140,60"});
-  for(const u of alive())if(Math.hypot(u.x-e.x,(u.y-e.y)/0.7)<R)hurtUnit(u,e.dmg,e);
+  for(const u of [...alive(),...supLiving()])if(Math.hypot(u.x-e.x,(u.y-e.y)/0.7)<R)hurtUnit(u,e.dmg,e);
   for(const o of EN)if(o!==e&&o.hp>0&&Math.hypot(o.x-e.x,o.y-e.y)<R){o.hp-=o.mhp*0.25;flinchHit(o,o.mhp*0.25);}
   FX.push({x:e.x,y:e.y-20,txt:"ドカン",c:"gold",t:0.7});
 }
@@ -1245,7 +1249,7 @@ function enemyAct(e,dt,tu,f){
   if(!tu)return;
   const p=e.p,dist=Math.hypot(tu.x-e.x,tu.y-e.y);let a=Math.atan2(tu.y-e.y,tu.x-e.x);
   if(e.ail&&e.ail.confuse&&Math.sin(G.t*2.3+e.sd)>-0.2)a=e.sd+G.t*1.7;
-  const sp=e.spd*f*(e.buffT>0?1+(e.buffSpd||0.35):1),mv=(ang,s)=>{e.x+=Math.cos(ang)*s*dt;e.y+=Math.sin(ang)*s*dt;};
+  const sp=e.spd*f*(e.buffT>0?1+(e.buffSpd||0.35):1),mv=(ang,s)=>{e.x+=Math.cos(ang)*s*dt*(e.supSlow>0?0.85:1);e.y+=Math.sin(ang)*s*dt*(e.supSlow>0?0.85:1);};
   e.cd-=dt*f;if(e.buffT>0)e.buffT-=dt;
   switch(e.ai){
     case "melee_rush":
@@ -1371,8 +1375,10 @@ function drawHazards(){
   }
 }
 function updateEShots(dt){
-  const us=alive();
+  const us=[...alive(),...supLiving()];
   for(const s of ESHOTS){let k=dt;if(OFM())k=dt*ofTimeK(s.x,s.y,0.3);else if(G.tstop>0)k=0;else if(G.slowF&&G.slowF.t>0&&Math.hypot(s.x-G.slowF.u.x,s.y-G.slowF.u.y)<G.slowF.r)k*=0.3;s.x+=s.vx*k;s.y+=s.vy*k;s.life-=k;if(s.x<-20||s.x>WW+20||s.y<-20||s.y>WH+20)s.life=0;
+    const guard=supLiving().find(u=>u.cid==="lumina"&&u.aegis>0&&Math.hypot(u.x-s.x,u.y-26-s.y)<35&&Math.cos(Math.atan2(s.y-(u.y-26),s.x-u.x)-u.ang)>=0);
+    if(guard){s.life=0;continue;}
     for(const u of us){if(Math.hypot(u.x-s.x,(u.y-26)-s.y)<12){if(G.state==="fight"){hurtUnit(u,s.dmg,s.own,s);if(s.db&&u===P&&Math.random()<s.dbCh)applyDebuff(s.db);}s.life=0;break;}}}
   ESHOTS=ESHOTS.filter(s=>s.life>0);
 }
@@ -1386,10 +1392,12 @@ function applyAil(e,k,st,spread){
   const A=AIL[k],dur=A.dur*st.stPow*(1-resistOf(e,k));e.ail=e.ail||{};const cur=e.ail[k];
   if(k==="poison"){const dps=st.atk*0.35*st.stPow;if(cur){cur.t=Math.max(cur.t,dur);cur.n=Math.min(A.stack,cur.n+1);cur.dps=Math.max(cur.dps,dps);}else e.ail[k]={t:dur,n:1,dps};}
   else e.ail[k]={t:Math.max(dur,cur?cur.t:0)};
+  if(k==="poison"&&st.cmdUnit)e.ail[k].cmdUnit=st.cmdUnit;
   if(k==="stun")e.stun=Math.max(e.stun,dur);
   if(!spread&&st.sp.has("contagion"))for(const o of EN)if(o!==e&&o.hp>0&&Math.hypot(o.x-e.x,o.y-e.y)<64){applyAil(o,k,st,true);LINES.push({x1:e.x,y1:e.y-10,x2:o.x,y2:o.y-10,t:0.3,c:"#ff4fa8"});}
 }
 function hurtUnit(u,d,from,at){
+  if(u.sup){supHurt(u,d,from,at);return;}
   if(u.inv>0||G.state!=="fight"||u.down)return;
   if(u.ofDash)return; // 流星貫走 in motion
   const st=statsOf(u.cid,u);
@@ -1400,8 +1408,10 @@ function hurtUnit(u,d,from,at){
   if(u.ofNull>0){u.ofNull=0;u.inv=0.8;FX.push({x:u.x,y:u.y-56,txt:"一撃無効",c:"gold",t:0.9});return;} // 未来遮断: after a failed dodge, before cuts/barrier; also blocks knockback & ailments
   if(from.ail&&from.ail.atkdown)d*=0.65;
   d*=1-st.red;
+  if(u.cmdDef>0)d*=0.8;
   if(u.ofCut>0)d*=1-OFC().teleCut; // 位相防壁 (multiplies with other cuts)
   if(u.shield>0){const ab=Math.min(u.shield,d);u.shield-=ab;d-=ab;if(ab>0)FX.push({x:u.x+14,y:u.y-46,txt:"バリア",c:"cyan",t:0.5});}
+  d=supBarrier(u,d);
   if(u.ofGuard>0&&d>0&&u.hp-d<=0){u.ofGuard=0;d=u.hp-Math.min(10,st.hp);FX.push({x:u.x,y:u.y-70,txt:"命脈保持",c:"ok",t:1});} // HP10保護
   u.shieldT=0;u.hp-=d;u.inv=0.8;u.anim={k:"dmg",t:0};sfx("hurt",u===P?1:0.5);
   if(u===P&&from.db&&Math.random()<(from.boss?0.25:0.15))applyDebuff(from.db);
@@ -1416,8 +1426,9 @@ function onDodge(u,st,from,perfect){
   if(st.gsp.evadeBolt){const t=EN.filter(e=>hollowSolid(e)).sort((a,b)=>Math.hypot(a.x-u.x,a.y-u.y)-Math.hypot(b.x-u.x,b.y-u.y)).slice(0,3);for(const e of t)fire(u,e,{silent:true,mul:0.6});}
 }
 function shockwave(u,st){WAVES.push({x:u.x,y:u.y,t:0});
-  for(const e of EN)if(e.hp>0&&hollowSolid(e)&&Math.hypot(e.x-u.x,e.y-u.y)<70){const d=st.atk*1.5;e.hp-=d;e.lastHit=u;flinchHit(e,d);const a=Math.atan2(e.y-u.y,e.x-u.x);e.kx=Math.cos(a)*260;e.ky=Math.sin(a)*260;FX.push({x:e.x,y:e.y-e.r-4,txt:fmt(d),c:"cyan",t:0.6});}}
+  for(const e of EN)if(e.hp>0&&hollowSolid(e)&&Math.hypot(e.x-u.x,e.y-u.y)<70){const d=st.atk*1.5*(u.cmdAtk>0?1.2:1);e.hp-=d;e.lastHit=u;flinchHit(e,d);const a=Math.atan2(e.y-u.y,e.x-u.x);e.kx=Math.cos(a)*260;e.ky=Math.sin(a)*260;FX.push({x:e.x,y:e.y-e.r-4,txt:fmt(d),c:"cyan",t:0.6});}}
 function die(){
+  supReset();
   G.state="dying";G.dieT=1.4;sfx("down");P.anim={k:"die",t:0};P.target=null;P.dest=null;P.inv=0;
   let lost=0;for(const k in S.bag){const b=S.bag[k],h=Math.ceil(b.n/2);lost+=h;b.v*= (b.n-h)/Math.max(1,b.n);b.n-=h;if(b.n<=0)delete S.bag[k];}
   G.lost=lost;save(true);
@@ -1483,7 +1494,7 @@ const hollowSolid=e=>!(e.p&&e.p.phase)||((G.t+e.off)%3.2)<2.0;
 // boss flinch: a single hit of ≥6% max HP shows the anim "flinch" frame for 0.28s (cooldown 0.9s, never while roaring). Visual only; timers tick in updateDive
 function flinchHit(e,d){if(e.roar>0||e.flinchCd>0||!(e.def&&e.def.anim&&e.def.anim.flinch)||!(d>=e.mhp*0.06))return;e.flinch=0.28;e.flinchCd=0.9;}
 function hitEnemy(e,s){
-  const st=statsOf(s.own,s.u);let d=s.dmg;
+  const st=statsOf(s.own,s.u);let d=s.dmg*(s.u&&s.u.cmdAtk>0?1.2:1);
   const ailing=e.ail&&Object.keys(e.ail).length>0;
   if(ailing)d*=1+st.weak;
   if(e.ail&&e.ail.poison){const pb=(st.gsp.poisonDmg?0.3*Math.min(2,st.gsp.poisonDmg):0)+st.ofx.poisonDmg/100;if(pb>0)d*=1+pb;}
@@ -1500,7 +1511,7 @@ function hitEnemy(e,s){
   if(s.crit&&!s.small){
     if(st.sp.has("critChain")){const o=EN.filter(o=>o!==e&&o.hp>0&&hollowSolid(o)&&Math.hypot(o.x-e.x,o.y-e.y)<100).sort((a,b)=>Math.hypot(a.x-e.x,a.y-e.y)-Math.hypot(b.x-e.x,b.y-e.y))[0];
       if(o){o.hp-=d*0.5;o.lastHit=s.u;flinchHit(o,d*0.5);LINES.push({x1:e.x,y1:e.y-12,x2:o.x,y2:o.y-12,t:0.25,c:"#f6c445"});FX.push({x:o.x,y:o.y-o.r-4,txt:fmt(d*0.5),c:"gold",t:0.6});}}
-    if(st.gsp.critSplit){const a0=Math.atan2(s.vy,s.vx);for(const da of[-1,1]){const a=a0+da;SHOTS.push({...s,vx:Math.cos(a)*300,vy:Math.sin(a)*300,dmg:d*0.4,crit:false,small:true,hit:[e],life:0.35,pierce:0,homing:false});}}
+    if(st.gsp.critSplit){const a0=Math.atan2(s.vy,s.vx);for(const da of[-1,1]){const a=a0+da;SHOTS.push({...s,vx:Math.cos(a)*300,vy:Math.sin(a)*300,dmg:d*0.4/(s.u&&s.u.cmdAtk>0?1.2:1),crit:false,small:true,hit:[e],life:0.35,pierce:0,homing:false});}}
   }
   G.sync=Math.min(100,G.sync+(s.crit?2.2:1.1)*statsOf(P.cid).syncM*(s.fromP?1:0.5));
 }
@@ -1689,15 +1700,16 @@ function updateUnit(u,dt){
   u.x=Math.max(12,Math.min(WW-12,u.x));u.y=Math.max(62,Math.min(WH-6,u.y));
 }
 function updateDive(dt){
+  supTick(dt);
   G.t+=dt;FX.forEach(f=>{f.t-=dt;f.y-=28*dt});FX=FX.filter(f=>f.t>0);if(MARK){MARK.t-=dt;if(MARK.t<=0)MARK=null;}
   for(const p of PARTS){p.x+=p.vx*dt;p.y+=p.vy*dt;p.vy-=40*dt;p.l-=dt;}PARTS=PARTS.filter(p=>p.l>0);
   if(G.syncing){G.syncT+=dt;
-    if(G.syncT>=0.9&&!G.syncFired){G.syncFired=true;sfx("syncHit");const dmg=statsOf(P.cid).atk*18;
+    if(G.syncT>=0.9&&!G.syncFired){G.syncFired=true;sfx("syncHit");const dmg=statsOf(P.cid).atk*18*(P.cmdAtk>0?1.2:1);
       for(const e of EN){e.hp-=dmg*(e.boss?0.6:1);flinchHit(e,dmg*(e.boss?0.6:1));FX.push({x:e.x,y:e.y-e.r-6,txt:fmt(dmg*(e.boss?0.6:1)),c:"gold",t:0.9});}}
     if(G.syncT>=1.7)G.syncing=false;
     if(G.syncT<0.9)return;
   }
-  if(G.state==="clear"){G.clearT-=dt;for(const u of alive())if(u.anim&&u.anim.k==="joy")u.anim.t+=0;if(G.clearT<=0){G.state="choice";RUN?runAfterClear():floorChoice();}}
+  if(G.state==="clear"){G.clearT-=dt;for(const u of alive())if(u.anim&&u.anim.k==="joy")u.anim.t+=0;if(G.clearT<=0){G.state="choice";if(!RUN||RUN.kind==="run")supMapEnd();RUN?runAfterClear():floorChoice();}}
   if(G.state==="advance"){G.advT-=dt;P.x+=250*dt;P.ang=0;P.mv=true;P.target=null;P.dest=null;for(const u of [P,...ALLIES])if(u.anim)u.anim.t+=dt;if(G.advT<=0&&!OFM())runSegment();return;}
   if(G.state==="rest"){ofRest(dt);return;} // 龍脈溢界: between waves
   if(RUN&&RUN.kind==="rush"&&G.state==="fight")RUN.t+=dt;
@@ -1729,21 +1741,22 @@ function updateDive(dt){
   if(G.banner>0)G.banner-=dt;
   updateHazards(dt);
   if(OFM())ofUpdate(dt);
-  const targets=alive();
+  const targets=supTargets();
   for(const w of WAVES)w.t+=dt;WAVES=WAVES.filter(w=>w.t<0.5);for(const l of LINES)l.t-=dt;LINES=LINES.filter(l=>l.t>0);
   for(const e of EN){
     const px=e.x,py=e.y;e.slow=Math.max(0,e.slow-dt);e.stun=Math.max(0,e.stun-dt);
-    if(e.ail){for(const k in e.ail){const a=e.ail[k];a.t-=dt;if(k==="poison"){e.hp-=a.dps*a.n*dt;a.tick=(a.tick||0)+dt;if(a.tick>0.6){a.tick=0;FX.push({x:e.x+6,y:e.y-e.r-2,txt:fmt(Math.max(1,a.dps*a.n*0.6)),c:"pink",t:0.5});}}if(a.t<=0)delete e.ail[k];}}
+    if(e.ail){for(const k in e.ail){const a=e.ail[k];a.t-=dt;if(k==="poison"){e.hp-=a.dps*a.n*dt*(a.cmdUnit&&a.cmdUnit.cmdAtk>0?1.2:1);a.tick=(a.tick||0)+dt;if(a.tick>0.6){a.tick=0;FX.push({x:e.x+6,y:e.y-e.r-2,txt:fmt(Math.max(1,a.dps*a.n*0.6)),c:"pink",t:0.5});}}if(a.t<=0)delete e.ail[k];}}
     let f=e.stun>0?0:e.slow>0?0.45:1,edt=dt;
     if(OFM())edt=dt*ofTimeK(e.x,e.y,0.4); // 龍脈溢界: enemy clock = slowest of stop / 灰時演算 / slow field (not multiplied)
     else if(G.tstop>0)f=0;else if(G.slowF&&G.slowF.t>0&&Math.hypot(e.x-G.slowF.u.x,e.y-G.slowF.u.y)<G.slowF.r)f*=0.4;
     if(e.vuln>0)e.vuln-=dt;
     if(e.flinch>0)e.flinch-=dt;if(e.flinchCd>0)e.flinchCd-=dt;
-    let tu=targets[0],bd=1e9;for(const u of targets){const d=Math.hypot(u.x-e.x,u.y-e.y);if(d<bd){bd=d;tu=u;}}
+    let tu=targets[0],bd=1e9;for(const u of targets){const d=Math.hypot(u.x-e.x,u.y-e.y)*(u.sup&&u.cid==="lumina"&&S.sup.mode.lumina==="tank"?0.6:1);if(d<bd){bd=d;tu=u;}}
     if(e.idle){if(bd<230||e.hp<e.mhp||G.boss){e.idle=false;FX.push({x:e.x,y:e.y-e.r*2-8,txt:"！",c:"danger",t:0.6});}
       else{e.wa+=rnd(-1.5,1.5)*dt;e.x+=Math.cos(e.wa)*e.spd*0.25*f*dt;e.y+=Math.sin(e.wa)*e.spd*0.18*f*dt;
         if(e.x<30||e.x>WW-30||e.y<90||e.y>WH-20)e.wa=Math.atan2(WH/2-e.y,WW/2-e.x);e.x=clampX(e.x);e.y=clampY(e.y);e.vx_=(e.x-px)/dt;e.vy_=(e.y-py)/dt;continue;}}
-    enemyAct(e,edt,tu,f);
+    tu=supEnemyTarget(e,tu);e.supTarget=tu;
+    enemyAct(e,edt,tu,f);e.supSlow=Math.max(0,(e.supSlow||0)-dt);
     if(e.kx){e.x+=e.kx*edt;e.y+=e.ky*edt;e.kx*=0.85;e.ky*=0.85;if(Math.abs(e.kx)+Math.abs(e.ky)<5)e.kx=e.ky=0;}
     e.vx_=(e.x-px)/dt;e.vy_=(e.y-py)/dt;
     if(hollowSolid(e)&&e.stun<=0&&e.ai!=="suicide"&&!(e.ofAtk>0))for(const u of targets){if(Math.hypot(u.x-e.x,u.y-e.y)<e.r+9){hurtUnit(u,e.dmg*(e.buffT>0?1+(e.buffAtk||0):1),e);if(e.ofAtk!==undefined){e.ofAtk=OFC().copy.atkCd;break;}}} // copies: one contact hit per 1.5s
@@ -1793,12 +1806,283 @@ function autoNextStart(lbl,go){autoNextStop();
     btn.textContent=`${lbl}（あと${left}秒で自動で進む）`;};
   a.iv=setInterval(tick,200);tick();
 }
+/* ================= アライアンス =================
+   Rental actors deliberately never join ALLIES, alive(), or partyU().
+   Paid credit is game seconds, not a second fee in addition to the advance. */
+let SUP=[],SUP_SHOTS=[],SUP_JOBS=[],SUP_SESSION=false;
+const SUP_DEF={
+  lumina:{name:"ルミナ",rate:250000,hp:150,atk:5,red:0.25,move:1,role:"鎌・短剣・盾／攻撃とタンク"},
+  shion:{name:"シオン",rate:150000,hp:90,atk:6,red:0.15,move:1.15,role:"曲刀／近接攻撃"},
+  eirou:{name:"エイロウ",rate:300000,hp:80,atk:3.5,red:0,move:0.9,role:"号令／ガードマン3人と全体支援"}
+};
+const SUP_ART={};
+for(const id of ['lumina','lumina_dagger','lumina_shield','shion','eirou','guard_ar','guard_gat','guard_rk']){
+  const walk=id.startsWith('guard')?'guard':id.startsWith('lumina')?'lumina':id;
+  const img=new Image(),aimg=new Image();img.src='sprites/walk_'+walk+'.png';aimg.src='sprites/act_'+id+'.png';
+  SUP_ART[id]={img,aimg};
+}
+function supSanitize(o){
+  o=o&&typeof o==='object'?o:{};const ids=Object.keys(SUP_DEF),mode=o.mode||{},t=o.tgt||{},st=o.stat||{};
+  const num=v=>Number.isFinite(+v)?Math.max(0,+v):0;
+  return{team:[...new Set(Array.isArray(o.team)?o.team.filter(k=>ids.includes(k)):[])].slice(0,2),
+    mode:{lumina:mode.lumina==='tank'?'tank':'free'},tgt:Object.fromEntries(ids.map(k=>[k,['boss','adds','assist'].includes(t[k])?t[k]:'boss'])),stat:{paid:num(st.paid),sec:num(st.sec)}};
+}
+function supGuards(){return SUP.flatMap(u=>u.guards||[]);}
+function supVisible(){return [...SUP,...supGuards()].filter(u=>!(u.join>0)&&(!u.owner||!u.owner.down));}
+function supLiving(){return supVisible().filter(u=>!u.down);}
+function supportParty(){return [...partyU(),...supLiving()];}
+function supTargets(){const gs=supLiving().filter(u=>u.owner);return [...alive(),...supLiving().filter(u=>u.cid!=='eirou'||!gs.some(g=>g.owner===u))];}
+function supArt(u){return SUP_ART[u.owner?'guard_'+u.weapon:u.cid==='lumina'?(u.dance>0?'lumina_dagger':u.aegis>0?'lumina_shield':'lumina'):u.cid];}
+function supReset(){SUP=[];SUP_SHOTS=[];SUP_JOBS=[];SUP_SESSION=false;}
+function supBase(){
+  const f=OFM()?50:FLOOR,sc=scaleFor(f,ZONES,false),loop=Math.max(0,Math.floor((f-1)/10)-(ZONES.length-1));
+  let atk=sc.hp/Math.pow(2,loop/2),hp=sc.atk/Math.pow(1.4,loop/2);
+  if(OFM()){atk*=1.4*Math.pow(1.15,RUN.stage/2);hp*=1.5*Math.pow(1.08,RUN.stage/2);}
+  else if(RUN&&RUN.kind==='rush'){atk*=1.25;hp*=1.2;}
+  else if(RUN&&RUN.kind==='run'){const d=Math.max(0,RUN.seg-(MODES.run.deepFrom||18));atk*=1.1*Math.pow(1.07,d/2);hp*=1.15*Math.pow(1.035,d/2);}
+  return{atk,hp};
+}
+function supStats(u){
+  const d=SUP_DEF[u.owner?'eirou':u.cid],base=supBase();let atk=d.atk*base.atk,aspd=0,crit=0,dodge=0,atkP=0,fieldRed=0;
+  if(G.pbuf)for(const b of G.pbuf){if(b.cid&&b.cid!==u.cid)continue;atkP+=b.atkP||0;aspd+=b.aspd||0;crit+=b.crit||0;dodge+=b.dodge||0;}
+  // Passive sister-wide field/party encouragement is also symmetric with active support.
+  if(partyHas('ht')){if(nodeSum('ht').sp.has('field')){atkP+=15;fieldRed=10/(10+80);}if(bossParty())atkP+=10;}atk*=Math.max(0.2,1+atkP/100);
+  return{hp:(u.owner?50:d.hp)*base.hp,atk,red:1-(1-(u.owner?0.3:d.red))*(1-fieldRed),move:(u.owner?1:d.move)*(u.cmdSpeed>0?1.2:1),
+    aspd:Math.max(0.3,1+aspd/100)*(u.cmdSpeed>0?1.15:1),crit,dodge,cdm:1.5,range:u.owner?({ar:220,gat:180,rk:260}[u.weapon]):u.cid==='lumina'?200:55};
+}
+function supMake(cid){const u={sup:true,cid,id:cid,x:P.x-40,y:P.y,ang:-Math.PI/2,hp:0,down:false,inv:0,cd:0,cds:{},shield:0,shieldT:0,join:3,credit:30,warn:{},anim:null,shotN:0};u.hp=supStats(u).hp;u.maxHp=u.hp;
+  if(cid==='eirou')u.guards=['ar','gat','rk'].map((weapon,i)=>{const g={...u,cid:'guard',id:'guard'+i,owner:u,weapon,cds:{},credit:0,warn:{},join:3,spin:0};g.hp=supStats(g).hp;g.maxHp=g.hp;return g;});return u;}
+function supCanCall(){return MODE==='dive'&&['fight','rest'].includes(G.state)&&(!OFM()||G.state==='rest'||RUN.wave===1&&G.t<3);}
+function supCall(cid,initial=false){
+  if(!S.sup.team.includes(cid)||SUP.some(u=>u.cid===cid)||(!initial&&!supCanCall()))return false;
+  const price=SUP_DEF[cid].rate*30;if(S.n<price){toast(SUP_DEF[cid].name+'：最低課金30秒分の所持金が必要');return false;}
+  S.n=Math.max(0,S.n-price);S.sup.stat.paid+=price;const u=supMake(cid);SUP.push(u);
+  // Exact balance exhausts every active contract together, including prepaid actors.
+  if(S.n===0)supExpire();supSay(u,'合流まで3秒');save(true);return true;
+}
+function supSay(u,txt){const m=SUP_DEF[u.cid].name+'：'+txt;log(m);FX.push({x:P.x,y:P.y-80,txt:m,c:'cyan',t:2});}
+function supExpire(){for(const u of SUP)if(!u.expired){u.expired=true;supSay(u,'期限切れ。このマップまでは戦う');}}
+function supDismiss(cid){const u=SUP.find(u=>u.cid===cid);if(!u)return;supSay(u,'また呼んでね');SUP=SUP.filter(v=>v!==u);SUP_JOBS=SUP_JOBS.filter(j=>j.u!==u&&j.u.owner!==u);SUP_SHOTS=SUP_SHOTS.filter(s=>s.u!==u&&s.u.owner!==u);}
+function supMapEnd(){for(const u of [...SUP])if(u.expired)supDismiss(u.cid);}
+function supMap(){
+  if(!RUN||RUN.kind==='run')supMapEnd();
+  SUP_SHOTS=[];SUP_JOBS=[];
+  if(!SUP_SESSION){SUP_SESSION=true;for(const cid of S.sup.team)supCall(cid,true);}
+  else{
+    for(const u of SUP){const units=[u,...u.guards||[]];for(const v of units){const mx=supStats(v).hp,r=v.maxHp?v.hp/v.maxHp:1;v.maxHp=mx;
+      if(!RUN){v.hp=mx;v.down=false;v.revive=0;v.anim=null;}
+      else if(RUN.kind==='rush'&&RUN.idx>0){v.hp=Math.min(mx,mx*r+mx*0.3);if(v.hp>0){v.down=false;v.anim=null;}}
+      else v.hp=mx*r;
+      v.x=clampX(P.x+rnd(-45,45));v.y=clampY(P.y+20);v.target=null;}}
+  }
+}
+function supRevive(u){u.down=false;u.hp=supStats(u).hp*0.5;u.maxHp=supStats(u).hp;u.x=clampX(P.x-30);u.y=clampY(P.y+20);u.anim=null;u.revive=0;
+  if(u.guards)for(const g of u.guards)supGuardRevive(g);}
+function supGuardRevive(g){g.down=false;g.hp=supStats(g).hp;g.maxHp=g.hp;g.x=g.owner.x;g.y=g.owner.y;g.join=1;g.anim=null;g.spin=0;g.owner.anim={k:'atk',t:0};g.owner.orderStage='Start';g.owner.orderT=1;}
+function supBarrier(u,d){const ab=Math.min(u.cmdShield||0,d);u.cmdShield=(u.cmdShield||0)-ab;return d-ab;}
+function supHurt(u,d,from,at,tele=false){
+  if(u.down||u.join>0||G.state!=='fight'||!tele&&u.inv>0)return;
+  const st=supStats(u),src=at||from,front=src&&Math.cos(Math.atan2(src.y-u.y,src.x-u.x)-u.ang)>=0;
+  if(u.ofEvade>0)return;
+  if(!tele&&Math.random()*100<st.dodge){u.inv=0.45;return;}
+  if(u.ofNull>0){u.ofNull=0;return;}
+  if(!tele&&u.parry>0){u.parry=0;u.inv=0.5;if(from&&from.hp>0)supHit(from,u,3);return;}
+  if(tele)d*=0.5;
+  else {if(from&&from.ail&&from.ail.atkdown)d*=0.65;d*=1-st.red;if(u.cmdDef>0)d*=0.8;if(u.aegis>0&&front)d*=0.2;if(u.dance>0)d*=0.5;if(u.legion>0)d*=0.6;}
+  if(u.ofCut>0)d*=1-OFC().teleCut;
+  const ab=Math.min(u.shield||0,d);u.shield=(u.shield||0)-ab;d=supBarrier(u,d-ab);
+  if(u.ofGuard>0&&d>0&&u.hp-d<=0){u.ofGuard=0;d=Math.max(0,u.hp-Math.min(10,st.hp));}
+  u.hp=Math.max(0,u.hp-d);u.inv=tele?0.5:0.8;u.anim={k:'dmg',t:0};u.shieldT=0;
+  if(d>0)FX.push({x:u.x,y:u.y-56,txt:'-'+fmt(d),c:'danger',t:0.8});
+  if(u.hp===0){u.down=true;u.revive=40;u.anim={k:'die',t:0};u.target=null;if(u.owner){u.owner.guardClock=u.owner.guardClock||15;}else if(u.guards){for(const g of u.guards){g.down=true;g.hp=0;}}}
+}
+function supHit(e,u,mul,armor=false){
+  if(!e||e.hp<=0||!hollowSolid(e))return;
+  const st=supStats(u);let d=st.atk*mul*(u.cmdAtk>0?1.2:1);
+  if(G.critAll>0||Math.random()*100<st.crit)d*=st.cdm;
+  if(e.p&&e.p.armor&&!armor)d*=1-e.p.armor;if(e.roar>0)d*=0.15;if(e.vuln>0)d*=1+(e.vulnV||0.25);
+  e.hp-=d;e.supLastHit=u.id;e.idle=false;flinchHit(e,d); // lastHit stays a sister: existing rewards/XP stay intact.
+  FX.push({x:e.x,y:e.y-e.r-5,txt:fmt(d),c:'cyan',t:0.6});
+}
+function supEnemies(u,r=1e9){return EN.filter(e=>e.hp>0&&hollowSolid(e)&&!e.idle&&Math.hypot(e.x-u.x,e.y-u.y)<=r);}
+function supTarget(u){const es=supEnemies(u).sort((a,b)=>Math.hypot(a.x-u.x,a.y-u.y)-Math.hypot(b.x-u.x,b.y-u.y)),cfg=S.sup.tgt[u.owner?'eirou':u.cid];
+  return(cfg==='assist'&&P.target&&P.target.hp>0&&hollowSolid(P.target)?P.target:null)||(cfg==='adds'?es.find(e=>!e.boss):es.find(e=>e.boss))||es[0]||null;}
+function supEnemyTarget(e,fallback){
+  const l=SUP.find(u=>u.cid==='lumina'&&!u.down&&!(u.join>0));if(l&&e.supTaunt>G.t)return l;
+  const er=SUP.find(u=>u.cid==='eirou'&&!u.down&&!(u.join>0));if(er&&Math.hypot(er.x-e.x,er.y-e.y)<=200){const gs=(er.guards||[]).filter(g=>!g.down&&!(g.join>0));if(gs.length)return gs.sort((a,b)=>Math.hypot(a.x-e.x,a.y-e.y)-Math.hypot(b.x-e.x,b.y-e.y))[0];}
+  return fallback;
+}
+function supAttackAnim(u,t){if(t)u.ang=Math.atan2(t.y-u.y,t.x-u.x);u.anim={k:'atk',t:0};}
+function supArea(u,r,mul,arc=360){for(const e of supEnemies(u,r)){let a=Math.atan2(e.y-u.y,e.x-u.x)-u.ang;a=Math.atan2(Math.sin(a),Math.cos(a));if(Math.abs(a)<=arc*Math.PI/360)supHit(e,u,mul);}WAVES.push({x:u.x,y:u.y,t:0,c:'63,224,255',r});}
+function supShot(u,t,mul,range,pierce=0,kind='crescent',angle){const a=angle??Math.atan2(t.y-u.y,t.x-u.x);SUP_SHOTS.push({u,x:u.x,y:u.y-18,vx:Math.cos(a)*360,vy:Math.sin(a)*360,life:range/360,hit:new Set(),pierce,mul,kind});supAttackAnim(u,t);}
+function supDash(u,t,len,mul){const x=u.x,y=u.y,a=Math.atan2(t.y-y,t.x-x),d=Math.min(len,Math.hypot(t.x-x,t.y-y)+20);u.x=clampX(x+Math.cos(a)*d);u.y=clampY(y+Math.sin(a)*d);supClamp(u);u.ang=a;
+  for(const e of supEnemies(u))if(segDist(e.x,e.y,x,y,u.x,u.y)<=e.r+20)supHit(e,u,mul);
+  LINES.push({x1:x,y1:y-20,x2:u.x,y2:u.y-20,t:0.4,c:'#3fe0ff',w:4});supAttackAnim(u,t);}
+function supUse(u,k,cd,fn){if(u.cds[k]>0)return false;u.cds[k]=cd;fn();return true;}
+function supThreat(u){return EN.some(e=>e.hp>0&&e.supTarget===u&&(e.charge>0||e.wind>0||e.boss&&e.cd<0.7))||ESHOTS.some(s=>Math.hypot(s.x-u.x,s.y-(u.y-26))<95&&(s.vx*(u.x-s.x)+s.vy*(u.y-26-s.y))>0);}
+function supEvade(u,sp,adt){
+  if(!OFM())return false;const tl=TELE.find(t=>!t.all);if(!tl)return false;
+  if(teleIn(tl,u.x,u.y)){const safe=ofSafeFor(u,tl);if(safe){supMoveTo(u,safe.x,safe.y,sp*1.15,adt);if(u.cid==='lumina'&&safe.d>sp*tl.t)supUse(u,'aegis',12,()=>{u.aegis=4;});}return true;}
+  return true;
+}
+function supMoveTo(u,x,y,sp,dt){const d=Math.hypot(x-u.x,y-u.y);if(d>2&&dt>0)moveUnit(u,Math.atan2(y-u.y,x-u.x),Math.min(sp,d/dt),dt);}
+function supClamp(u){u.x=clampX(u.x);u.y=clampY(u.y);if(!u.owner&&u.cid!=='eirou'){const max=u.cid==='shion'?320:S.sup.mode.lumina==='tank'?200:280,d=Math.hypot(u.x-P.x,u.y-P.y);if(d>max){u.x=clampX(P.x+(u.x-P.x)*max/d);u.y=clampY(P.y+(u.y-P.y)*max/d);}}}
+function supLumina(u,t,dt){
+  const es=supEnemies(u),cluster=es.find(e=>Math.hypot(e.x-u.x,e.y-u.y)<=220&&supEnemies(e,50).length>=3);if(cluster&&!(t&&t.boss))t=cluster;
+  const d=t?Math.hypot(t.x-u.x,t.y-u.y):1e9,boss=es.some(e=>e.boss),tank=S.sup.mode.lumina==='tank';
+  if(t)supAttackFacing(u,t);
+  if(tank)supUse(u,'taunt',10,()=>{for(const e of supEnemies(u,180))e.supTaunt=G.t+(e.boss?4:6);supEffect(u,'盾・挑発の陣');});
+  if(u.hp<supStats(u).hp*(tank?0.8:0.6)||supThreat(u))supUse(u,'aegis',12,()=>{u.aegis=4;supEffect(u,'盾・イージス');});
+  if(boss||es.length>=5)supUse(u,'legion',50,()=>{u.legion=8;supEffect(u,'レギオン顕現');});
+  if(!t)return;
+  if(supEnemies(u,120).length>=3)supUse(u,'moon',14,()=>{supArea(u,120,4);supAttackAnim(u,t);});
+  if(d<=220&&(t.boss||es.some(e=>supEnemies(e,50).length>=3)))supUse(u,'dance',9,()=>{const a=Math.atan2(t.y-u.y,t.x-u.x),n=Math.max(0,d-25);u.x=clampX(u.x+Math.cos(a)*Math.min(220,n));u.y=clampY(u.y+Math.sin(a)*Math.min(220,n));u.dance=1.2;SUP_JOBS.push({u,t:0.15,gap:0.15,n:8,kind:'dance'});supEffect(u,'短剣・乱舞');});
+  if(u.cd<=0&&d<=200){if(d<=60)supArea(u,60,1.3,120);else supShot(u,t,1,200,1);
+    if(u.legion>0){if(d<=60)supShot(u,t,1,200,1);else supArea(u,60,1.3,120);}supAttackAnim(u,t);u.cd=0.7*(u.aegis>0?1.5:1)*(u.legion>0?0.5:1)/supStats(u).aspd;}
+}
+function supAttackFacing(u,t){u.ang=Math.atan2(t.y-u.y,t.x-u.x);}
+function supEffect(u,txt){FX.push({x:u.x,y:u.y-68,txt,c:'cyan',t:1.1});}
+function supShion(u,t){
+  if(supThreat(u))supUse(u,'parry',12,()=>{u.parry=1.5;supEffect(u,'見切り');});if(!t)return;supAttackFacing(u,t);
+  const es=supEnemies(u),d=Math.hypot(t.x-u.x,t.y-u.y),end={x:u.x+Math.cos(u.ang)*400,y:u.y+Math.sin(u.ang)*400};
+  if(es.some(e=>e.boss)||es.filter(e=>segDist(e.x,e.y,u.x,u.y,end.x,end.y)<e.r+20).length>=3){if(supUse(u,'ult',40,()=>{supDash(u,end,400,12);supEffect(u,'蒼月一閃');}))return;}
+  if(d>80&&d<=200){if(supUse(u,'dash',6,()=>{supDash(u,t,200,2.5);supEffect(u,'踏み込み斬り');}))return;}
+  if(u.iai>0)return;
+  if(d<=70&&(t.boss||t.elite||t.hp===Math.max(...es.map(e=>e.hp)))&&supUse(u,'iai',15,()=>{u.iai=0.6;SUP_JOBS.push({u,target:t,t:0.6,n:1,kind:'iai'});supEffect(u,'居合・断');}))return;
+  if(d<=55){supUse(u,'combo',8,()=>{SUP_JOBS.push({u,target:t,t:0.08,gap:0.08,n:5,kind:'combo'});supEffect(u,'連閃');});
+    if(u.cd<=0){supArea(u,55,1,100);supAttackAnim(u,t);if(++u.shotN%3===0)supShot(u,t,0.6,120);u.cd=0.45/supStats(u).aspd;}}
+}
+function supCommand(u,k){
+  const cds={barrier:25,atk:30,def:30,speed:30,laser:45,reinforce:40,reposition:6};
+  if(u.orderT>0||u.cds[k]>0)return false;u.cds[k]=cds[k];u.orderT=1.5;u.orderStage=['laser','reposition'].includes(k)?'Point':'Raise';supAttackAnim(u,u.target);
+  const all=supportParty();
+  if(k==='barrier')for(const v of all){v.cmdShield=Math.max(v.cmdShield||0,statsOf(v.cid,v).hp*0.2);v.cmdShieldT=10;}
+  if(['atk','def','speed'].includes(k))for(const v of all)v[{atk:'cmdAtk',def:'cmdDef',speed:'cmdSpeed'}[k]]=12;
+  if(k==='reinforce'){const g=u.guards.find(g=>g.down);if(g)supGuardRevive(g);}
+  if(k==='laser'){const t=supEnemies(u).find(e=>e.boss)||u.target||supTarget(u);if(t)SUP_JOBS.push({u,target:t,x:t.x,y:t.y,t:1.5,gap:0.3,n:10,kind:'laser'});}
+  if(k==='reposition'){const v=all.find(v=>!v.owner&&EN.filter(e=>e.supTarget===v).length>=2);if(v){const e=EN.find(e=>e.supTarget===v),g=u.guards.filter(g=>!g.down).sort((a,b)=>Math.hypot(a.x-v.x,a.y-v.y)-Math.hypot(b.x-v.x,b.y-v.y))[0];if(g&&e)g.post={x:clampX(v.x+(e.x-v.x)*0.2),y:clampY(v.y+(e.y-v.y)*0.2),t:3};}}
+  supEffect(u,({barrier:'総員防御',atk:'攻勢',def:'堅守',speed:'迅速',laser:'衛星レーザー',reinforce:'緊急増援',reposition:'再配置'})[k]);return true;
+}
+function supGuardClock(u,dt){const dead=u.guards.filter(g=>g.down);if(!dead.length){u.guardClock=0;return;}u.guardClock=(u.guardClock||15)-dt;if(u.guardClock<=0){supGuardRevive(dead[0]);u.guardClock=dead.length>1?15:0;}}
+function supEirou(u,dt){
+  const gs=u.guards,dead=gs.filter(g=>g.down);
+  u.think=(u.think||0)-dt;if(u.think>0||u.orderT>0)return;u.think=0.5;
+  const all=supportParty(),es=supEnemies(u),boss=es.find(e=>e.boss),tl=OFM()?TELE.find(t=>t.all&&t.t<3):null;
+  if(tl&&(supCommand(u,'barrier')||supCommand(u,'def')))return;
+  if(all.some(v=>v.hp<statsOf(v.cid,v).hp*0.35&&!(v.cmdShield>0))&&supCommand(u,'barrier'))return;
+  if(dead.length>=2&&supCommand(u,'reinforce'))return;
+  if((boss&&boss.hp>boss.mhp*0.15||es.some(e=>supEnemies(e,100).length>=5))&&supCommand(u,'laser'))return;
+  if((boss||es.length>=3)&&!all.some(v=>v.cmdAtk>0)&&supCommand(u,'atk'))return;
+  if((boss||all.some(v=>v.hp<statsOf(v.cid,v).hp*0.6))&&!all.some(v=>v.cmdDef>0)&&supCommand(u,'def'))return;
+  if(u.mv&&!all.some(v=>v.cmdSpeed>0)&&supCommand(u,'speed'))return;
+  if(all.some(v=>!v.owner&&EN.filter(e=>e.supTarget===v).length>=2&&!gs.some(g=>!g.down&&Math.hypot(g.x-v.x,g.y-v.y)<60)))supCommand(u,'reposition');
+}
+function supGuardAct(g,adt){
+  const er=g.owner,es=supEnemies(g),byEr=(a,b)=>Math.hypot(a.x-er.x,a.y-er.y)-Math.hypot(b.x-er.x,b.y-er.y);let t;
+  if(g.weapon==='ar')t=es.sort(byEr)[0];
+  else if(g.weapon==='gat')t=es.filter(e=>supEnemies(e,80).length>=3).sort(byEr)[0]||es.sort(byEr)[0];
+  else t=es.sort((a,b)=>(!!b.boss-!!a.boss)||(!!b.elite-!!a.elite)||((b.p.armor||0)-(a.p.armor||0))||b.hp-a.hp)[0];
+  g.target=t;
+  const i=er.guards.indexOf(g),a=i*Math.PI*2/3,post=g.post&&g.post.t>0?g.post:{x:er.x+Math.cos(a)*45,y:er.y+Math.sin(a)*35};if(g.post)g.post.t-=adt;
+  if(!supEvade(g,110*supStats(g).move,adt))supMoveTo(g,post.x,post.y,110*supStats(g).move,adt);supClamp(g);
+  if(!t||Math.hypot(t.x-g.x,t.y-g.y)>supStats(g).range){g.spin=0;return;}
+  if(g.weapon==='gat'){g.spin+=adt;if(g.spin<0.8)return;}
+  if(g.cd>0)return;
+  if(g.weapon==='rk'){supShot(g,t,3,260,0,'rocket');g.cd=2.5/supStats(g).aspd;er.orderStage='Point';}
+  else {const gat=g.weapon==='gat',a=Math.atan2(t.y-g.y,t.x-g.x)+(gat?rnd(-Math.PI/18,Math.PI/18):0);supShot(g,t,gat?0.2:0.35,gat?180:220,gat?1:0,gat?'gat':'ar',a);g.cd=(gat?0.1:0.25)/supStats(g).aspd;}
+}
+function supUnitTick(u,dt){
+  const adt=dt*ofUk(u);u.mv=false;
+  if(u.anim){u.anim.t+=adt;if(u.anim.t>=ANIM[u.anim.k].dur)u.anim=null;}
+  for(const k of Object.keys(u.cds))u.cds[k]=Math.max(0,u.cds[k]-dt);
+  for(const k of ['inv','legion','aegis','parry','orderT','ofNull','ofCut','ofGuard','ofEvade','ofRegen'])u[k]=Math.max(0,(u[k]||0)-dt);
+  for(const k of ['dance','iai'])u[k]=Math.max(0,(u[k]||0)-adt);
+  if(u.cid==='eirou'&&u.orderT>0&&u.orderT<0.25)u.orderStage='Return';
+  u.cd=Math.max(0,u.cd-adt);
+  if(u.down){if(!u.owner){u.revive-=dt;if(u.revive<=0)supRevive(u);}return;}
+  if(u.join>0){u.join=Math.max(0,u.join-dt);if(u.join===0){u.x=clampX(P.x-W/(2*CAM.z)+30);u.y=clampY(P.y+20);u.orderStage='Start';u.orderT=1;}return;}
+  const st=supStats(u);u.hp=Math.min(st.hp,u.hp+(u.ofRegen>0?st.hp*0.04*dt:0));
+  if(u.cid==='eirou')supGuardClock(u,dt);
+  if(G.state!=='fight'){if(G.state==='clear'&&!u.down&&(!u.anim||u.anim.k!=='joy'))u.anim={k:'joy',t:0};return;}
+  if(u.owner){supGuardAct(u,adt);return;}
+  const t=supTarget(u);u.target=t;const sp=110*st.move;
+  if(u.cid==='eirou')supEirou(u,dt);
+  if(supEvade(u,sp,adt)){supClamp(u);return;}
+  if(u.iai>0||u.parry>0)return;
+  if(u.cid==='lumina')supLumina(u,t,adt);if(u.cid==='shion')supShion(u,t);
+  if(u.cid==='eirou'){
+    const n=supEnemies(u).sort((a,b)=>Math.hypot(a.x-u.x,a.y-u.y)-Math.hypot(b.x-u.x,b.y-u.y))[0];
+    const a=n?Math.atan2(P.y-n.y,P.x-n.x):P.ang+Math.PI,es=supEnemies(u),points=[];
+    for(const r of [120,160,90])for(let i=0;i<16;i++){const b=a+i*Math.PI/8,x=clampX(P.x+Math.cos(b)*r),y=clampY(P.y+Math.sin(b)*r),safe=es.length?Math.min(...es.map(e=>Math.hypot(e.x-x,e.y-y))):1000;
+      points.push({x,y,safe,score:(safe>=150?10000:Math.min(150,safe)*10)+Math.cos(b-a)*100-Math.hypot(x-u.x,y-u.y)*0.1});}
+    const post=points.sort((a,b)=>b.score-a.score)[0];supMoveTo(u,post.x,post.y,sp,adt);
+  }else if(!(u.iai>0)&&!(u.dance>0)){
+    if(t){const tank=u.cid==='lumina'&&S.sup.mode.lumina==='tank',d=Math.hypot(t.x-u.x,t.y-u.y),range=u.cid==='shion'?45:tank?50:145;
+      if(tank){const n=supEnemies(P).sort((a,b)=>Math.hypot(a.x-P.x,a.y-P.y)-Math.hypot(b.x-P.x,b.y-P.y))[0]||t,a=Math.atan2(n.y-P.y,n.x-P.x),d=Math.min(170,Math.hypot(n.x-P.x,n.y-P.y)*0.65);supMoveTo(u,P.x+Math.cos(a)*d,P.y+Math.sin(a)*d,sp,adt);}
+      else if(d>range)supMoveTo(u,t.x,t.y,sp,adt);
+    }else if(Math.hypot(P.x-u.x,P.y-u.y)>65)supMoveTo(u,P.x-30,P.y+25,sp,adt);
+  }
+  supClamp(u);
+}
+function supTick(dt){
+  if(!SUP.length&&!SUP_SHOTS.length&&!SUP_JOBS.length&&![P,...ALLIES].some(u=>u&&(u.cmdAtk>0||u.cmdDef>0||u.cmdSpeed>0||u.cmdShieldT>0)))return;
+  if(document.hidden||tab!=='main'||TITLE||!['fight','clear','advance','rest'].includes(G.state))return;
+  const active=SUP.filter(u=>!u.expired);let charge=0;
+  for(const u of SUP){if(u.expired)continue;const use=Math.min(dt,u.credit);u.credit-=use;charge+=(dt-use)*SUP_DEF[u.cid].rate;S.sup.stat.sec+=dt;}
+  const paid=Math.min(Math.max(0,S.n),charge);S.n=Math.max(0,S.n-paid);S.sup.stat.paid+=paid;
+  const rate=active.reduce((n,u)=>n+SUP_DEF[u.cid].rate,0);
+  for(const u of active){const remain=u.credit+(rate?S.n/rate:0);for(const n of [60,30,10])if(remain<=n&&!u.warn[n]){u.warn[n]=true;supSay(u,'契約、残り'+n+'秒');}}
+  if(S.n===0)supExpire();
+  // Command layers tick exactly once, including sisters (their ordinary updates remain untouched).
+  for(const u of [P,...ALLIES,...SUP,...supGuards()].filter(Boolean)){for(const k of ['cmdAtk','cmdDef','cmdSpeed','cmdShieldT'])u[k]=Math.max(0,(u[k]||0)-dt);if(!u.cmdShieldT)u.cmdShield=0;}
+  for(const u of [...SUP,...supGuards()]){const x=u.x,y=u.y;supUnitTick(u,dt);u.vx_=(u.x-x)/dt;u.vy_=(u.y-y)/dt;}
+  for(const j of SUP_JOBS){if(j.u.down){j.n=0;continue;}if(G.state!=='fight')continue;j.t-=dt*ofUk(j.u);
+    if(j.kind==='laser'&&j.target&&j.target.hp>0){const d=Math.hypot(j.target.x-j.x,j.target.y-j.y);if(d>0){const m=Math.min(d,40*dt*ofUk(j.u));j.x+=(j.target.x-j.x)/d*m;j.y+=(j.target.y-j.y)/d*m;}}
+    while(j.t<=0&&j.n>0){j.n--;j.t+=j.gap||1;
+      if(j.kind==='dance')supArea(j.u,50,0.6);
+      if(j.kind==='combo'||j.kind==='iai'){if(j.target&&j.target.hp>0&&Math.hypot(j.target.x-j.u.x,j.target.y-j.u.y)<(j.kind==='iai'?70:55))supHit(j.target,j.u,j.kind==='iai'?8:0.9);supAttackAnim(j.u,j.target);}
+      if(j.kind==='laser'){j.u.orderStage='Command';for(const e of supEnemies({x:j.x,y:j.y},60))supHit(e,j.u,2);WAVES.push({x:j.x,y:j.y,t:0,c:'63,224,255',r:60});}}
+  }
+  SUP_JOBS=SUP_JOBS.filter(j=>j.n>0);
+  for(const s of SUP_SHOTS){if(G.state!=='fight'){s.life=0;continue;}const adt=dt*ofUk(s.u);s.x+=s.vx*adt;s.y+=s.vy*adt;s.life-=adt;
+    for(const e of EN)if(e.hp>0&&hollowSolid(e)&&!s.hit.has(e)&&Math.hypot(s.x-e.x,s.y-(e.y-12))<e.r+5){s.hit.add(e);
+      if(s.kind==='rocket'){for(const o of supEnemies({x:e.x,y:e.y},55))supHit(o,s.u,3*(1-0.5*Math.hypot(o.x-e.x,o.y-e.y)/55)*(o.boss?1.2:1),true);WAVES.push({x:e.x,y:e.y,t:0,c:'255,140,60',r:55});}
+      else{supHit(e,s.u,s.mul);if(s.kind==='ar')e.supSlow=0.5;}
+      if(s.pierce>0)s.pierce--;else{s.life=0;break;}}}
+  SUP_SHOTS=SUP_SHOTS.filter(s=>s.life>0);
+}
+function supContract(cid){if(S.sup.team.includes(cid))S.sup.team=S.sup.team.filter(k=>k!==cid);else if(S.sup.team.length<2)S.sup.team.push(cid);else toast('契約は2人まで');save(true);markDirty();}
+function supGateHtml(){const rate=S.sup.team.reduce((n,k)=>n+SUP_DEF[k].rate,0),ps=perSec(),mins=r=>r<=0?'無期限':(S.n/r/60).toFixed(1)+'分';
+  return `<section aria-label="アライアンス"><h2>アライアンス</h2><p class="note">2人まで。出撃ごとに最低30秒前払い／ゲーム内時間で課金。残高0で期限切れ、マップ終了時に帰還。</p><div class="list">${Object.entries(SUP_DEF).map(([id,d])=>`<div class="item" style="cursor:default"><b class="name">${d.name}</b><span class="own">¥${fmtMoney(d.rate)}/秒</span><span class="desc">${d.role}<br>出撃前払い ¥${fmtMoney(d.rate*30)}</span><span class="desc row" style="grid-column:1/-1"><span aria-hidden="true" style="display:inline-block;width:32px;height:64px;background:url(sprites/walk_${id}.png) 0 0 / 384px 64px"></span><button class="btn sm" data-supteam="${id}" aria-pressed="${S.sup.team.includes(id)}">${S.sup.team.includes(id)?'外す':'連れていく'}</button>${id==='lumina'?`<label>行動 <select data-supmode="1"><option value="free" ${S.sup.mode.lumina==='free'?'selected':''}>自由（アタッカー）</option><option value="tank" ${S.sup.mode.lumina==='tank'?'selected':''}>タンク</option></select></label>`:''}<label>狙い <select data-suptgt="${id}">${[['boss','ボス優先'],['adds','雑魚優先'],['assist','主人公と同じ敵']].map(([v,n])=>`<option value="${v}" ${S.sup.tgt[id]===v?'selected':''}>${n}</option>`).join('')}</select></label></span></div>`).join('')}</div><p class="note">合計 ¥${fmtMoney(rate)}/秒 ・ いまの所持金で約${rate?mins(rate-ps):'―'}（ボス戦中 約${rate?mins(rate):'―'}）<br>累計支払 ¥${fmtMoney(S.sup.stat.paid)} ／ 利用 ${Math.floor(S.sup.stat.sec)}人秒</p></section>`;
+}
+function supRenderBand(){
+  let el=$('alliance-band');if(!el&&(MODE!=='dive'||!S.sup.team.length&&!SUP.length))return;
+  if(!el){el=document.createElement('div');el.id='alliance-band';el.className='row';el.setAttribute('aria-label','アライアンス');cv.parentNode.parentNode.insertBefore(el,cv.parentNode.nextSibling);
+    el.addEventListener('click',e=>{const b=e.target.closest('button');if(!b||b.disabled)return;if(b.dataset.supcall)supCall(b.dataset.supcall);if(b.dataset.supreturn)supDismiss(b.dataset.supreturn);supRenderBand();});}
+  el.hidden=MODE!=='dive'||!S.sup.team.length&&!SUP.length;if(el.hidden)return;
+  const ids=[...new Set([...S.sup.team,...SUP.map(u=>u.cid)])],key=ids.map(id=>id+':'+SUP.some(u=>u.cid===id)).join(','),rate=SUP.filter(u=>!u.expired).reduce((n,u)=>n+SUP_DEF[u.cid].rate,0);
+  // Retain buttons between HUD updates so a press spanning multiple frames still clicks.
+  if(el.dataset.key!==key){el.dataset.key=key;el.innerHTML=ids.map(id=>{const on=SUP.some(u=>u.cid===id),d=SUP_DEF[id];return `<span class="note" style="padding:3px 6px" data-suprow="${id}"><b>${d.name}</b> ¥${fmtMoney(d.rate)}/秒 <meter min="0" max="1" value="0" aria-label="${d.name} HP" ${on?'':'hidden'}></meter> <span data-supstatus></span> <button class="btn sm" ${on?'data-supreturn':'data-supcall'}="${id}">${on?'帰す':'呼ぶ'}</button></span>`;}).join('');}
+  for(const row of el.querySelectorAll('[data-suprow]')){const id=row.dataset.suprow,u=SUP.find(u=>u.cid===id),status=row.querySelector('[data-supstatus]'),b=row.querySelector('button');
+    if(u){const mx=supStats(u).hp,m=row.querySelector('meter');m.max=mx;m.value=u.hp;status.textContent=`HP ${fmt(u.hp)}/${fmt(mx)} `+(u.expired?'期限切れ':u.join>0?'合流 '+Math.ceil(u.join)+'秒':u.down?'復帰 '+Math.ceil(u.revive)+'秒':'残り約'+Math.ceil(u.credit+(rate?S.n/rate:0))+'秒');}
+    else{status.textContent='未出撃';b.disabled=!supCanCall()||S.n<SUP_DEF[id].rate*30;}}
+}
+function supDrawHud(){let y=12;for(const u of SUP){const st=supStats(u),x=240;ctx.fillStyle='rgba(10,8,18,.8)';ctx.fillRect(x-4,y-10,155,27);ctx.font='9px sans-serif';ctx.fillStyle='#bfeaff';ctx.fillText(SUP_DEF[u.cid].name+(u.expired?'（期限切れ）':u.down?'（ダウン）':u.join>0?'（合流中）':''),x,y);ctx.fillStyle='#302642';ctx.fillRect(x,y+4,140,4);ctx.fillStyle=u.down?'#ff4f6b':'#72ddff';ctx.fillRect(x,y+4,140*Math.max(0,u.hp/st.hp),4);y+=29;}}
+function supDraw(){
+  if(!SUP.length&&!SUP_SHOTS.length&&!SUP_JOBS.length)return;
+  for(const s of SUP_SHOTS){ctx.strokeStyle='#72ddff';ctx.lineWidth=s.kind==='rocket'?5:2;ctx.beginPath();ctx.moveTo(s.x-s.vx*0.025,s.y-s.vy*0.025);ctx.lineTo(s.x,s.y);ctx.stroke();}
+  for(const j of SUP_JOBS)if(j.kind==='laser'){ctx.strokeStyle='#70dfff';ctx.lineWidth=2;ctx.beginPath();ctx.arc(j.x,j.y,60,0,Math.PI*2);ctx.stroke();if(j.n<10){ctx.fillStyle='rgba(100,220,255,.35)';ctx.fillRect(j.x-12,62,24,Math.max(0,j.y-62));}}
+  for(const u of supVisible()){if(u.cmdShield>0){ctx.strokeStyle='#cba6ff';ctx.beginPath();ctx.ellipse(u.x,u.y-28,20,34,0,0,7);ctx.stroke();}ctx.fillStyle='#72ddff';ctx.font='9px sans-serif';ctx.fillText(u.owner?['A','B','C'][u.owner.guards.indexOf(u)]:'SUP',u.x-10,u.y-68);if(u.owner){ctx.fillStyle='#302642';ctx.fillRect(u.x-15,u.y-65,30,3);ctx.fillStyle='#72ddff';ctx.fillRect(u.x-15,u.y-65,30*Math.max(0,u.hp/supStats(u).hp),3);}
+    if(u.cid==='eirou'&&u.orderT>0){ctx.fillStyle='#bfeaff';ctx.fillText(u.orderStage||'Return',u.x-15,u.y-80);}}
+  ctx.lineWidth=1;
+}
+
 /* ===== active skills (auto-cast; tap the icons at the bottom-left to cast your own) ===== */
 const INNATE={luarie:"lu_slow",ht:"ht_cheer",mimi:"mi_lance"}; // everyone starts with one skill
 const nearEn=(x,y,r)=>EN.filter(e=>e.hp>0&&!e.idle&&hollowSolid(e)&&Math.hypot(e.x-x,(e.y-y)/0.7)<r);
 const partyU=()=>[P,...ALLIES].filter(u=>u&&!u.down);
 function pBuff(b){G.pbuf=(G.pbuf||[]).filter(x=>x.id!==b.id);G.pbuf.push(b);}
-function skHit(e,dmg,u,c){if(e.hp<=0)return;let d=dmg;if(e.vuln>0)d*=1+(e.vulnV||0.25);if(e.p&&e.p.armor)d*=1-e.p.armor;if(e.roar>0)d*=0.15;
+function skHit(e,dmg,u,c){if(e.hp<=0)return;let d=dmg*(u.cmdAtk>0?1.2:1);if(e.vuln>0)d*=1+(e.vulnV||0.25);if(e.p&&e.p.armor)d*=1-e.p.armor;if(e.roar>0)d*=0.15;
   e.hp-=d;e.lastHit=u;flinchHit(e,d);if(e.idle)e.idle=false;FX.push({x:e.x,y:e.y-e.r-6,txt:fmt(Math.max(1,d)),c:c||"gold",t:0.8});}
 const SKILLS={
   lu_slow:{nm:"時間遅延フィールド",cid:"luarie",type:"sup",cd:12,desc:"周りの敵と敵の弾を4秒間おそくする",
@@ -1820,7 +2104,7 @@ const SKILLS={
     cast(u){const st=statsOf(u.cid,u),ks=["poison","blind","confuse","atkdown","miss","stun"];for(const e of nearEn(u.x,u.y,170)){applyAil(e,pick(ks),st,true);LINES.push({x1:u.x,y1:u.y-30,x2:e.x,y2:e.y-10,t:0.3,c:"#ff4fa8"});}
       WAVES.push({x:u.x,y:u.y,t:0,c:"255,79,168",r:170});}},
   ht_ward:{nm:"位相結界",cid:"ht",type:"sup",cd:16,desc:"味方全員に最大HP20%のバリアを張り、デバフを消す",
-    cast(u){for(const v of partyU()){const st=statsOf(v.cid,v);v.shield=(v.shield||0)+st.hp*0.2;v.shieldT=0;}P.db={};WAVES.push({x:P.x,y:P.y,t:0,c:"63,224,255",r:90});}},
+    cast(u){for(const v of supportParty()){const st=statsOf(v.cid,v);v.shield=(v.shield||0)+st.hp*0.2;v.shieldT=0;}P.db={};WAVES.push({x:P.x,y:P.y,t:0,c:"63,224,255",r:90});}},
   ht_voice:{nm:"ダークボイス・侵食",cid:"ht",type:"atk",cd:30,ult:1,desc:"画面中の敵の防御を崩す。8秒間 受けるダメージ+40%・おそくなり・攻撃力ダウン",
     cast(u){const st=statsOf(u.cid,u);for(const e of nearEn(u.x,u.y,520)){e.vuln=8;e.vulnV=Math.max(e.vulnV||0,0.4);e.slow=Math.max(e.slow,3);applyAil(e,"atkdown",st,true);}G.flash={t:0.5,c:"120,0,90"};}},
   ht_full:{nm:"フルシンクロ",cid:"ht",type:"sup",cd:35,ult:1,desc:"8秒間、味方全員の攻撃+50%・攻撃速度+40%、デバフを受けない",
@@ -1892,6 +2176,7 @@ const encDef=id=>id==="zoneBoss"?{id,name:"エリアボス",desc:"このエリ�
 function partyHp(){const m={};for(const u of [P,...ALLIES])if(u)m[u.cid]=u.down?0:u.hp/statsOf(u.cid,u).hp;return m;}
 function restoreHp(m,heal){for(const u of [P,...ALLIES]){if(!u||m[u.cid]===undefined)continue;const mx=statsOf(u.cid,u).hp;u.hp=Math.max(1,mx*Math.min(1,Math.max(m[u.cid]>0?m[u.cid]:0.15,m[u.cid]+heal)));}}
 function startRun(zi){
+  supReset();
   RUN={kind:"run",zi,seg:0,cleared:0,heat:{...S.heat},hpM:1,atkM:1,rewM:1,shards:0,next:null};
   MODE="dive";OPEN=null;SND.syncUntil=0;runSegment();syncModeUI();syncStage();markDirty();
   log(`ノイズ・ラン開始：${ZONES[zi].name}${heatPts(RUN.heat)?`（侵食度${heatPts(RUN.heat)}）`:""}`);
@@ -1914,11 +2199,13 @@ function runSegment(){
   else if(enc==="treasure"||enc==="rest"){
     G.spawnLeft=0;G.queue=[];EN=[];G.state="clear";G.clearT=2.4;P.anim={k:"joy",t:0};P.dest=null;P.x=160;
     if(enc==="rest"){const heal=heatOn("fragile")?0:(ed.heal||0.45),st=statsOf(P.cid,P);P.hp=Math.min(st.hp,P.hp+st.hp*heal);P.db={};
+      for(const u of supLiving())u.hp=Math.min(supStats(u).hp,u.hp+supStats(u).hp*heal);
       FX.push({scr:1,x:W/2,y:H/2-50,txt:heal?`安全地帯：HP回復`:"安全地帯（消耗：回復なし）",c:"ok",t:2.2,big:1});
       if(S.yog<3&&!heatOn("noYog")&&Math.random()<0.3){S.yog++;FX.push({scr:1,x:W/2,y:H/2-20,txt:"ヨーグルトを拾った",c:"ok",t:2});}sfx("heal");}
     else{const zm=zoneMats(Z),n=3+Math.floor(Math.random()*3),sc=scaleOf(FLOOR);for(let i=0;i<n;i++)if(zm.length)addMat(pick(zm),FLOOR,1+Math.floor(Math.random()*2));
       const coin=Math.round(40*sc.xp);addMoney(coin);FX.push({scr:1,x:W/2,y:H/2-50,txt:`粒子だまり：素材${n}種 +¥${fmtMoney(coin)}`,c:"gold",t:2.4,big:1});sfx("coin");}
   }
+  for(const u of [...SUP,...supGuards()]){u.x=clampX(P.x+rnd(-30,30));u.y=clampY(P.y+20);}
   if(heatOn("swarm")&&G.spawnLeft>0&&!G.boss){G.spawnLeft=Math.round(G.spawnLeft*1.5);G.maxAlive+=2;}
   if(G.state==="fight"&&!G.boss)prePlace();
   if(G.state==="fight")FX.push({x:W/2,y:96,scr:1,txt:`区画${seg}：${ed.name}`,c:enc==="elite"||enc==="rareBoss"?"gold":"cyan",t:1.8,big:0});
@@ -1953,6 +2240,7 @@ function runRetreat(){
 function rushList(){return ZONES.map((z,i)=>i).filter(i=>bossBeaten(i)&&ENEMIES[ZONES[i].bossId]);}
 function startRush(){
   const list=rushList();if(!list.length)return;
+  supReset();
   RUN={kind:"rush",list,idx:-1,cleared:0,t:0,heat:{...S.heat},hpM:1,atkM:1,rewM:1,shards:0};
   MODE="dive";OPEN=null;SND.syncUntil=0;rushNext(true);syncModeUI();syncStage();markDirty();
   log(`ボスラッシュ開始（${list.length}体${heatPts(RUN.heat)?`・侵食度${heatPts(RUN.heat)}`:""}）`);
@@ -1973,7 +2261,7 @@ function rushComplete(){
   const o=S.rushBest,better=!o||r.list.length>o.n||(r.list.length===o.n&&(r.t<o.t||h>o.heat&&r.t<=o.t*1.05));
   if(better)S.rushBest={n:r.list.length,t:r.t,heat:h};
   const ids=r.list.map(i=>ZONES[i].bossId),ofNew=!S.overflowUnlocked&&MODES.overflow.unlock.every(id=>ids.includes(id));if(ofNew)S.overflowUnlocked=true; // never revoked
-  G.state="choice";save(true);
+  G.state="choice";supMapEnd();save(true);
   overlay("ボスラッシュ 制覇！",`${r.list.length}体を撃破。タイム ${fmtTime(r.t)}${better?"（自己ベスト！）":`（ベスト ${fmtTime(o.t)}）`}${h?`・侵食度${h}`:""}。共鳴の欠片 +${r.shards}。ヨーデル管理所の「共鳴研究」で使える。${ofNew?"――龍脈の記録容量が限界を超えた。歪みゲートに『龍脈溢界』が開放された！":""}`,
     [["街へ帰還","primary",()=>returnHome()]]);
 }
@@ -2132,9 +2420,10 @@ function ofUpdate(dt){
   TELE=TELE.filter(t=>!t.dead);
   if(G.state==="fight")ofSched(edt);}
 function ofResolve(tl){TFX.push({tl,t:0.3});sfx(tl.all?"explode":"hurt");WAVES.push({x:tl.x||W/2,y:tl.y||H/2,t:0,c:"255,120,50",r:tl.all?320:90});
-  for(const u of alive()){if(tl.hit.has(u))continue;if(teleIn(tl,u.x,u.y)){tl.hit.add(u);ofTeleHit(u,tl);}if(G.state!=="fight")break;}} // one hit per group, per unit
+  for(const u of [...alive(),...supLiving()]){if(tl.hit.has(u))continue;if(teleIn(tl,u.x,u.y)){tl.hit.add(u);ofTeleHit(u,tl);}if(G.state!=="fight")break;}} // one hit per group, per unit
 // telegraph damage: % of max HP, ignores defence / random dodge / blind / the post-hit 0.8s window. 完全回避, 一撃無効, 60%カット, barrier, HP10保護 apply.
 function ofTeleHit(u,tl){
+  if(u.sup){supHurt(u,supStats(u).hp*tl.dmg,null,null,true);return;}
   if(u.down||G.state!=="fight")return;
   const st=statsOf(u.cid,u);
   if(u.ofEvade>0){if(tl.all){u.ofEvade=0;FX.push({x:u.x,y:u.y-70,txt:"虚像歩法：全体攻撃を回避（終了）",c:"cyan",t:1.1});}else FX.push({x:u.x,y:u.y-56,txt:"回避",c:"cyan",t:0.7});return;}
@@ -2142,7 +2431,7 @@ function ofTeleHit(u,tl){
   if(u.ofNull>0){u.ofNull=0;FX.push({x:u.x,y:u.y-56,txt:"一撃無効",c:"gold",t:0.9});return;}
   let d=st.hp*tl.dmg;if(u.ofCut>0)d*=1-OFC().teleCut;
   if(u.shield>0){const ab=Math.min(u.shield,d);u.shield-=ab;d-=ab;if(ab>0)FX.push({x:u.x+14,y:u.y-46,txt:"バリア",c:"cyan",t:0.5});}
-  ofLoseHp(u,d,st);}
+  ofLoseHp(u,supBarrier(u,d),st);}
 function ofLoseHp(u,d,st){
   if(u.ofGuard>0&&d>0&&u.hp-d<=0){u.ofGuard=0;u.hp=Math.min(10,st.hp);FX.push({x:u.x,y:u.y-70,txt:"命脈保持",c:"ok",t:1});}else u.hp-=d;
   u.shieldT=0;u.inv=Math.max(u.inv,0.5);u.anim={k:"dmg",t:0};sfx("hurt",u===P?1:0.5);
@@ -2152,17 +2441,17 @@ function ofLoseHp(u,d,st){
 /* --- 専用スキル8種 (only while RUN.kind==="overflow"; added to skillsOf there, never to the trees) --- */
 Object.assign(SKILLS,{
   of_lu_null:{nm:"未来遮断",ab:"遮断",cid:"luarie",type:"of",of:1,cd:45,desc:"生存中の全員に、12秒以内の次の一撃を各自1回だけ無効にする守り",
-    cast(u){for(const v of partyU())v.ofNull=12;WAVES.push({x:u.x,y:u.y,t:0,c:"246,196,69",r:160});}},
+    cast(u){for(const v of supportParty())v.ofNull=12;WAVES.push({x:u.x,y:u.y,t:0,c:"246,196,69",r:160});}},
   of_lu_gray:{nm:"灰時演算",ab:"灰時",cid:"luarie",type:"of",of:1,cd:90,desc:"10秒間、自分以外の戦場（敵・敵弾・予兆・味方）を25%の速さにする",
     cast(u){G.ofSlow={t:10,by:u};G.flash={t:0.35,c:"210,210,210"};}},
   of_ht_cut:{nm:"位相防壁",ab:"防壁",cid:"ht",type:"of",of:1,cd:45,desc:"8秒間、生存中の全員の受けるダメージ60%カット",
-    cast(u){for(const v of partyU())v.ofCut=8;WAVES.push({x:u.x,y:u.y,t:0,c:"63,224,255",r:160});}},
+    cast(u){for(const v of supportParty())v.ofCut=8;WAVES.push({x:u.x,y:u.y,t:0,c:"63,224,255",r:160});}},
   of_ht_guard:{nm:"命脈保持",ab:"命脈",cid:"ht",type:"of",of:1,cd:75,desc:"10秒間、生存中の全員が致死ダメージを1回だけHP10で耐える",
-    cast(u){for(const v of partyU())v.ofGuard=10;WAVES.push({x:u.x,y:u.y,t:0,c:"123,224,160",r:160});}},
+    cast(u){for(const v of supportParty())v.ofGuard=10;WAVES.push({x:u.x,y:u.y,t:0,c:"123,224,160",r:160});}},
   of_ht_regen:{nm:"再生共鳴",ab:"再生",cid:"ht",type:"of",of:1,cd:30,desc:"12秒間、生存中の全員が毎秒最大HPの4%回復",
-    cast(u){for(const v of partyU())v.ofRegen=12;WAVES.push({x:u.x,y:u.y,t:0,c:"123,224,160",r:120});}},
+    cast(u){for(const v of supportParty())v.ofRegen=12;WAVES.push({x:u.x,y:u.y,t:0,c:"123,224,160",r:120});}},
   of_ht_full:{nm:"フルリカバー",ab:"全快",cid:"ht",type:"of",of:1,cd:120,desc:"生存中の全員のHPを全回復（ダウン中の味方は起こせない）",
-    cast(u){for(const v of partyU()){v.hp=statsOf(v.cid,v).hp;FX.push({x:v.x,y:v.y-60,txt:"全回復",c:"ok",t:0.9});}sfx("heal");}},
+    cast(u){for(const v of supportParty()){v.hp=statsOf(v.cid,v).hp;FX.push({x:v.x,y:v.y-60,txt:"全回復",c:"ok",t:0.9});}sfx("heal");}},
   of_mi_evade:{nm:"虚像歩法",ab:"虚像",cid:"mimi",type:"of",of:1,cd:45,desc:"5秒間、自分への攻撃と予兆を完全回避。全体攻撃を避けた瞬間に終了",
     cast(u){u.ofEvade=5;}},
   of_mi_dash:{nm:"流星貫走",ab:"流星",cid:"mimi",type:"of",of:1,cd:12,desc:"着地点を指定して最大280移動。経路上の敵に攻撃力300%（移動中は全体攻撃以外を受けない）",
@@ -2199,8 +2488,8 @@ function ofWanted(u,k){
     if(tl.all)return tl.t<1.2;
     return teleIn(tl,u.x,u.y)&&tl.t<0.6&&!(ofSafeFor(u,tl)||{}).ok&&!(!((u.skcd||{}).of_mi_dash>0)&&ofAutoDash(u));}
   if(k==="of_mi_dash"){if(tl&&!tl.all){if(!teleIn(tl,u.x,u.y)||tl.t>(u.ai?1.4:0.9))return false;const s=ofSafeFor(u,tl);if(s&&s.ok&&u.ai&&tl.t>0.8)return false;}else if(tl)return false;return !!ofAutoDash(u);}
-  if(k==="of_ht_regen")return al.some(v=>v.hp<statsOf(v.cid,v).hp*0.7&&!(v.ofRegen>0));
-  if(k==="of_ht_full")return al.some(v=>v.hp<statsOf(v.cid,v).hp*0.35)||al.filter(v=>v.hp<statsOf(v.cid,v).hp*0.55).length>=2;
+  if(k==="of_ht_regen")return supportParty().some(v=>v.hp<statsOf(v.cid,v).hp*0.7&&!(v.ofRegen>0));
+  if(k==="of_ht_full")return supportParty().some(v=>v.hp<statsOf(v.cid,v).hp*0.35)||supportParty().filter(v=>v.hp<statsOf(v.cid,v).hp*0.55).length>=2;
   if(k==="of_lu_gray")return !!tl&&!tl.all&&tl.t>1.2&&al.some(v=>teleIn(tl,v.x,v.y)&&!(ofSafeFor(v,tl)||{}).ok);
   return false;}
 // allies: getting off a telegraphed floor beats attacking; while one is up they hold still on safe floor (also in "follow" formation)
@@ -2275,6 +2564,7 @@ async function ofStartRun(stage){
   }else OF_STARTING=false;
   if(!S.overflowUnlocked||MODE!==entryMode||OPEN!==entryOpen||RUN!==entryRun||GATE_TAB!==entryTab)return;
   const C=OFC();stage=Math.max(0,Math.min(ofMaxStage(),Math.floor(+stage||0)));
+  supReset();
   RUN={kind:"overflow",stage,wave:0,t:0,heat:{},hpM:1,atkM:1,rewM:1,shards:0,frags:0,gear:0,cores:0,auto:0,paid:false,done:false};
   MODE="dive";OPEN=null;SND.syncUntil=0;FLOOR=C.boss.floor;WW=W;WH=H;HAZ=[];
   P=mkUnit(S.char,WW/2,WH-60,false);ALLIES=CIDS.filter(c=>c!==S.char).map((c,i)=>mkUnit(c,P.x+(i?44:-44),P.y+6,true)); // full HP, every skill ready
@@ -2289,12 +2579,14 @@ function ofWave(n){
     of:{wait:C.copyFirst,et:0,last:-1,ph:0,i:0,lastAll:-1e9,allN:0},ofSlow:null,ofAim:null};
   for(let i=0;i<cnt;i++){const x=cnt===1?WW/2:WW*(0.25+0.25*i),y=boss?140:112+(i%2)*24,e=ofMakeEnemy(id,x,y,boss,i);if(!e.def)continue;EN.push(e);burst(e.x,e.y,e.hue,14);}
   for(const u of [P,...ALLIES]){u.target=null;u.dest=null;u.ofSafe=null;}
+  if(n===1)supMap();else for(const u of SUP)if(u.down)supRevive(u);
   if(boss)sfx("boss");else FX.push({scr:1,x:W/2,y:100,txt:`第${n}波：${ENEMIES[EN[0]?EN[0].t:id].name}×${cnt}`,c:"cyan",t:2.2,big:0});
   markDirty();}
 function ofAfterWave(){
   const C=OFC();if(RUN.wave>=C.waves.length)return ofComplete();
   ofFrag(C.reward.waveFrag);
   for(const u of [P,...ALLIES]){const mx=statsOf(u.cid,u).hp;if(u.down){u.down=false;u.anim=null;u.hp=mx*C.restHeal;}else u.hp=Math.min(mx,u.hp+mx*C.restHeal);u.target=null;u.dest=null;}
+  for(const u of supLiving())u.hp=Math.min(supStats(u).hp,u.hp+supStats(u).hp*C.restHeal);
   P.db={};G.ofAim=null;G.state="rest";G.restT=C.rest;
   FX.push({scr:1,x:W/2,y:H/2-64,txt:"波を退けた ― 休息（HP25%回復・ダウンから復帰）",c:"ok",t:2.2,big:0});markDirty();}
 // rest: cooldowns keep running on normal time; nothing else moves
@@ -2332,7 +2624,7 @@ function ofKill(e){
   else{ofFrag(R.copyFrag);if(Math.random()<C.copy.gear*statsOf(S.char).drop/0.06)ofGear(false);}
   progress("kill",e);markDirty();}
 function ofComplete(){
-  const r=RUN,C=OFC(),R=C.reward;if(!r||r.done)return;r.done=true;G.state="choice"; // paid exactly once
+  const r=RUN,C=OFC(),R=C.reward;if(!r||r.done)return;r.done=true;G.state="choice";supMapEnd(); // paid exactly once
   const first=!(S.ofBest.clears>0);
   gainShards(R.clearShards);addMoney(R.clearMoney);
   if(r.stage>0)ofFrag(r.stage);ofCore((first?R.firstCore:0)+(r.stage>=R.coreFromStage?1:0));
@@ -3568,18 +3860,19 @@ function drawEnemy(e){
   if(e.ail){const ks=Object.keys(e.ail);ks.forEach((k,i)=>drawIcon(k,x-(ks.length-1)*6+i*12,top-9,11));}
 }
 function drawUnitBody(u){
-  const A=u.anim;
+  const A=u.sup&&(u.iai>0||u.parry>0||u.cid==='eirou'&&u.orderT>0)?{k:"atk",t:0}:u.anim;
   if(!A&&u.inv>0&&Math.floor(G.t*20)%2)return;
   const x=u.x,y=u.y,moving=!!(u.dest||u.mv||u.dash);
   const cx=Math.cos(u.ang),sy=Math.sin(u.ang);
   const dir=Math.abs(cx)>Math.abs(sy)?(cx<0?1:2):(sy>0?0:3);
-  const ch=CHARS[u.cid];shadow(x,y,11);ctx.imageSmoothingEnabled=true;
+  const ch=u.sup?supArt(u):CHARS[u.cid];shadow(x,y,11);ctx.imageSmoothingEnabled=true;
   if(A&&ch.aimg.complete&&ch.aimg.naturalWidth){
     const d3=dir===3?2:dir===0?0:1,mir=dir===2&&A.k!=="die"&&A.k!=="joy";let idx;
     if(A.k==="atk")idx=d3*4+Math.min(3,Math.floor(A.t*12.5));
     else if(A.k==="dmg")idx=12+d3*2+(A.t<0.25?0:1);
     else if(A.k==="die")idx=18+Math.min(2,Math.floor(A.t/0.3));
     else idx=21+Math.min(7,Math.floor(A.t/0.2));
+    if(u.sup&&u.cid==='eirou'&&u.orderT>0)idx=({Start:0,Raise:1,Point:2,Command:3,Return:4})[u.orderStage||'Return'];
     ctx.save();ctx.translate(x,y);if(mir)ctx.scale(-1,1);ctx.drawImage(ch.aimg,idx*160,0,160,192,-40,-75,80,96);ctx.restore();return;
   }
   const fr=moving?[0,1,2,1][Math.floor(G.t*8)%4]:1;
@@ -3634,14 +3927,14 @@ function drawDive(){
   if(MARK){ctx.strokeStyle=C[MARK.c];ctx.globalAlpha=MARK.t*2;ctx.lineWidth=2;const r=16-MARK.t*10;ctx.beginPath();ctx.ellipse(MARK.x,MARK.y,r,r*0.45,0,0,7);ctx.stroke();ctx.globalAlpha=1;}
   if(P.dest){ctx.strokeStyle=C.cyan;ctx.lineWidth=1.5;ctx.beginPath();ctx.ellipse(P.dest.x,P.dest.y,6,2.6,0,0,7);ctx.stroke();}
   if(DRAG){ctx.fillStyle="#fff";ctx.globalAlpha=.1;ctx.beginPath();ctx.arc(DRAG.x,DRAG.y,18,0,7);ctx.fill();ctx.globalAlpha=1;}
-  const L=[...(A?ART_VIS:deco).map(d=>({y:d.y,f:()=>drawDeco(d,R)})),...EN.map(e=>({y:e.y,f:()=>drawEnemy(e)})),...[P,...ALLIES].map(u=>({y:u.y,f:()=>drawUnit(u)}))];
+  const L=[...(A?ART_VIS:deco).map(d=>({y:d.y,f:()=>drawDeco(d,R)})),...EN.map(e=>({y:e.y,f:()=>drawEnemy(e)})),...[P,...ALLIES,...supVisible()].map(u=>({y:u.y,f:()=>drawUnit(u)}))];
   L.sort((a,b)=>a.y-b.y).forEach(o=>o.f());
   if(A)drawArtRain(A,true,vx0,vy0,vw,vh); // rain in front of the characters, under shots and particles
   for(const s of SHOTS){const col=CHARS[s.own].col,sy=s.y-26,big=s.own==="mimi";
     ctx.fillStyle=col;ctx.globalAlpha=.35;ctx.beginPath();ctx.arc(s.x,sy,big?10:7,0,7);ctx.fill();
     ctx.globalAlpha=1;ctx.beginPath();ctx.arc(s.x,sy,big?5.5:3.6,0,7);ctx.fill();ctx.fillStyle="#fff";ctx.beginPath();ctx.arc(s.x,sy,big?2.4:1.6,0,7);ctx.fill();
     if(s.own==="ht"){ctx.strokeStyle="rgba(255,79,168,.5)";ctx.beginPath();ctx.moveTo(s.x,sy);ctx.lineTo(s.x-s.vx*0.05,sy-s.vy*0.05);ctx.stroke();}}
-  drawEShots();
+  drawEShots();supDraw();
   // particles returning to the upper world
   for(const p of PARTS){ctx.globalAlpha=Math.min(1,p.l);ctx.fillStyle=`hsl(${p.hue},90%,70%)`;ctx.fillRect(p.x,p.y,p.s,p.s);}ctx.globalAlpha=1;
   for(const w of WAVES){const R2=w.r||70;ctx.strokeStyle=`rgba(${w.c||"63,224,255"},${Math.max(0,1-w.t*2)})`;ctx.lineWidth=3;ctx.beginPath();ctx.ellipse(w.x,w.y,R2*w.t*2,R2*w.t*0.9,0,0,7);ctx.stroke();}
@@ -3689,6 +3982,7 @@ function drawDive(){
   ctx.fillStyle=C.ink;ctx.font="700 10px sans-serif";ctx.fillText(`HP ${fmt(P.hp)}/${fmt(st.hp)}`,136,18);
   let ay=44;for(const a of ALLIES){const sa=statsOf(a.cid);ctx.fillStyle="#2e2942";ctx.fillRect(10,ay,70,5);ctx.fillStyle=a.down?C.danger:CHARS[a.cid].col;ctx.fillRect(10,ay,70*Math.max(0,a.hp)/sa.hp,5);
     ctx.fillStyle=C.muted;ctx.font="9px sans-serif";ctx.fillText(CHARS[a.cid].name+(a.down?"（ダウン）":""),84,ay+5);ay+=10;}
+  supDrawHud();
   drawMinimap();
   if(OFM())drawOfHud();
   for(const pass of [0,1]){ctx.save();if(!pass)applyCam();ctx.textAlign="center";for(const f of FX){if(!!f.scr!==!!pass)continue;ctx.globalAlpha=Math.min(1,f.t*2);ctx.fillStyle=C[f.c]||C.ink;ctx.font=f.big?"26px DotGothic16, monospace":f.big===0?"13px DotGothic16, monospace":"700 12px sans-serif";ctx.fillText(f.txt,f.x,f.y-14);}ctx.globalAlpha=1;ctx.textAlign="left";ctx.restore();}
@@ -3781,6 +4075,7 @@ function syncModeUI(){
     "敵をタップで攻撃（指をすべらせると狙いを次々変更）。何もない所をタップで移動。マップは画面より広い（右上の地図に敵●と粒子◆）。左下のアイコンでスキル（自動でも使う）。各エリアの10層目にボス（3人で戦う）。やられると持ち帰り中の素材を半分なくす。";
 }
 function renderHud(){
+  supRenderBand();
   const c=S.ch[S.char];
   $("num").textContent=fmtMoney(S.n);$("lv").textContent="Lv"+c.lv;$("sp").textContent=spFree(S.char);$("cname").textContent=CHARS[S.char].name;
   $("spdot").hidden=!CIDS.some(k=>spFree(k)>0);$("xpbar").style.width=(100*c.xp/xpNeed(c.lv))+"%";
@@ -3846,6 +4141,7 @@ function renderFac(){
     if(JUKE)h+=`<button class="btn sm" data-juke="" style="margin-top:6px">お店の曲に戻す</button>`;
   }else if(OPEN==="gate"){
     const rl=rushList();
+    h+=supGateHtml();
     h+=`<div class="gtabs" role="tablist">${[["normal","通常探索"],["run","ノイズ・ラン"],["rush","ボスラッシュ"],["overflow","龍脈溢界"]].map(([k,nm])=>`<button role="tab" data-gtab="${k}" aria-selected="${GATE_TAB===k}">${nm}</button>`).join("")}</div>`;
     if(GATE_TAB==="run"){
       const C=MODES.run;
@@ -3901,6 +4197,7 @@ function misCard(m,act){
   return `<div class="mi${done&&act?" done":""}"><div><div class="cl">${esc(m.cl)}${m.free?'<span class="tag" style="color:var(--ok)">無償</span>':""}</div><div class="tx">${esc(m.txt)}</div></div>${rw}
     ${m.sub?`<div class="sub">${esc(m.sub)}</div>`:""}${act?`<div class="prog"><i style="width:${100*m.prog/m.need}%"></i></div>${m.type==="deliver"?`<div class="sub">倉庫 ${stock(m.mat)}/${m.need}</div>`:""}`:""}<div class="act">${btn}</div></div>`;
 }
+$("fac").addEventListener("change",e=>{const d=e.target.dataset;if(d.supmode){S.sup.mode.lumina=e.target.value;save(true);}if(d.suptgt){S.sup.tgt[d.suptgt]=e.target.value;save(true);}});
 $("fac").addEventListener("input",e=>{if(e.target.dataset&&e.target.dataset.npck)npcDebugInput(e.target);}); // ?npcdebug=1 number boxes
 $("fac").addEventListener("click",e=>{
   const b=e.target.closest("button");if(!b||b.disabled)return;const d=b.dataset;
@@ -3909,6 +4206,7 @@ $("fac").addEventListener("click",e=>{
   if(d.talk)npcTalk();
   if(d.talkclose&&TALK){TALK.cur=null;TALK.t=0;markDirty();} // hide the line; the order is kept until leaving the facility
   if(d.juke!==undefined)jukePlay(d.juke||null);
+  if(d.supteam){supContract(d.supteam);}
   if(d.gtab){GATE_TAB=d.gtab;markDirty();}
   if(d.heat){S.heat=S.heat||{};if(S.heat[d.heat])delete S.heat[d.heat];else S.heat[d.heat]=true;markDirty();save(true);}
   if(d.run!==undefined){startRun(+d.run);}
@@ -4134,6 +4432,7 @@ function sanitize(o){
   s.last=+o.last||Date.now();s.char=CIDS.includes(o.char)?o.char:"luarie";s.yog=Math.min(3,Math.max(0,Math.floor(+o.yog||0)));s.auto=typeof o.auto==="boolean"?o.auto:null;s.zoom=typeof o.zoom==="boolean"?o.zoom:null;{const v=o.vol||{},cl=(x,d)=>Number.isFinite(+x)?Math.min(1,Math.max(0,+x)):d;s.vol={bgm:cl(v.bgm,0.6),se:cl(v.se,0.7)};}s.mute=!!o.mute;s.heard=Array.isArray(o.heard)?o.heard.filter(k=>BGM_FILES[k]):[];
   s.shards=Math.max(0,Math.floor(+o.shards||0));s.autoSkill=o.autoSkill!==false;
   s.speed=o.speed===2?2:1;
+  s.sup=supSanitize(o.sup);
   s.ally={};for(const c of CIDS){const a=(o.ally||{})[c]||{},ok=(k,v)=>ALLY_OPT[k].some(x=>x[0]===v);s.ally[c]={tgt:ok("tgt",a.tgt)?a.tgt:"boss",act:ok("act",a.act)?a.act:"bal",pos:ok("pos",a.pos)?a.pos:"follow"};}s.res={};for(const d of MODES.resonance){const v=Math.floor(+(o.res||{})[d.id]||0);if(v>0)s.res[d.id]=Math.min(d.max,v);}
   s.heat={};for(const d of MODES.heat)if((o.heat||{})[d.id])s.heat[d.id]=true;
   s.runBest={};for(const [k,v] of Object.entries(o.runBest||{}))if(v&&+v.seg>0)s.runBest[k]={seg:Math.floor(+v.seg),heat:Math.floor(+v.heat||0)};
