@@ -3855,7 +3855,7 @@ function renderFac(){
     }else{
     h+=`<p class="note">ヨーデル粒子が乱れた特殊空間への入口。各エリアは10層で、10層目にボス。5層を越えると6層目から始められる。深く進むほど歪崩壊が強まる。中でやられると、持ち帰り中の素材を半分なくす。</p>`;
     h+=`<div class="list">`;
-    ZONES.forEach((Z,zi)=>{const f0=zi*10+1,open=S.best>=f0,boss=ENEMIES[Z.bossId];
+    [...ZONES.keys()].reverse().forEach(zi=>{const Z=ZONES[zi];const f0=zi*10+1,open=S.best>=f0,boss=ENEMIES[Z.bossId];
       if(!open){h+=`<div class="note">🔒 ${Z.name}（推奨Lv${Z.recommendedLevel}・第${f0}層に到達すると開く）</div>`;return;}
       const starts=[f0];if(S.best>=f0+5)starts.push(f0+5);
       const ens=Z.enemyPool.map(p=>ENEMIES[p.id]).filter(Boolean).map(d=>d.name).join("・");
