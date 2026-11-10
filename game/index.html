@@ -2076,12 +2076,22 @@ function supRenderBand(){
     if(u){const mx=supStats(u).hp,m=row.querySelector('meter');m.max=mx;m.value=u.hp;status.textContent=`HP ${fmt(u.hp)}/${fmt(mx)} `+(u.expired?'期限切れ':u.join>0?'合流 '+Math.ceil(u.join)+'秒':u.down?'復帰 '+Math.ceil(u.revive)+'秒':'残り約'+Math.ceil(u.credit+(rate?S.n/rate:0))+'秒');}
     else{status.textContent='未出撃';b.disabled=!supCanCall()||S.n<SUP_DEF[id].rate*30;}}
 }
-function supDrawHud(){let y=12;for(const u of SUP){const st=supStats(u),x=240;ctx.fillStyle='rgba(10,8,18,.8)';ctx.fillRect(x-4,y-10,155,27);ctx.font='9px sans-serif';ctx.fillStyle='#bfeaff';ctx.fillText(SUP_DEF[u.cid].name+(u.expired?'（期限切れ）':u.down?'（ダウン）':u.join>0?'（合流中）':''),x,y);ctx.fillStyle='#302642';ctx.fillRect(x,y+4,140,4);ctx.fillStyle=u.down?'#ff4f6b':'#72ddff';ctx.fillRect(x,y+4,140*Math.max(0,u.hp/st.hp),4);y+=29;}}
+function supDrawHud(y){for(const u of SUP){const st=supStats(u),x=10,chips=[],labels={lu_link:'演算',lu_inf:'無限',ht_cheer:'鼓舞',ht_full:'全開'};
+  if(u.cmdShield>0)chips.push('障壁'+Math.ceil(u.cmdShieldT));
+  if(u.shield>0)chips.push('バリア'+fmt(u.shield));
+  for(const [k,n] of [['cmdAtk','攻'],['cmdDef','守'],['cmdSpeed','速'],['aegis','イージス'],['legion','レギオン']])if(u[k]>0)chips.push(n+Math.ceil(u[k]));
+  for(const b of G.pbuf||[])if((!b.cid||b.cid===u.cid)&&b.t>0)chips.push((labels[b.id]||SKILLS[b.id]?.nm||b.id)+Math.ceil(b.t));
+  if(u.down)chips.push('復帰'+Math.ceil(u.revive));
+  ctx.font='700 8px sans-serif';let cx=x;const fit=[];for(const text of chips){const w=ctx.measureText(text).width+8;if(cx+w>161)break;fit.push({text,x:cx,w});cx+=w+3;}
+  const h=fit.length?37:27;ctx.fillStyle='rgba(10,8,18,.8)';ctx.fillRect(x-4,y-10,155,h);ctx.font='9px sans-serif';ctx.fillStyle='#bfeaff';ctx.fillText(SUP_DEF[u.cid].name+(u.expired?'（期限切れ）':u.down?'（ダウン）':u.join>0?'（合流中）':''),x,y);ctx.fillStyle='#302642';ctx.fillRect(x,y+4,140,4);ctx.fillStyle=u.down?'#ff4f6b':'#72ddff';ctx.fillRect(x,y+4,140*Math.max(0,u.hp/st.hp),4);
+  ctx.font='700 8px sans-serif';for(const c of fit){ctx.fillStyle='rgba(255,255,255,.85)';ctx.beginPath();ctx.roundRect?ctx.roundRect(c.x,y+10,c.w,12,4):ctx.rect(c.x,y+10,c.w,12);ctx.fill();ctx.fillStyle='#1a1526';ctx.fillText(c.text,c.x+4,y+19);}y+=h+2;
+}}
 function supDraw(){
+  for(const u of [P,...ALLIES].filter(Boolean)){ctx.fillStyle='#302642';ctx.fillRect(u.x-15,u.y-65,30,3);ctx.fillStyle=u.down?C.danger:CHARS[u.cid].col;ctx.fillRect(u.x-15,u.y-65,30*Math.max(0,u.hp/statsOf(u.cid).hp),3);}
   if(!SUP.length&&!SUP_SHOTS.length&&!SUP_JOBS.length)return;
   for(const s of SUP_SHOTS){ctx.strokeStyle='#72ddff';ctx.lineWidth=s.kind==='rocket'?5:2;ctx.beginPath();ctx.moveTo(s.x-s.vx*0.025,s.y-s.vy*0.025);ctx.lineTo(s.x,s.y);ctx.stroke();}
   for(const j of SUP_JOBS)if(j.kind==='laser'){ctx.strokeStyle='#70dfff';ctx.lineWidth=2;ctx.beginPath();ctx.arc(j.x,j.y,60,0,Math.PI*2);ctx.stroke();if(j.n<10){ctx.fillStyle='rgba(100,220,255,.35)';ctx.fillRect(j.x-12,62,24,Math.max(0,j.y-62));}}
-  for(const u of supVisible()){if(u.cmdShield>0){ctx.strokeStyle='#cba6ff';ctx.beginPath();ctx.ellipse(u.x,u.y-28,20,34,0,0,7);ctx.stroke();}ctx.fillStyle='#72ddff';ctx.font='9px sans-serif';ctx.fillText(u.owner?['A','B','C'][u.owner.guards.indexOf(u)]:'SUP',u.x-10,u.y-68);if(u.owner){ctx.fillStyle='#302642';ctx.fillRect(u.x-15,u.y-65,30,3);ctx.fillStyle='#72ddff';ctx.fillRect(u.x-15,u.y-65,30*Math.max(0,u.hp/supStats(u).hp),3);}
+  for(const u of supVisible()){if(u.cmdShield>0){ctx.strokeStyle='#cba6ff';ctx.beginPath();ctx.ellipse(u.x,u.y-28,20,34,0,0,7);ctx.stroke();}ctx.fillStyle='#72ddff';ctx.font='9px sans-serif';ctx.fillText(u.owner?['A','B','C'][u.owner.guards.indexOf(u)]:'SUP',u.x-10,u.y-68);ctx.fillStyle='#302642';ctx.fillRect(u.x-15,u.y-65,30,3);ctx.fillStyle=u.down?'#ff4f6b':'#72ddff';ctx.fillRect(u.x-15,u.y-65,30*Math.max(0,u.hp/supStats(u).hp),3);
     if(u.cid==='eirou'&&u.orderT>0){ctx.fillStyle='#bfeaff';ctx.fillText(u.orderStage||'Return',u.x-15,u.y-80);}}
   ctx.lineWidth=1;
 }
@@ -3992,7 +4002,7 @@ function drawDive(){
   ctx.fillStyle=C.ink;ctx.font="700 10px sans-serif";ctx.fillText(`HP ${fmt(P.hp)}/${fmt(st.hp)}`,136,18);
   let ay=44;for(const a of ALLIES){const sa=statsOf(a.cid);ctx.fillStyle="#2e2942";ctx.fillRect(10,ay,70,5);ctx.fillStyle=a.down?C.danger:CHARS[a.cid].col;ctx.fillRect(10,ay,70*Math.max(0,a.hp)/sa.hp,5);
     ctx.fillStyle=C.muted;ctx.font="9px sans-serif";ctx.fillText(CHARS[a.cid].name+(a.down?"（ダウン）":""),84,ay+5);ay+=10;}
-  supDrawHud();
+  supDrawHud(Math.max(ay,Object.keys(P.db).length?38:0)+12);
   drawMinimap();
   if(OFM())drawOfHud();
   for(const pass of [0,1]){ctx.save();if(!pass)applyCam();ctx.textAlign="center";for(const f of FX){if(!!f.scr!==!!pass)continue;ctx.globalAlpha=Math.min(1,f.t*2);ctx.fillStyle=C[f.c]||C.ink;ctx.font=f.big?"26px DotGothic16, monospace":f.big===0?"13px DotGothic16, monospace":"700 12px sans-serif";ctx.fillText(f.txt,f.x,f.y-14);}ctx.globalAlpha=1;ctx.textAlign="left";ctx.restore();}
