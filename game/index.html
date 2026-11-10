@@ -354,7 +354,8 @@ textarea{width:100%;box-sizing:border-box;min-height:80px;font-family:ui-monospa
     <div class="slots" id="slots"></div>
     <div class="row" style="margin-top:8px"><button class="btn primary" id="bBest">最強装備にする</button><button class="btn" id="bBestAll">3人まとめて最強装備</button></div>
     <div class="detail" id="detail" hidden style="margin-top:10px"></div>
-    <div class="row" style="justify-content:space-between;margin:14px 0 8px"><h2 style="margin:0">もちもの <span id="invc"></span></h2></div>
+    <div class="row" style="justify-content:space-between;margin:14px 0 8px"><h2 style="margin:0">もちもの <span id="invc"></span></h2><button class="btn sm" id="sellmode">選んで売る</button></div>
+    <div id="sellbar"></div>
     <div class="inv" id="inv"></div>
     <h2 style="margin-top:14px">素材（倉庫）</h2><div class="bag" id="matlist"></div>
     <h2 style="margin-top:14px">ボス戦のサポート</h2>
@@ -823,8 +824,8 @@ function enterTown(fromGate){
   P=mkUnit(S.char,fromGate?g.x-20:300,fromGate?STREET_Y+8:300,false);P.ang=Math.PI/2;
   $("ov").hidden=true;syncModeUI();syncStage();markDirty();
 }
-function enterInterior(id){sfx("door");OPEN=id;JUKE=null;TALK=null;P.dest=null;P.pend=null;P.ang=-Math.PI/2;MARK=null;syncStage();markDirty();}
-function leaveInterior(){OPEN=null;JUKE=null;TALK=null;P.dest=null;P.ang=Math.PI/2;syncStage();markDirty();}
+function enterInterior(id){clearSale();sfx("door");OPEN=id;JUKE=null;TALK=null;P.dest=null;P.pend=null;P.ang=-Math.PI/2;MARK=null;syncStage();markDirty();}
+function leaveInterior(){clearSale();OPEN=null;JUKE=null;TALK=null;P.dest=null;P.ang=Math.PI/2;syncStage();markDirty();}
 function townTap(x,y){
   if(OPEN)leaveInterior(); // tapping the town closes the facility window and carries on as a normal town tap
   const f=FACS.find(f=>x>=f.z[0]&&x<f.z[1]&&y>60&&y<STREET_Y);
@@ -2377,7 +2378,7 @@ function ofSockHtml(it,ow){
     if(c.act==="roll"){const s=socks[c.si],d=s&&OFX[s.effectId];if(d)h+=`<div class="talkbox"><p>再抽選すると「${d.nm} ${fmtOfx(s.effectId,sockVal(s))}」（投入${s.invested}）は消え、龍鱗片「${FRAG_T[d.fr]}」×${s.invested>0?Math.ceil(s.invested/10):0} が戻る。龍脈核を1個使い、今の能力は候補から外れる。</p></div>`;}
     else h+=`<div class="talkbox"><p>「${esc(it.name)}」を分解して 龍鱗片 ${yieldTxt(y)} を受け取る。装備は消える。</p></div>`;
     h+=`<div class="row"><button class="btn sm primary" data-ofyes="1"${dis}>確定する</button><button class="btn sm" data-ofno="1">やめる</button></div>`;}
-  if(canDis)h+=`<button class="btn sm danger" data-ofdis="1"${ow||!town?" disabled":""}>分解する（龍鱗片 ${yieldTxt(y)}）${ow?"：装備中は分解できない":""}</button>`;
+  if(canDis)h+=`<button class="btn sm danger" data-ofdis="1"${ow||!town||it.lock?" disabled":""}>分解する（龍鱗片 ${yieldTxt(y)}）${it.lock?"：🔒ロック中は分解できない":ow?"：装備中は分解できない":""}</button>`;
   return h+`</div>`;}
 function ofSockItem(id,si){if(MODE!=="town"||!S.overflowUnlocked)return null;const it=itemById(id);return it&&it.sockets&&it.sockets[si]?it:null;}
 function ofInvest(id,si,eff,n){const it=ofSockItem(id,si);if(!it)return;const s=it.sockets[si],MAX=OFC().socket.max;
@@ -2393,7 +2394,7 @@ function ofRoll(id,si){const it=ofSockItem(id,si);if(!it)return;const s=it.socke
   bumpStats();markDirty();save(true);sfx("lvup");toast(`能力「${OFX[s.effectId].nm}」が付いた${ref?`（龍鱗片「${FRAG_T[fr]}」×${ref}が戻った）`:""}`);}
 function ofClear(id,si){const it=ofSockItem(id,si);if(!it)return;const s=it.sockets[si];if(!s.effectId)return;const fr=OFX[s.effectId].fr,ref=s.invested>0?Math.ceil(s.invested/10):0;
   S.dragonFragments[fr]+=ref;s.effectId="";s.invested=0;bumpStats();markDirty();save(true);toast(`効果を外した（龍鱗片「${FRAG_T[fr]}」×${ref}が戻った）`);}
-function ofDismantle(id){const it=itemById(id);if(!it||MODE!=="town"||!S.overflowUnlocked||ownerOf(it.id))return;const y=ofYield(it);if(yieldN(y)<=0)return;
+function ofDismantle(id){const it=itemById(id);if(!it||MODE!=="town"||!S.overflowUnlocked||ownerOf(it.id)||it.lock)return;const y=ofYield(it);if(yieldN(y)<=0)return;
   S.inv=S.inv.filter(x=>x!==it);addFrags(y);if(selItem===id)selItem=null;bumpStats();markDirty();save(true);toast(`${it.name}を分解：龍鱗片 ${yieldTxt(y)}`);} // removal + fragments saved together
 
 /* ================= dive drawing ================= */
@@ -3760,6 +3761,25 @@ function claim(m){sfx("coin");
 
 /* ================= DOM render ================= */
 let tab="main",dirty=true,selItem=null,VIEW="luarie";
+let SELL_MODE=false,SELL_IDS=new Set(),SELL_CONFIRM=null,SELL_ALL_CONFIRM=null;
+const canSell=it=>!!it&&!it.lock&&!ownerOf(it.id);
+const saleItems=ids=>S.inv.filter(it=>canSell(it)&&(!ids||ids.has(it.id)));
+const saleTotal=items=>items.reduce((v,it)=>v+sellValue(it),0);
+const saleQuote=items=>({ids:new Set(items.map(it=>it.id)),value:saleTotal(items)});
+function clearSale(){SELL_MODE=false;SELL_IDS.clear();SELL_CONFIRM=null;SELL_ALL_CONFIRM=null;}
+function salePrompt(items,all=false){const locked=S.inv.filter(it=>it.lock).length;
+  return `<div class="talkbox"><p>${items.length}個を ¥${fmtMoney(saleTotal(items))} で売りますか？${all&&locked?`（🔒ロック中の${locked}個は残ります）`:""} 装備中のものは残ります。</p><div class="row"><button class="btn sm danger" data-act="${all?"sellallyes":"selselYes"}">売る</button><button class="btn sm" data-act="${all?"sellallno":"selselNo"}">やめる</button></div></div>`;}
+function sellQuoted(all){const q=all?SELL_ALL_CONFIRM:SELL_CONFIRM;if(!q)return;
+  const items=saleItems(all?null:SELL_IDS),next=saleQuote(items);
+  if(!items.length){toast("売れる装備はない");if(all)SELL_ALL_CONFIRM=null;else SELL_CONFIRM=null;markDirty();return;}
+  if(q.value!==next.value||q.ids.size!==next.ids.size||items.some(it=>!q.ids.has(it.id))){if(all)SELL_ALL_CONFIRM=next;else SELL_CONFIRM=next;toast("対象・金額が変わりました。もう一度確認してください");markDirty();return;}
+  S.inv=S.inv.filter(it=>!next.ids.has(it.id));addMoney(next.value);if(next.ids.has(selItem))selItem=null;
+  clearSale();toast(`${items.length}個を¥${fmtMoney(next.value)}で売った`);markDirty();}
+$("sellmode").onclick=()=>{SELL_MODE=true;SELL_IDS.clear();SELL_CONFIRM=null;markDirty();};
+$("sellbar").addEventListener("click",e=>{const b=e.target.closest("button");if(!b||b.disabled)return;
+  const a=b.dataset.act;if(a==="selcancel")clearSale();
+  if(a==="selconfirm")SELL_CONFIRM=saleQuote(saleItems(SELL_IDS));
+  if(a==="selselYes")sellQuoted(false);if(a==="selselNo")SELL_CONFIRM=null;markDirty();});
 const markDirty=()=>{dirty=true;bumpStats();};
 function syncModeUI(){
   $("townUI").hidden=MODE!=="town";$("diveUI").hidden=MODE!=="dive";const sc=document.querySelector(".sidecol");if(sc)sc.scrollTop=0;
@@ -3811,7 +3831,7 @@ function renderFac(){
     const yp=yogPrice();
     h+=`<div><h2 style="margin-top:6px">ヨーグルト</h2><p class="note">食べると粒子を補充。HPが半分回復し、侵食が消え、同期ゲージが50%たまる。持てるのは3個まで（いま${S.yog}個）。</p></div>
       <button class="btn" data-act="buyyog" data-cost="${yp}" data-block="${S.yog>=3?1:0}">ヨーグルトを買う（¥${fmtMoney(yp)}）</button>
-      <button class="btn sm" data-act="sellcommon">ふつうの装備をまとめて売る</button>`;
+      <button class="btn sm" data-act="sellcommon">白装備を全部売る</button> <button class="btn sm danger" data-act="sellall">全部の装備をまとめて売る</button>${SELL_ALL_CONFIRM?salePrompt(saleItems(),true):""}`;
   }else if(OPEN==="guild"){
     fillBoard();
     h+=`<p class="note">「ヨーデル絡みの困りごとは山ほどあるんです」 受けられる依頼は2件まで。</p>`;
@@ -3907,8 +3927,11 @@ $("fac").addEventListener("click",e=>{
   if(d.sell){const k=d.sell,n=Math.min(+d.n,stock(d.sell)),v=sellMat(k,n);if(v>0)toast(`${MATS[k].nm}×${n}を ¥${fmtMoney(v)} で売った`);markDirty();save(true);}
   if(d.deliver){const m=S.active.find(m=>m.id===+d.deliver);if(m&&stock(m.mat)>=m.need){takeMat(m.mat,m.need);m.prog=m.need;toast(`${MATS[m.mat].nm}を${m.need}個納品した`);claim(m);}}
   if(d.act==="buyyog"){const p=yogPrice();if(S.n>=p&&S.yog<3){S.n-=p;S.yog++;toast("ヨーグルトを買った");markDirty();}}
-  if(d.act==="sellcommon"){let v=0,c=0;const eq=new Set(CIDS.flatMap(k=>Object.values(S.ch[k].eq)));S.inv=S.inv.filter(i=>{if(i.rar==="c"&&!eq.has(i.id)){v+=sellValue(i);c++;return false;}return true;});
+  if(d.act==="sellcommon"){clearSale();let v=0,c=0;const eq=new Set(CIDS.flatMap(k=>Object.values(S.ch[k].eq)));S.inv=S.inv.filter(i=>{if(i.rar==="c"&&!eq.has(i.id)&&!i.lock){v+=sellValue(i);c++;return false;}return true;});
     if(!c)toast("売れる「ふつう」装備はない");else{addMoney(v);toast(`${c}個を¥${fmtMoney(v)}で売った`);}markDirty();}
+  if(d.act==="sellall"){const items=saleItems();if(!items.length)toast("売れる装備はない");else SELL_ALL_CONFIRM=saleQuote(items);markDirty();}
+  if(d.act==="sellallyes"&&OPEN==="shop")sellQuoted(true);
+  if(d.act==="sellallno"){SELL_ALL_CONFIRM=null;markDirty();}
   if(d.act==="reroll"){const rc=+b.dataset.cost;if(S.n>=rc){S.n-=rc;S.board=[];fillBoard();markDirty();}}
   if(d.acc){const m=S.board.find(m=>m.id===+d.acc);if(m&&S.active.length<2){S.active.push(m);S.board=S.board.filter(x=>x!==m);fillBoard();toast(`依頼を受けた：${m.txt}`);markDirty();save(true);}}
   if(d.drop){S.active=S.active.filter(m=>m.id!==+d.drop);markDirty();}
@@ -3917,7 +3940,7 @@ $("fac").addEventListener("click",e=>{
   if(d.start){enterDive(+d.start);}
 });
 function viewSwitch(id){const el=$(id);el.innerHTML=CIDS.map(c=>`<button data-view="${c}" aria-pressed="${c===VIEW}">${CHARS[c].name} Lv${S.ch[c].lv}${spFree(c)>0?` ・SP${spFree(c)}`:""}</button>`).join("");}
-document.addEventListener("click",e=>{const b=e.target.closest("[data-view]");if(b){VIEW=b.dataset.view;selItem=null;markDirty();}});
+document.addEventListener("click",e=>{const b=e.target.closest("[data-view]");if(b){clearSale();VIEW=b.dataset.view;selItem=null;markDirty();}});
 function renderPanels(){
   dirty=false;renderFac();viewSwitch("vsw1");viewSwitch("vsw2");renderOfTog();
   const c=S.ch[VIEW];
@@ -3928,13 +3951,18 @@ function renderPanels(){
   for(const k in SLOTS){const it=itemById(c.eq[k]),d=document.createElement("button");d.className="slot"+(it?" rc-"+it.rar:"");
     d.innerHTML=`<div class="k">${SLOTS[k].nm}</div><div class="v" style="color:var(--rc,var(--muted))">${it?esc(it.name)+(it.plus?" +"+it.plus:""):"なし"}</div>`;
     d.onclick=()=>{if(it){selItem=it.id;markDirty();}};slots.appendChild(d);}
+  for(const id of SELL_IDS)if(!canSell(itemById(id)))SELL_IDS.delete(id);
+  const selected=saleItems(SELL_IDS);
+  $("sellmode").hidden=SELL_MODE;
+  $("sellbar").innerHTML=SELL_MODE?`<div class="note">売る装備をタップして選択（🔒ロック中・装備中は選べません）</div><div class="row"><b>${selected.length}個 ・ 合計 ¥${fmtMoney(saleTotal(selected))}</b><button class="btn sm danger" data-act="selconfirm" ${!selected.length?"disabled":""}>選んだものを売る</button><button class="btn sm" data-act="selcancel">やめる</button></div>${SELL_CONFIRM?salePrompt(selected):""}`:"";
   const inv=$("inv");inv.innerHTML="";$("invc").textContent=`${S.inv.length}/${INV_MAX}`;
   const order={l:0,e:1,r:2,c:3};
   [...S.inv].sort((a,b)=>order[a.rar]-order[b.rar]||b.lvl-a.lvl).forEach(it=>{
     const ow=ownerOf(it.id),b=document.createElement("button");b.className=`gi rc-${it.rar}${ow?" eq":""}${selItem===it.id?" sel":""}`;
     const sk=it.sockets&&it.sockets.length?" "+it.sockets.map(x=>x.effectId?"◆":"◇").join(""):"";
-    b.innerHTML=`<div class="t">${it.sp?"★":""}${esc(it.name)}${it.plus?" +"+it.plus:""}${sk}</div><div class="s">${SLOTS[it.slot].nm} ・ Lv${it.lvl}${ow?" ・ "+CHARS[ow].name+"が装備中":""}</div>`;
-    b.onclick=()=>{selItem=it.id;markDirty();};inv.appendChild(b);});
+    if(SELL_MODE){b.disabled=!canSell(it);b.setAttribute("aria-pressed",SELL_IDS.has(it.id));if(b.disabled)b.style.opacity="0.5";}
+    b.innerHTML=`<div class="t">${SELL_MODE?(SELL_IDS.has(it.id)?"☑ ":"☐ "):""}${it.lock?"🔒 ":""}${it.sp?"★":""}${esc(it.name)}${it.plus?" +"+it.plus:""}${sk}</div><div class="s">${SLOTS[it.slot].nm} ・ Lv${it.lvl}${ow?" ・ "+CHARS[ow].name+"が装備中":""}</div>`;
+    b.onclick=()=>{if(SELL_MODE){if(!canSell(it))return;if(SELL_IDS.has(it.id))SELL_IDS.delete(it.id);else SELL_IDS.add(it.id);SELL_CONFIRM=null;}else selItem=it.id;markDirty();};inv.appendChild(b);});
   if(!document.activeElement||!document.activeElement.closest||!document.activeElement.closest("#allyset"))
     $("allyset").innerHTML=CIDS.map(c=>{const cfg=allyCfg(c),me=c===S.char;return `<div class="ally-row${me?" me":""}"><b>${CHARS[c].name}</b>${me?'<span class="note">いま主人公（サポートのときに使う設定）</span>':""}
       ${Object.entries({tgt:"狙い",act:"行動",pos:"位置"}).map(([k,lab])=>`<label>${lab}<select data-cid="${c}" data-k="${k}">${ALLY_OPT[k].map(([v,nm])=>`<option value="${v}"${cfg[k]===v?" selected":""}>${nm}</option>`).join("")}</select></label>`).join("")}
@@ -3948,13 +3976,15 @@ function renderPanels(){
     const cur=itemById(c.eq[it.slot]);
     const lines=Object.keys(it.st).map(k=>{const v=ist(it,k),cvv=cur&&cur!==it?ist(cur,k):null,pct=k==="crit"||k==="gain";
       const diff=cvv!==null?v-cvv:null;return `<div class="note">${STN[k]} +${pct?v.toFixed(1)+"%":fmt(v)}${diff!==null?` <span style="color:${diff>=0?"var(--ok)":"var(--danger)"}">(${diff>=0?"+":""}${pct?diff.toFixed(1):Math.round(diff)})</span>`:""}</div>`;}).join("");
-    det.innerHTML=`<div class="t">${RAR[it.rar].nm}　${esc(it.name)}${it.plus?" +"+it.plus:""}</div><div class="note">${SLOTS[it.slot].nm} ・ Lv${it.lvl}${ow?` ・ ${CHARS[ow].name}が装備中`:""}</div>${lines}${it.sp?`<div class="note" style="color:var(--gold)">特殊：${GSP[it.sp]}</div>`:""}
+    det.innerHTML=`<div class="t">${it.lock?"🔒 ":""}${RAR[it.rar].nm}　${esc(it.name)}${it.plus?" +"+it.plus:""}</div><div class="note">${SLOTS[it.slot].nm} ・ Lv${it.lvl}${ow?` ・ ${CHARS[ow].name}が装備中`:""}</div>${lines}${it.sp?`<div class="note" style="color:var(--gold)">特殊：${GSP[it.sp]}</div>`:""}
       <div class="row" style="margin-top:4px"><button class="btn primary" id="equip" ${mine?"disabled":""}>${mine?"装備中":CHARS[VIEW].name+"が装備する"}</button>
       <button class="btn" id="enh" data-cost="${enhCost(it)}" data-block="${it.plus>=10?1:0}">強化 +${it.plus+1}（¥${fmtMoney(enhCost(it))}）</button>
-      <button class="btn danger" id="sell" ${ow?"disabled":""}>売る（¥${fmtMoney(sellValue(it))}）</button></div>`;
+      <button class="btn" id="itemlock">${it.lock?"🔒 ロック中（タップで解除）":"🔓 ロックする"}</button>
+      <button class="btn danger" id="sell" ${ow||it.lock?"disabled":""}>${it.lock?"🔒ロック中は売れない":`売る（¥${fmtMoney(sellValue(it))}）`}</button></div>`;
     $("equip").onclick=()=>{for(const k of CIDS)if(S.ch[k].eq[it.slot]===it.id)S.ch[k].eq[it.slot]=null;c.eq[it.slot]=it.id;markDirty();};
     $("enh").onclick=()=>{const cc=enhCost(it);if(S.n<cc||it.plus>=10)return;S.n-=cc;it.plus++;toast(`${it.name} +${it.plus} に強化`);markDirty();};
-    $("sell").onclick=()=>{addMoney(sellValue(it));S.inv=S.inv.filter(x=>x!==it);selItem=null;markDirty();};
+    $("itemlock").onclick=()=>{it.lock=it.lock?undefined:true;OF_CONFIRM=null;SELL_CONFIRM=null;markDirty();};
+    $("sell").onclick=()=>{if(!canSell(it))return;clearSale();addMoney(sellValue(it));S.inv=S.inv.filter(x=>x!==it);selItem=null;markDirty();};
     det.insertAdjacentHTML("beforeend",ofSockHtml(it,ow));
   }
   renderHud();
@@ -4128,7 +4158,7 @@ function sanitize(o){
   for(const k of OF_SK)if((o.ofAuto||{})[k]===false)s.ofAuto[k]=false;
   for(const p of PRODUCERS)s.own[p.id]=Math.max(0,Math.floor(+(o.own||{})[p.id]||0));
   if(Array.isArray(o.inv))s.inv=o.inv.filter(i=>i&&SLOTS[i.slot]&&RAR[i.rar]&&i.st).slice(0,INV_MAX).map(i=>({id:+i.id,slot:i.slot,rar:i.rar,name:String(i.name).slice(0,30),sp:GSP[i.sp]?i.sp:undefined,lvl:Math.max(1,+i.lvl||1),plus:Math.min(10,Math.max(0,+i.plus||0)),st:Object.fromEntries(Object.entries(i.st).filter(([k])=>STN[k]).map(([k,v])=>[k,+v||0])),
-    source:i.source==="overflow"?"overflow":undefined,sockets:sanSock(i.sockets)}));
+    lock:i.lock?true:undefined,source:i.source==="overflow"?"overflow":undefined,sockets:sanSock(i.sockets)}));
   if(o.ch){for(const c of CIDS)s.ch[c]=sanCh(o.ch[c],c);}
   else{ // old single-character save: carry level & gear over, refund skill points (the tree changed)
     const c=sanCh({lv:o.lv,xp:o.xp,eq:o.eq,sk:o.sk||{}},s.char);s.ch[s.char]=c;}
@@ -4149,7 +4179,7 @@ const decode=t=>JSON.parse(decodeURIComponent(escape(atob(t.trim()))));
 
 /* ================= wiring ================= */
 document.querySelectorAll(".tabs button").forEach(b=>b.onclick=()=>{
-  tab=b.dataset.t;document.querySelectorAll(".tabs button").forEach(x=>x.setAttribute("aria-selected",x===b));
+  clearSale();tab=b.dataset.t;document.querySelectorAll(".tabs button").forEach(x=>x.setAttribute("aria-selected",x===b));
   for(const t of["main","skill","gear","save"])$("p-"+t).hidden=t!==tab;if(tab!=="main")VIEW=VIEW||S.char;markDirty();});
 $("p-main").addEventListener("contextmenu",e=>e.preventDefault());
 document.addEventListener("selectstart",e=>{if(e.target.tagName!=="TEXTAREA")e.preventDefault();});
