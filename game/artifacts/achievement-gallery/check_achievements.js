@@ -121,16 +121,16 @@ async function run() {
     const first=page.locator('[data-gallery-open="g_ar01"]');
     await first.getByText("NEW").waitFor();
     await page.waitForFunction(() => Boolean(document.querySelector('[data-gallery-open="g_ar01"] img')?.naturalWidth));
-    assert.ok(requests.includes("/gallery/thumb/g_ar01.webp"));
-    assert.ok(!requests.includes("/gallery/g_ar01.webp"));
+    assert.ok(requests.includes("/gallery/thumb/g_ar01kv.webp"));
+    assert.ok(!requests.includes("/gallery/g_ar01kv.webp"));
     await page.screenshot({ path: png("album") });
     await first.click();
     await page.waitForFunction(() => $("galleryDialog").open && $("galleryFull").naturalWidth > 0);
     assert.equal(await page.locator("#galleryUnlock").innerText(),"下層スラム制覇");
-    assert.equal(await page.evaluate(() => S.gallerySeen.g_ar01), "gallery/g_ar01.webp");
+    assert.equal(await page.evaluate(() => S.gallerySeen.g_ar01), "gallery/g_ar01kv.webp");
     await page.screenshot({ path: png("gallery-full") });
     await page.keyboard.press("ArrowRight");
-    assert.equal(await page.evaluate(() => S.gallerySeen.g_ar02), "gallery/g_ar02.webp");
+    assert.equal(await page.evaluate(() => S.gallerySeen.g_ar02), "gallery/g_ar02kv.webp");
     await page.keyboard.press("Escape");
     await page.locator("#galleryDialog").waitFor({ state: "hidden" });
     assert.equal(await first.getByText("NEW").count(), 0);
@@ -162,7 +162,7 @@ async function run() {
         keys:S.keys, saved:JSON.parse(localStorage.getItem(KEY)).gallerySeen.g_ar01 };
     });
     assert.deepEqual(full,{count:50,claimed:50,title:"t_c7",oneTreeTitle:1,allGallery:true,goldFrame:true,titleBg:"2",
-      keys:{1:999,2:1,3:2,4:1,5:2},saved:"gallery/g_ar01.webp"});
+      keys:{1:999,2:1,3:2,4:1,5:2},saved:"gallery/g_ar01kv.webp"});
     await page.close();
     assert.deepEqual(errors,[]);
     console.log("PASS achievements, legacy migration, rewards, title, trophies, gallery states, assets and modal (0 page errors)");
