@@ -295,6 +295,60 @@ textarea{width:100%;box-sizing:border-box;min-height:80px;font-family:ui-monospa
   .divebar{gap:6px}.divebar .btn{min-height:38px;padding:6px 8px;font-size:.8rem}
 }
 @media (prefers-reduced-motion:reduce){.toast{transition:none}.syncbtn.ready{animation:none}}
+.ach-title{font-weight:700;font-family:var(--f-body);font-size:.86rem}
+.ach-title-white{color:#f8f4ff}
+.ach-title-blue{color:#76dfff}
+.ach-title-purple{color:#d2a6ff}
+.ach-title-gold,.ach-gold-name{color:#ffd774!important}
+.ach-title-rainbow{color:#ffe1a0;background:linear-gradient(100deg,#ff9fcd,#ffde91,#83f5ff,#d3b2ff);background-clip:text;-webkit-text-fill-color:transparent}
+#hudAch:not(:empty){display:block;line-height:1.25;margin-top:3px}
+.ach-gold-frame .hud{outline:1px solid #cda951;outline-offset:3px;border-radius:8px}
+#title::before{content:"";position:absolute;inset:0;z-index:1;pointer-events:none}
+#title .tt-in{z-index:2}
+#title[data-ach-bg="1"]::before{background:radial-gradient(ellipse at 50% 70%,#158a8770,transparent 58%),linear-gradient(#040a1cdd,#100a26a0)}
+#title[data-ach-bg="2"]::before{background:radial-gradient(ellipse at 42% 47%,transparent 24%,#ff51a84a 31%,transparent 38%),radial-gradient(ellipse at 58% 55%,transparent 25%,#49dfff55 34%,transparent 41%),radial-gradient(ellipse at 50% 41%,transparent 23%,#ffd46655 32%,transparent 44%),#0807198c}
+#townUI[data-home-tint="1"]{background-image:linear-gradient(#ff835312,#ff835307)}
+#townUI[data-home-tint="2"]{background-image:linear-gradient(#ffcb5125,#ffcb5108)}
+#vig[data-k="home"][data-home-tint="1"] #vigimg{filter:sepia(.22) saturate(1.13)}
+#vig[data-k="home"][data-home-tint="2"] #vigimg{filter:sepia(.42) saturate(1.24)}
+.home-ach-actions{margin-block:10px}
+.ach-badge{display:inline-block;vertical-align:middle;background:#ffd774;color:#201527;border-radius:6px;padding:2px 6px;font-size:.69rem;font-weight:700;white-space:nowrap}
+.ach-view{display:grid;gap:12px;margin-top:12px}
+.ach-view h4,.ach-view h5,.ach-view p,.ach-view figure{margin:0}
+.ach-view h4{font-size:1rem}
+.ach-view h4 small,.ach-view h5{color:var(--muted)}
+.ach-view .row{justify-content:space-between;flex-wrap:wrap}
+.ach-view select{max-width:100%;color:var(--ink);background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:5px}
+.ach-view summary{cursor:pointer;color:var(--cyan)}
+.ach-trophies{display:grid;grid-template-columns:repeat(auto-fit,minmax(88px,1fr));gap:6px}
+.ach-trophies figure{text-align:center;padding:6px 3px;border:1px solid var(--line);border-radius:8px;background:radial-gradient(ellipse at center,#2e2443,#171223);font-size:.7rem}
+.ach-trophy-sprite{width:60px;height:60px;margin:auto;background:var(--sprite) left top / auto 100% no-repeat}
+.ach-trophies .locked .ach-trophy-sprite{filter:brightness(0) drop-shadow(0 0 2px #7863a2)}
+.ach-key-table{width:100%;border-collapse:collapse;font-size:.72rem;margin-top:6px}
+.ach-key-table th,.ach-key-table td{padding:5px;border-bottom:1px solid var(--line);text-align:left}
+.ach-view section h5{margin-top:8px}
+.ach-list{display:grid;gap:6px;list-style:none;margin:5px 0 0;padding:0}
+.ach-list li{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:8px;border:1px solid var(--line);border-radius:8px;background:#100e19}
+.ach-list li small{color:var(--muted)}
+.ach-list button{flex-shrink:0}
+.ach-reward{color:#f1ca83;font-size:.74rem}
+.gallery-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(135px,45%),1fr));gap:8px}
+.gallery-card{display:flex;flex-direction:column;overflow:hidden;gap:4px;padding:5px 5px 8px;text-align:left;font:inherit;color:var(--ink);background:#171222;border:1px solid var(--line);border-radius:9px;min-width:0}
+button.gallery-card{cursor:pointer}
+button.gallery-card:hover,button.gallery-card:focus-visible{outline:1px solid var(--cyan)}
+.gallery-card b,.gallery-card small{padding-inline:3px;font-size:.76rem}
+.gallery-card small{color:var(--muted)}
+.gallery-card.bronze{border-color:#a87959}.gallery-card.silver{border-color:#abbcd5}.gallery-card.gold{border-color:#e7b74e}.gallery-card.extreme{border-color:#c488ff}
+.gallery-thumb{display:grid;place-items:center;position:relative;aspect-ratio:16/9;width:100%;overflow:hidden;border-radius:5px;font-size:.76rem;color:#d4c9ed;background:repeating-linear-gradient(0deg,#7b6a9c12 0 1px,transparent 1px 4px),linear-gradient(137deg,#30243d,#100f19 52%,#242138)}
+.gallery-thumb.locked{background:radial-gradient(ellipse at 50% 65%,#08060f 28%,transparent 55%),#191525}
+.gallery-thumb img{width:100%;height:100%;object-fit:cover;position:absolute;inset:0}
+.gallery-thumb .ach-badge{position:absolute;right:4px;top:4px}
+.ach-view .gtabs button[aria-pressed="true"]{color:var(--cyan);border-color:var(--cyan)}
+#galleryDialog{position:fixed;inset:0;margin:auto;max-width:96vw;max-height:96dvh;padding:0;border:0;background:transparent;color:var(--ink);overflow:auto}
+#galleryDialog::backdrop{background:#07050dec}
+.gallery-full-panel{display:grid;gap:8px;justify-items:center;text-align:center;max-width:96vw;padding:10px;background:#151120;border:1px solid #44365d;border-radius:12px}
+.gallery-full-panel h2,.gallery-full-panel p{margin:0}
+#galleryFull{display:block;max-width:100%;max-height:70dvh;object-fit:contain}
 </style>
 </head>
 <body>
@@ -303,7 +357,7 @@ textarea{width:100%;box-sizing:border-box;min-height:80px;font-family:ui-monospa
 <div class="wrap">
   <div class="top">
     <div class="hud">
-      <div class="money">¥<span id="num">0</span><small id="rateTop"></small></div>
+      <div class="money">¥<span id="num">0</span><small id="rateTop"></small><div id="hudAch"></div></div>
       <button class="btn sm fullbtn" id="bFull" hidden aria-label="全画面">⛶</button><button class="btn sm fullbtn" id="bMute" aria-label="音を消す" aria-pressed="false">♪</button><div class="lv"><span id="cname">ルアリエ</span> <b id="lv">Lv1</b> ・ SP <b id="sp">0</b><div class="bar"><i id="xpbar"></i></div></div>
     </div>
     <div class="tabs" role="tablist">
@@ -407,10 +461,25 @@ textarea{width:100%;box-sizing:border-box;min-height:80px;font-family:ui-monospa
     <div class="tt-sub">ノイズダイブ</div>
     <div class="tt-chars"><i style="--s:url(sprites/walk_luarie.png)"></i><i style="--s:url(sprites/walk_ht.png)"></i><i style="--s:url(sprites/walk_mimi.png)"></i></div>
     <button class="btn tt-go" id="ttGo">タップしてスタート</button>
+    <div id="titleAch"></div>
     <p class="tt-note" id="ttNote">音が出ます</p>
   </div>
 </div>
 
+<dialog id="galleryDialog" aria-labelledby="galleryFullTitle">
+  <article class="gallery-full-panel">
+    <h2 id="galleryFullTitle"></h2>
+    <img id="galleryFull" alt="">
+    <p id="galleryCaption"></p>
+    <small id="galleryUnlock" class="note"></small>
+    <small id="galleryCredit" class="note"></small>
+    <div class="row">
+      <button class="btn sm" id="galleryPrev">← 前へ</button>
+      <button class="btn sm" id="galleryClose" autofocus>閉じる</button>
+      <button class="btn sm" id="galleryNext">次へ →</button>
+    </div>
+  </article>
+</dialog>
 <script>
 /* ================= data ================= */
 const KEY="3sync-save-v1",OLDKEY="donguri-save-v2";
@@ -602,12 +671,19 @@ const zoneOf=f=>ZONES[zoneIdx(f)];
 const floorIn=f=>((f-1)%10)+1;
 async function loadData(){
   const get=p=>fetch(p,{cache:"no-cache"}).then(r=>{if(!r.ok)throw new Error(p+" "+r.status);return r.json();});
+  const album=get("data/gallery.json").then(d=>{
+    if(!Array.isArray(d))throw new Error("Invalid album data");
+    return d.filter(g=>g&&/^g_[a-z0-9]+$/.test(g.id)&&Object.hasOwn(GALLERY_CATS,g.cat)&&
+      Number.isFinite(g.order)&&typeof g.title==="string"&&typeof g.hint==="string"&&g.unlock&&
+      typeof g.img==="string"&&typeof g.thumb==="string").sort((a,b)=>a.order-b.order);
+  }).catch(err=>{console.warn("gallery.json",err);return [];});
   const [en,mp,mt]=await Promise.all([get("data/enemies.json"),get("data/maps.json"),get("data/materials.json")]);
   for(const m of mt.materials)MATS[m.id]={nm:m.name,base:m.price,zone:m.zone,boss:!!m.boss};
   for(const e of en.enemies){ENEMIES[e.id]=e;if(e.missionOnly)SPECIAL[e.id]={nm:e.name,minF:e.minFloor||1,desc:e.desc||""};}
   ZONES=mp.zones;BGS=mp.backgrounds||{};
   for(const k in BG_ART)if(BGS[k]){BGS[k].art=BG_ART[k];} // map-art settings (configured zones)
   try{const md=await get("data/modes.json");MODES={...MODES,...md};}catch(err){console.warn("modes.json",err);}
+  galleryItems=await album;
   MODES.overflow={...OF_DEF,...(MODES.overflow||{})};
   MODES.key={...KEY_DEF,...(MODES.key||{})};
   try{const d=await get("data/npcs.json");
@@ -643,7 +719,7 @@ const CLIENTS=["ヨーデル管理庁","下層商店会","ラーメン屋の店�
 const FREECLIENTS=["迷子の子ども","近所のおばあちゃん","野良猫たち","屋台のおじさん"];
 
 const freshCh=()=>({lv:1,xp:0,spx:0,eq:{w:null,h:null,c:null},nodes:{},builds:Array.from({length:5},(_,i)=>({nm:"ビルド"+(i+1),nodes:null}))});
-const fresh=()=>({keys:{1:0,2:0,3:0,4:0,5:0},chips:0,keyClr:{nr:[false,false,false,false,false],br:[false,false,false,false,false]},nrBest:{},n:0,total:0,own:{},ch:{luarie:freshCh(),ht:freshCh(),mimi:freshCh()},inv:[],best:1,uid:1,mid:1,char:"luarie",
+const fresh=()=>({achClaimed:{},achKnown:{},titleEq:null,gallerySeen:{},keys:{1:0,2:0,3:0,4:0,5:0},chips:0,keyClr:{nr:[false,false,false,false,false],br:[false,false,false,false,false]},nrBest:{},n:0,total:0,own:{},ch:{luarie:freshCh(),ht:freshCh(),mimi:freshCh()},inv:[],best:1,uid:1,mid:1,char:"luarie",
   bag:{},mats:{},yog:1,board:[],active:[],auto:null,zoom:null,speed:1,vol:{bgm:0.6,se:0.7},mute:false,heard:[],shards:0,res:{},heat:{},runBest:{},rushBest:null,overflowUnlocked:false,ofBest:{top:-1,clears:0,t:0},dragonFragments:{atk:0,hp:0,range:0,speed:0,crit:0},ofAuto:{},ally:{},sup:{team:[],mode:{lumina:"free"},tgt:{lumina:"boss",shion:"boss",eirou:"boss"},stat:{paid:0,sec:0}},autoSkill:true,last:Date.now(),intro:false,ver:2});
 let S=fresh();
 
@@ -722,7 +798,7 @@ function perSec(){if(livePaused())return 0;const base=PRODUCERS.reduce((a,p)=>a+
 const xpNeed=lv=>Math.floor(10*Math.pow(1.28,lv-1));
 function addMoney(x){S.n+=x;S.total+=Math.max(0,x);}
 function addXp(cid,x){const c=S.ch[cid];c.xp+=x;let up=false;while(c.xp>=xpNeed(c.lv)){c.xp-=xpNeed(c.lv);c.lv++;up=true;}
-  if(up){sfx("lvup");log(`${CHARS[cid].name} Lv${c.lv}${(c.lv-1)*CFG.SP_PER_LV<=CFG.SP_LV_CAP?"（SP +1）":""}`);bumpStats();
+  if(up){scanAchievements();sfx("lvup");log(`${CHARS[cid].name} Lv${c.lv}${(c.lv-1)*CFG.SP_PER_LV<=CFG.SP_LV_CAP?"（SP +1）":""}`);bumpStats();
     const u=[P,...ALLIES].find(u=>u&&u.cid===cid);if(u&&!u.down)u.hp=statsOf(cid,u).hp;markDirty();}}
 // explorer 100%, live members 30% (100% when fighting the boss together), with catch-up for those far behind
 function shareXp(x){x*=1+resV("xp")/100;
@@ -758,7 +834,7 @@ function gainItem(it){
   const c=S.ch[S.char];if(!c.eq[it.slot])c.eq[it.slot]=it.id;
   markDirty();
 }
-function addMat(k,f,n=1){const v=MATS[k].base*Math.pow(1.17,f-1)*n;const b=S.bag[k]||(S.bag[k]={n:0,v:0});b.n+=n;b.v+=v;}
+function addMat(k,f,n=1,storage=S.bag){const v=MATS[k].base*Math.pow(1.17,f-1)*n;const b=storage[k]||(storage[k]={n:0,v:0});b.n+=n;b.v+=v;}
 const bagValue=()=>Object.values(S.bag).reduce((a,b)=>a+b.v,0)*statsOf(S.char).gain;
 // materials brought home go into storage: keep them, deliver them for requests, or sell any amount
 const stock=k=>S.mats[k]?S.mats[k].n:0;
@@ -843,7 +919,7 @@ function enterTown(fromGate){
   P=mkUnit(S.char,fromGate?g.x-20:300,fromGate?STREET_Y+8:300,false);P.ang=Math.PI/2;
   $("ov").hidden=true;syncModeUI();syncStage();markDirty();
 }
-function enterInterior(id){clearSale();sfx("door");OPEN=id;JUKE=null;TALK=null;P.dest=null;P.pend=null;P.ang=-Math.PI/2;MARK=null;syncStage();markDirty();}
+function enterInterior(id){homeView="";clearSale();sfx("door");OPEN=id;JUKE=null;TALK=null;P.dest=null;P.pend=null;P.ang=-Math.PI/2;MARK=null;syncStage();markDirty();}
 function leaveInterior(){clearSale();OPEN=null;JUKE=null;TALK=null;P.dest=null;P.ang=Math.PI/2;syncStage();markDirty();}
 function townTap(x,y){
   if(OPEN)leaveInterior(); // tapping the town closes the facility window and carries on as a normal town tap
@@ -1799,7 +1875,7 @@ function updateDive(dt){
   }
 }
 function floorChoice(){
-  const next=FLOOR+1,wasBest=S.best;S.best=Math.max(S.best,next);const Zn=zoneOf(next),newZone=zoneIdx(next)!==zoneIdx(FLOOR)&&next>wasBest,fi=floorIn(FLOOR);
+  const next=FLOOR+1,wasBest=S.best;S.best=Math.max(S.best,next);if(S.best>wasBest)scanAchievements();const Zn=zoneOf(next),newZone=zoneIdx(next)!==zoneIdx(FLOOR)&&next>wasBest,fi=floorIn(FLOOR);
   let s=`持ち帰り中の素材の価値 約¥${fmtMoney(bagValue())}。帰還すると倉庫に入る。`;
   if(fi===5)s+=` ゲートから第${next}層に直接来られるようになった。`;
   if(fi===9)s+=` 次の層はボス「${ENEMIES[zoneOf(next).bossId].name}」。3人で戦う。`;
@@ -2636,7 +2712,7 @@ function ofPanelAt(sx,sy){const rows=ofRows();for(let i=0;i<rows.length;i++){con
 function drawOfPanel(){
   ofRows().forEach((r,i)=>{const y=OFP.y+i*(OFP.bh+OFP.rg),dn=!r.u||r.u.down;
     ctx.fillStyle="rgba(10,8,18,.72)";ctx.fillRect(OFP.x-3,y-1,OFP.lw+r.ks.length*(OFP.bw+OFP.g)+3,OFP.bh+2);
-    ctx.fillStyle=dn?"#5d5772":CHARS[r.cid].col;ctx.font="9px DotGothic16, monospace";ctx.textAlign="left";ctx.fillText({luarie:"ルア",ht:"えー",mimi:"ミミ"}[r.cid],OFP.x+1,y+13);
+    ctx.fillStyle=dn?"#5d5772":hasGoldName(r.cid)?"#ffd774":CHARS[r.cid].col;ctx.font="9px DotGothic16, monospace";ctx.textAlign="left";ctx.fillText({luarie:"ルア",ht:"えー",mimi:"ミミ"}[r.cid],OFP.x+1,y+13);
     r.ks.forEach((k,j)=>{const d=SKILLS[k],x=OFP.x+OFP.lw+j*(OFP.bw+OFP.g),left=r.u&&r.u.skcd?r.u.skcd[k]||0:0,aim=G.ofAim&&k==="of_mi_dash";
       ctx.fillStyle=aim?"rgba(63,224,255,.45)":"rgba(63,224,255,.16)";ctx.fillRect(x,y,OFP.bw,OFP.bh);
       if(left>0){ctx.fillStyle="rgba(0,0,0,.62)";ctx.fillRect(x,y,OFP.bw,OFP.bh*Math.min(1,left/d.cd));}
@@ -3984,7 +4060,7 @@ function drawUnitBody(u){
   const x=u.x,y=u.y,moving=!!(u.dest||u.mv||u.dash);
   const cx=Math.cos(u.ang),sy=Math.sin(u.ang);
   const dir=Math.abs(cx)>Math.abs(sy)?(cx<0?1:2):(sy>0?0:3);
-  const ch=u.sup?supArt(u):CHARS[u.cid];shadow(x,y,11);ctx.imageSmoothingEnabled=true;
+  const ch=u.sup?supArt(u):CHARS[u.cid];shadow(x,y,11);drawAchAura(u);ctx.imageSmoothingEnabled=true;
   if(A&&ch.aimg.complete&&ch.aimg.naturalWidth){
     const d3=dir===3?2:dir===0?0:1,mir=dir===2&&A.k!=="die"&&A.k!=="joy";let idx;
     if(A.k==="atk")idx=d3*4+Math.min(3,Math.floor(A.t*12.5));
@@ -4100,7 +4176,7 @@ function drawDive(){
   const st=statsOf(P.cid);ctx.fillStyle="#2e2942";ctx.fillRect(10,10,120,8);ctx.fillStyle=C.ok;ctx.fillRect(10,10,120*P.hp/st.hp,8);
   ctx.fillStyle=C.ink;ctx.font="700 10px sans-serif";ctx.fillText(`HP ${fmt(P.hp)}/${fmt(st.hp)}`,136,18);
   let ay=44;for(const a of ALLIES){const sa=statsOf(a.cid);ctx.fillStyle="#2e2942";ctx.fillRect(10,ay,70,5);ctx.fillStyle=a.down?C.danger:CHARS[a.cid].col;ctx.fillRect(10,ay,70*Math.max(0,a.hp)/sa.hp,5);
-    ctx.fillStyle=C.muted;ctx.font="9px sans-serif";ctx.fillText(CHARS[a.cid].name+(a.down?"（ダウン）":""),84,ay+5);ay+=10;}
+    ctx.fillStyle=hasGoldName(a.cid)?"#ffd774":C.muted;ctx.font="9px sans-serif";ctx.fillText(CHARS[a.cid].name+(a.down?"（ダウン）":""),84,ay+5);ay+=10;}
   supDrawHud(Math.max(ay,Object.keys(P.db).length?38:0)+12);
   drawMinimap();
   if(OFM())drawOfHud();
@@ -4215,7 +4291,7 @@ function syncModeUI(){
 function renderHud(){
   supRenderBand();
   const c=S.ch[S.char];
-  $("num").textContent=fmtMoney(S.n);$("lv").textContent="Lv"+c.lv;$("sp").textContent=spFree(S.char);$("cname").textContent=CHARS[S.char].name;
+  $("num").textContent=fmtMoney(S.n);$("lv").textContent="Lv"+c.lv;$("sp").textContent=spFree(S.char);$("cname").textContent=CHARS[S.char].name;$("cname").classList.toggle("ach-gold-name",hasGoldName(S.char));
   $("spdot").hidden=!CIDS.some(k=>spFree(k)>0);$("xpbar").style.width=(100*c.xp/xpNeed(c.lv))+"%";
   const ps=perSec();$("rateTop").textContent=livePaused()?"ライブ休止中（ボス戦）":ps>0?`+${ps<100?ps.toFixed(1).replace(/\.0$/,""):fmtMoney(ps)}/秒`:"";
   if(MODE==="town"){$("loc").innerHTML=OPEN?`<b>${FACS.find(f=>f.id===OPEN).full}</b>`:"<b>新御霊市・下層 3番街</b>";$("locR").textContent=`最深 第${S.best}層`;}
@@ -4255,15 +4331,320 @@ function keyGateHtml(){return `<p class="note">キー専用の高難度モード
   const k=i+1;if(!bossBeaten(i))return `<p class="note">🔒 ランク${nm}（エリア${k}ボス撃破で解放）</p>`;
   return `<div class="card"><b>ランク${nm} ・ 所持キー ${S.keys[k]}枚</b><p class="note">敵の強さ（両モード共通）：HP ×${KEYC().nrush.hp[i]}／攻撃 ×${KEYC().nrush.atk[i]}</p><p>ノイズ・ラッシュ ランク${nm} ・ 記録：${S.nrBest[k]?fmtTime(S.nrBest[k].t):"―"} ${S.keyClr.nr[i]?"初回クリア済み":""}</p><button class="btn sm primary" data-nrush="${k}"${S.keys[k]?'':' disabled'}>ノイズ・ラッシュ開始</button><p>ボスラッシュ・キー戦 ランク${nm} ${S.keyClr.br[i]?"初回クリア済み":""}</p><button class="btn sm primary" data-krush="${k}"${S.keys[k]?'':' disabled'}>ボスラッシュ・キー戦開始</button></div>`;
 }).join("");}
+/* ================= achievements / album ================= */
+const ACH_BOSSES=["king_yogurt","junk_queen","noise_dj","exec_unit","distortion_core","ryumyaku_overflow"];
+const ACH_CATS={reach:"到達",grow:"育成",end:"エンド"};
+const GALLERY_CATS={offshot:"オフショット",solo:"ソロ",cool:"かっこいい",special:"特別",extra:"アーカイブ"};
+const achTitle=(id,name,color)=>({id,name,color});
+const ach=(id,cat,name,desc,tier,cond,reward={},title,progress)=>({id,cat,name,desc,tier,cond,reward,title,progress});
+const achGoal=(id,cat,name,desc,tier,value,goal,reward,title)=>ach(id,cat,name,desc,tier,
+  ()=>value()>=goal,reward,title,()=>Math.min(value(),goal)+" / "+goal);
+const achNodes=cid=>Object.keys(S.ch[cid].nodes).length;
+const achKeyBoth=i=>S.keyClr.nr[i]&&S.keyClr.br[i];
+const achRunSeg=()=>Math.max(0,...Object.values(S.runBest).map(b=>b.seg));
+const achPlus=it=>it?.plus||0;
+const achEquipped=cid=>Object.values(S.ch[cid].eq).map(id=>itemById(id));
+const ACH=[
+  ...[
+    ["下層スラム",{money:5000,mats:{shard:20}},"下層スラムの生還者","white"],
+    ["旧商店路地",{money:20000,mats:{lucky_circuit:5}},"路地裏の踏破者","white"],
+    ["ライブ街区",{shards:3,mats:{howl_coil:5}},"裏通りのアンコール","blue"],
+    ["管理区境界",{shards:5,keys:{1:1},chips:2},"境界線を越えし者","blue"],
+    ["歪み前線",{shards:8,mats:{core_crystal:3},chips:3},"歪み前線の突破者","blue"]
+  ].map(([zone,reward,name,color],i)=>ach("a"+(i+1),"reach",zone+"制覇",zone+"のボスを撃破する",i<2?1:2,
+    ()=>bossBeaten(i),{...reward,cosmetic:"trophy:"+ACH_BOSSES[i]},achTitle("t_a"+(i+1),name,color))),
+  achGoal("a6","reach","全ゾーン制覇","全5ゾーンのボスを撃破する",3,()=>ACH_BOSSES.slice(0,5).filter((_,i)=>bossBeaten(i)).length,5,
+    {shards:10,keys:{1:2},chips:5,cosmetic:"homeTint:1"},achTitle("t_a6","新御霊市の守り手","gold")),
+  ...[
+    [55,3,{shards:5,chips:3},"深層潜行者","purple"],
+    [63,3,{shards:8,chips:5},"ヨーデルの底を見た者","purple"],
+    [71,3,{shards:10,mats:{core:3},chips:7},"無明の潜り手","purple"],
+    [80,4,{shards:10,cosmetic:"aura:deep"},"深淵の常連","purple"],
+    [100,4,{shards:15,cosmetic:"titleBg:1"},"百層の語り部","rainbow"]
+  ].map(([floor,tier,reward,name,color],i)=>achGoal("a"+(i+7),"reach",`深層${floor}層到達`,`第${floor}層に到達する`,tier,()=>S.best,floor,reward,achTitle("t_a"+(i+7),name,color))),
+  ...CIDS.flatMap(cid=>{
+    const id=cid==="ht"?"echan":cid,name=CHARS[cid].name,lv=()=>S.ch[cid].lv,nodes=()=>achNodes(cid);
+    return [
+      achGoal("b1_"+id,"grow",name+" Lv50",name+"をLv50にする",2,lv,50,{shards:3,chips:2}),
+      achGoal("b3_"+id,"grow",name+" Lv81",name+"をLv81（レベル限界）にする",3,lv,81,{shards:5,chips:3,cosmetic:"goldName:"+id}),
+      ...[
+        [25,2,2,"a","枝を伸ばす者","white"],
+        [50,2,3,"b","根を張る者","blue"],
+        [75,3,5,"c","大樹の守り手","purple"]
+      ].map(([pct,tier,shards,suffix,title,color])=>achGoal(`b4_${id}_${pct}`,"grow",`${name} ツリー${pct}%`,
+        `${name}のツリーを${pct}%取得する`,tier,nodes,Math.ceil(250*pct/100),{shards},achTitle("t_b4"+suffix,title,color))),
+      achGoal("b5_"+id,"grow",name+" 完全同調",name+"のツリーを250ノード取得する",4,nodes,250,
+        {cosmetic:"aura:"+id},achTitle("t_b5_"+id,"完全同調："+name,"gold"))
+    ];
+  }),
+  achGoal("b2","grow","三姉妹全員Lv50","三姉妹全員をLv50にする",2,()=>CIDS.filter(c=>S.ch[c].lv>=50).length,3,{},achTitle("t_b2","三姉妹そろって一人前","blue")),
+  achGoal("b6","grow","三位一体","三姉妹全員のツリーを250ノード取得する",4,()=>CIDS.filter(c=>achNodes(c)>=250).length,3,
+    {cosmetic:["titleBg:2","homeTint:2"]},achTitle("t_b6","スリーシンク——三位一体","rainbow")),
+  achGoal("b7","grow","装備+10達成","所持または装備中の装備を+10にする",2,()=>Math.max(0,...S.inv.map(achPlus),...CIDS.flatMap(c=>achEquipped(c).map(achPlus))),10,
+    {shards:5,chips:2},achTitle("t_b7","鍛え抜かれた刃","blue")),
+  achGoal("b8","grow","フルチューン","いずれかの姉妹の装備中3スロットすべてを+10にする",3,
+    ()=>Math.max(...CIDS.map(c=>achEquipped(c).filter(it=>achPlus(it)>=10).length)),3,
+    {shards:8},achTitle("t_b8","フルチューン","purple")),
+  achGoal("c1","end","ボスラッシュ3体撃破","ボスラッシュで3体撃破する",2,()=>S.rushBest?.n||0,3,{shards:3}),
+  achGoal("c2","end","ボスラッシュ完走","ボスラッシュで5体撃破する",3,()=>S.rushBest?.n||0,5,{shards:8,chips:3},achTitle("t_c2","連戦の覇者","purple")),
+  ...[
+    [10,2,{shards:5},"a","ノイズランナー","blue"],
+    [20,3,{shards:8},"b","止まらない足","purple"],
+    [30,3,{shards:12,chips:3},"c","ノイズの向こう側","purple"]
+  ].map(([seg,tier,reward,suffix,name,color])=>achGoal("c3_"+seg,"end",`ノイズラン区画${seg}到達`,`いずれかのゾーンで区画${seg}に到達する`,
+    tier,achRunSeg,seg,reward,achTitle("t_c3"+suffix,name,color))),
+  ach("c4","end","龍脈溢界初クリア","龍脈溢界をクリアする",3,()=>S.ofBest.clears>0||S.ofBest.top>=0,
+    {shards:10,keys:{3:1},chips:5,cosmetic:"trophy:ryumyaku_overflow"},achTitle("t_c4","龍脈を鎮めし者","purple")),
+  ...[
+    [{shards:3,frags:5}], [{shards:4,frags:5}],
+    [{shards:5,frags:5,chips:3},achTitle("t_c5m","再溢出を越えて","purple")],
+    [{shards:6,frags:10}], [{shards:10,frags:15,chips:5,keys:{5:1}},achTitle("t_c5","星骸を砕く者","gold")]
+  ].map(([reward,title],i)=>achGoal("c5_"+(i+1),"end",`再溢出ステージ${i+1}制覇`,`再溢出ステージ${i+1}以上をクリアする`,
+    i===4?4:3,()=>Math.max(0,S.ofBest.top),i+1,reward,title)),
+  ...KEY_RANKS.map((rank,i)=>{
+    const name=["鍵の見習い","鍵守","錠前破り","封印解き"][i];
+    return achGoal("c6_"+(i+1),"end",`キー戦ランク${rank}両モード制覇`,`ランク${rank}のキー戦を両モードでクリアする`,i===4?4:3,
+      ()=>Number(S.keyClr.nr[i])+Number(S.keyClr.br[i]),2,i===4?{frags:10}:{keys:{[i+2]:1}},name?achTitle("t_k"+(i+1),name,i===0?"blue":"purple"):undefined);
+  }),
+  achGoal("c7","end","キー戦全ランク制覇","全5ランクのキー戦を両モードでクリアする",4,()=>KEY_RANKS.filter((_,i)=>achKeyBoth(i)).length,5,
+    {cosmetic:"hudFrame:gold"},achTitle("t_c7","マスターキー","rainbow"))
+];
+const ACH_BY_ID=new Map(ACH.map(a=>[a.id,a]));
+const achState=()=>new Set(ACH.filter(a=>a.cond()).map(a=>a.id));
+function achTitles(claimed){
+  const titles=new Map();
+  for(const id of Object.keys(claimed)){
+    const title=ACH_BY_ID.get(id)?.title;
+    if(title&&!titles.has(title.id))titles.set(title.id,{...title,earnedBy:id});
+  }
+  return titles;
+}
+let achCosmetics=new Set(),equippedTitle=null,homeView="",galleryTab="offshot",galleryItems=[],galleryCurrent=null;
+
+function applyAchCosmetics(){
+  achCosmetics=new Set(ACH.flatMap(a=>S.achClaimed[a.id]?a.reward.cosmetic||[]:[]));
+  equippedTitle=achTitles(S.achClaimed).get(S.titleEq)||null;
+  document.body.classList.toggle("ach-gold-frame",achCosmetics.has("hudFrame:gold"));
+  $("title").dataset.achBg=achCosmetics.has("titleBg:2")?"2":achCosmetics.has("titleBg:1")?"1":"";
+  $("titleAch").innerHTML=titleHtml(equippedTitle);
+  $("hudAch").innerHTML=titleHtml(equippedTitle);
+}
+const titleHtml=t=>t?`<span class="ach-title ach-title-${t.color}">${t.name}</span>`:"";
+const achCharId=cid=>cid==="ht"?"echan":cid;
+const hasGoldName=cid=>achCosmetics.has("goldName:"+achCharId(cid));
+const achCharName=cid=>`<span class="${hasGoldName(cid)?"ach-gold-name":""}">${CHARS[cid].name}</span>`;
+
+function scanAchievements(silent=false){
+  const reached=achState(),news=ACH.filter(a=>reached.has(a.id)&&!S.achKnown[a.id]);
+  for(const a of news)S.achKnown[a.id]=true;
+  if(!silent&&news.length){
+    toast(news.map(a=>"実績達成："+a.name).join(" ／ "));
+    dirty=true;
+  }
+  return news.length;
+}
+function grantAchievement(a,reached){
+  if(!a||S.achClaimed[a.id]||!reached.has(a.id))return false;
+  const r=a.reward;
+  if(r.money)addMoney(r.money);
+  S.shards+=r.shards||0;
+  if(r.chips)gainChips(r.chips);
+  if(r.frags)ofFrag(r.frags);
+  for(const [id,count] of Object.entries(r.mats||{}))addMat(id,1,count,S.mats);
+  for(const [rank,count] of Object.entries(r.keys||{}))S.keys[rank]=Math.min(999,S.keys[rank]+count);
+  S.achClaimed[a.id]=true;
+  return true;
+}
+function finishAchClaim(){
+  applyAchCosmetics();
+  markDirty();
+  save(true);
+}
+function claimAch(id){
+  if(grantAchievement(ACH_BY_ID.get(id),achState()))finishAchClaim();
+}
+function claimAllAch(){
+  const reached=achState();
+  let count=0;
+  for(const a of ACH)if(grantAchievement(a,reached))count++;
+  if(count)finishAchClaim();
+}
+function equipTitle(id){
+  if(id&&!achTitles(S.achClaimed).has(id))return;
+  S.titleEq=id||null;
+  finishAchClaim();
+}
+function sanitizeAchievements(s,o){
+  for(const [id,claimed] of Object.entries(o.achClaimed||{})){
+    if(claimed===true&&ACH_BY_ID.has(id))s.achClaimed[id]=true;
+  }
+  for(const a of ACH)if(o.achKnown?.[a.id]===true)s.achKnown[a.id]=true;
+  if(achTitles(s.achClaimed).has(o.titleEq))s.titleEq=o.titleEq;
+  for(const [id,img] of Object.entries(o.gallerySeen||{})){
+    if(/^g_[a-z0-9]+$/.test(id)&&typeof img==="string")s.gallerySeen[id]=img;
+  }
+}
+function achBadge(n,label=""){return n?` <span class="ach-badge">${label}${n}</span>`:"";}
+function achRewardText(a,titles){
+  const r=a.reward,parts=[];
+  if(r.money)parts.push("¥"+fmt(r.money));
+  if(r.shards)parts.push("共鳴の欠片 ×"+r.shards);
+  if(r.chips)parts.push("同調チップ ×"+r.chips);
+  if(r.frags)parts.push("龍鱗片 ×"+r.frags);
+  for(const [id,n] of Object.entries(r.mats||{}))parts.push(MATS[id].nm+" ×"+n);
+  for(const [rank,n] of Object.entries(r.keys||{}))parts.push("ダイブキー "+KEY_RANKS[rank-1]+" ×"+n);
+  if(a.title&&(!titles.has(a.title.id)||titles.get(a.title.id).earnedBy===a.id))parts.push("称号「"+a.title.name+"」");
+  for(const flag of [r.cosmetic].flat().filter(Boolean)){
+    const [type,id]=flag.split(":");
+    parts.push({trophy:"トロフィー",homeTint:"家の色調",titleBg:"タイトル背景",goldName:"金色の名前",hudFrame:"金色のHUD枠",
+      aura:id==="deep"?"深層の燐光オーラ":"個人色オーラ"}[type]);
+  }
+  return parts.join(" ・ ");
+}
+function trophyHtml(reached){
+  return `<h4>トロフィー棚</h4><div class="ach-trophies">${ACH_BOSSES.map((id,i)=>{
+    const won=reached.has(i===5?"c4":"a"+(i+1));
+    return `<figure class="${won?"":"locked"}"><div class="ach-trophy-sprite" style="--sprite:url(sprites/enemies/${id}.png)"></div><figcaption>${won?esc(ENEMIES[id].name):"？？？"}</figcaption></figure>`;
+  }).join("")}</div>`;
+}
+function keyBonusHtml(){
+  return `<details><summary>キー戦の初回クリアボーナス</summary><table class="ach-key-table">
+    <thead><tr><th>ランク</th><th>ノイズ・ラッシュ</th><th>ボスラッシュ</th></tr></thead>
+    <tbody>${KEY_RANKS.map((rank,i)=>`<tr><th scope="row">${rank}</th>${["nr","br"].map(mode=>`<td>${S.keyClr[mode][i]?
+      `初回クリアボーナス受領済み（チップ${8*(i+1)}）`:"未クリア"}</td>`).join("")}</tr>`).join("")}</tbody></table></details>`;
+}
+function achievementHtml(reached){
+  const titles=achTitles(S.achClaimed),status=a=>S.achClaimed[a.id]?1:reached.has(a.id)?0:2;
+  const pending=ACH.filter(a=>status(a)===0).length;
+  return `<div class="ach-view">
+    <div class="row"><h4>実績 <small>${reached.size}／${ACH.length}</small></h4><button class="btn sm" data-home-view="album">アルバムを開く</button></div>
+    <div class="row"><span>装着中 ${titleHtml(equippedTitle)||"なし"}</span><label>称号 <select data-ach-title>
+      <option value="">なし</option>${[...titles.values()].map(t=>`<option value="${t.id}" ${S.titleEq===t.id?"selected":""}>${t.name}</option>`).join("")}
+    </select></label>${pending?`<button class="btn sm primary" data-ach-all="1">まとめて受け取る${achBadge(pending)}</button>`:""}</div>
+    ${trophyHtml(reached)}${keyBonusHtml()}
+    ${["達成済み・未受け取り","受け取り済み","未達成"].map((label,state)=>{
+      const entries=ACH.filter(a=>status(a)===state);
+      if(!entries.length)return "";
+      return `<section><h4>${label} <small>${entries.length}</small></h4>${Object.entries(ACH_CATS).map(([cat,name])=>{
+        const list=entries.filter(a=>a.cat===cat);
+        if(!list.length)return "";
+        return `<h5>${name}</h5><ul class="ach-list">${list.map(a=>`<li data-ach-id="${a.id}">
+          <div><b>${a.name}</b> <small>T${a.tier}</small>
+          <div class="note">${a.desc}${state===2&&a.progress?" ・ "+a.progress():""}</div>
+          <div class="ach-reward">${achRewardText(a,titles)}</div></div>
+          ${state===0?`<button class="btn sm" data-ach-claim="${a.id}">受け取る</button>`:""}</li>`).join("")}</ul>`;
+      }).join("")}</section>`;
+    }).join("")}</div>`;
+}
+function galleryUnlocked(item,reached){
+  const u=item.unlock;
+  if(u.ach)return reached.has(u.ach);
+  if(Array.isArray(u.achAll))return u.achAll.every(id=>reached.has(id));
+  if(u.achCount!==undefined)return reached.size>=u.achCount;
+  if(u.keyRank)return S.keyClr.nr[u.keyRank-1]||S.keyClr.br[u.keyRank-1];
+  return false;
+}
+const galleryNew=item=>item.img&&S.gallerySeen[item.id]!==item.img;
+function galleryHtml(reached){
+  if(!galleryItems.length)return '<h4>アルバム</h4><p class="note">アルバムのデータを読み込めませんでした。</p>';
+  const unlocked=galleryItems.filter(g=>galleryUnlocked(g,reached));
+  const main=unlocked.filter(g=>g.cat!=="extra"),archive=unlocked.length-main.length,ready=main.filter(g=>g.img).length;
+  const grades=["bronze","bronze","silver","silver","gold","extreme","extreme","extreme","extreme"];
+  return `<div class="ach-view"><h4>アルバム</h4><p class="note">解放 ${main.length}／20（閲覧可 ${ready}・準備中 ${main.length-ready}） <span>アーカイブ ${archive}／12</span></p>
+    <div class="gtabs" aria-label="アルバムのカテゴリ">${Object.entries(GALLERY_CATS).map(([id,name])=>
+      `<button data-gallery-tab="${id}" aria-pressed="${galleryTab===id}">${name}</button>`).join("")}</div>
+    <div class="gallery-grid">${galleryItems.filter(g=>g.cat===galleryTab).map(g=>{
+      const open=galleryUnlocked(g,reached),viewable=open&&g.img,secret=!open&&g.secret;
+      const grade=g.cat==="cool"?grades[Number(g.id.slice(-2))-1]:"";
+      const content=`<span class="gallery-thumb ${open?"":"locked"}">
+        ${viewable?(g.thumb?`<img src="${esc(g.thumb)}" alt="" loading="lazy">`:"画像を開く"):open?"準備中":"🔒"}
+        ${viewable&&galleryNew(g)?'<span class="ach-badge">NEW</span>':""}</span>
+        <b>${secret?"？？？":esc(g.title)}</b>${open||secret?"":`<small>${esc(g.hint)}</small>`}`;
+      const cls=`gallery-card ${grade||""}`,state=viewable?"viewable":open?"pending":secret?"secret":"locked";
+      return viewable?`<button class="${cls}" data-gallery-open="${g.id}" data-gallery-state="${state}">${content}</button>`:
+        `<div class="${cls}" data-gallery-state="${state}">${content}</div>`;
+    }).join("")}</div></div>`;
+}
+function galleryUnlockText(u){
+  if(u.ach)return ACH_BY_ID.get(u.ach)?.name||"";
+  if(Array.isArray(u.achAll))return u.achAll.map(id=>ACH_BY_ID.get(id)?.name).filter(Boolean).join("・");
+  if(u.achCount!==undefined)return `実績 ${u.achCount}／${ACH.length}達成`;
+  return `キー戦ランク${KEY_RANKS[u.keyRank-1]}クリア（いずれかのモード）`;
+}
+function viewGalleryImage(id){
+  const item=galleryItems.find(g=>g.id===id);
+  if(!item?.img||!galleryUnlocked(item,achState()))return;
+  const dialog=$("galleryDialog");
+  galleryCurrent=item.id;
+  $("galleryFull").src=item.img;
+  $("galleryFull").alt=item.title;
+  $("galleryFullTitle").textContent=item.title;
+  $("galleryCaption").textContent=item.caption||item.hint;
+  $("galleryCredit").textContent=item.credit||"";
+  $("galleryUnlock").textContent=galleryUnlockText(item.unlock);
+  if(!dialog.open)dialog.showModal();
+  S.gallerySeen[id]=item.img;
+  dirty=true;
+  save(true);
+}
+function stepGalleryImage(step){
+  const reached=achState(),list=galleryItems.filter(g=>g.img&&galleryUnlocked(g,reached));
+  const index=list.findIndex(g=>g.id===galleryCurrent);
+  if(index>=0&&list.length>1)viewGalleryImage(list[(index+step+list.length)%list.length].id);
+}
+$("galleryDialog").addEventListener("click",e=>{if(e.target===$("galleryDialog"))$("galleryDialog").close();});
+$("galleryDialog").addEventListener("close",()=>{
+  $("galleryFull").removeAttribute("src");
+  const tile=document.querySelector(`[data-gallery-open="${galleryCurrent}"]`);
+  if(tile)tile.focus({preventScroll:true});
+  galleryCurrent=null;
+});
+$("galleryDialog").addEventListener("keydown",e=>{
+  if(e.key==="ArrowLeft"||e.key==="ArrowRight"){e.preventDefault();stepGalleryImage(e.key==="ArrowLeft"?-1:1);}
+});
+$("galleryClose").onclick=()=>$("galleryDialog").close();
+$("galleryPrev").onclick=()=>stepGalleryImage(-1);
+$("galleryNext").onclick=()=>stepGalleryImage(1);
+
+const achAuraImages=new Map();
+function achAuraImage(color){
+  if(!achAuraImages.has(color)){
+    const canvas=document.createElement("canvas");
+    canvas.width=80;canvas.height=80;
+    const g=canvas.getContext("2d"),light=g.createRadialGradient(40,40,1,40,40,40);
+    light.addColorStop(0,color+"79");light.addColorStop(.46,color+"31");light.addColorStop(1,color+"00");
+    g.fillStyle=light;g.fillRect(0,0,80,80);
+    achAuraImages.set(color,canvas);
+  }
+  return achAuraImages.get(color);
+}
+function drawAchAura(u){
+  const ch=CHARS[u.cid];
+  if(u.sup||!ch||u.down)return;
+  if(achCosmetics.has("aura:deep"))ctx.drawImage(achAuraImage("#44fad1"),u.x-40,u.y-34,80,52);
+  if(achCosmetics.has("aura:"+achCharId(u.cid)))ctx.drawImage(achAuraImage(ch.col),u.x-30,u.y-25,60,38);
+}
+
 function renderFac(){
   const el=$("fac");if(MODE!=="town")return;
+  const tint=OPEN==="home"?(achCosmetics.has("homeTint:2")?"2":achCosmetics.has("homeTint:1")?"1":""):"";
+  $("townUI").dataset.homeTint=tint;$("vig").dataset.homeTint=tint;
   if(!OPEN){el.innerHTML=`<h3>新御霊市・下層 3番街</h3><p class="note">酸性雨が降るスラムの路地。行きたい場所をタップしよう。</p>
     <div class="facgrid">${FACS.map(f=>`<button class="btn" data-go="${f.id}">${f.nm}</button>`).join("")}</div>`;return;}
   const f=FACS.find(f=>f.id===OPEN),talk=npcsAt(OPEN).some(n=>n.talks.length)?`<button class="btn sm" data-talk="1">話す</button>`:"";
-  let h=`<div class="row" style="justify-content:space-between"><h3>${f.full}</h3>${talk?`<span class="row">${talk}<button class="btn sm" data-close="1">外に出る</button></span>`:`<button class="btn sm" data-close="1">外に出る</button>`}</div>`+talkHtml();
+  let h=`<div class="row" style="justify-content:space-between"><h3>${f.full}${OPEN==="home"&&equippedTitle?" "+titleHtml(equippedTitle):""}</h3>${talk?`<span class="row">${talk}<button class="btn sm" data-close="1">外に出る</button></span>`:`<button class="btn sm" data-close="1">外に出る</button>`}</div>`+talkHtml();
   if(OPEN==="home"){
-    h+=`<p class="note">ガス代の請求書が冷蔵庫に貼ってある。探索に出る1人を決めよう。残りの2人はライブで稼ぎ、経験値も少し入る。</p><div class="chars">${CIDS.map(c=>`<button data-char="${c}" aria-pressed="${c===S.char}"><span class="face" style="background-image:url(${CHARS[c].src})"></span>${CHARS[c].name}<small>Lv${S.ch[c].lv}</small></button>`).join("")}</div>
-      <p class="note">${CHARS[S.char].name}：${CB[S.char].style}。巨大ノイズ戦ではほかの2人も一緒に戦う。</p>${storageHtml()}`;
+    const reached=achState();
+    if(homeView){
+      el.innerHTML=h+`<button class="btn sm" data-home-view="home">家に戻る</button>`+(homeView==="ach"?achievementHtml(reached):galleryHtml(reached));
+      return;
+    }
+    const pending=ACH.filter(a=>reached.has(a.id)&&!S.achClaimed[a.id]).length;
+    const news=galleryItems.filter(g=>galleryNew(g)&&galleryUnlocked(g,reached)).length;
+    h+=`<div class="row home-ach-actions"><button class="btn" data-home-view="ach">実績${achBadge(pending)}</button>
+      <button class="btn" data-home-view="album">アルバム${achBadge(news,"NEW ")}</button></div>`;
+    h+=`<p class="note">ガス代の請求書が冷蔵庫に貼ってある。探索に出る1人を決めよう。残りの2人はライブで稼ぎ、経験値も少し入る。</p><div class="chars">${CIDS.map(c=>`<button data-char="${c}" aria-pressed="${c===S.char}"><span class="face" style="background-image:url(${CHARS[c].src})"></span>${achCharName(c)}<small>Lv${S.ch[c].lv}</small></button>`).join("")}</div>
+      <p class="note">${achCharName(S.char)}：${CB[S.char].style}。巨大ノイズ戦ではほかの2人も一緒に戦う。</p>${storageHtml()}`;
     h+=supGateHtml();
   }else if(OPEN==="shop"){
     const keys=Object.keys(MATS).filter(k=>stock(k)>0);
@@ -4354,10 +4735,17 @@ function misCard(m,act){
   return `<div class="mi${done&&act?" done":""}"><div><div class="cl">${esc(m.cl)}${m.free?'<span class="tag" style="color:var(--ok)">無償</span>':""}</div><div class="tx">${esc(m.txt)}</div></div>${rw}
     ${m.sub?`<div class="sub">${esc(m.sub)}</div>`:""}${act?`<div class="prog"><i style="width:${100*m.prog/m.need}%"></i></div>${m.type==="deliver"?`<div class="sub">倉庫 ${stock(m.mat)}/${m.need}</div>`:""}`:""}<div class="act">${btn}</div></div>`;
 }
-$("fac").addEventListener("change",e=>{const d=e.target.dataset;if(d.supmode){S.sup.mode.lumina=e.target.value;save(true);}if(d.suptgt){S.sup.tgt[d.suptgt]=e.target.value;save(true);}});
+$("fac").addEventListener("change",e=>{const d=e.target.dataset;if(OPEN==="home"&&d.achTitle!==undefined)equipTitle(e.target.value);if(d.supmode){S.sup.mode.lumina=e.target.value;save(true);}if(d.suptgt){S.sup.tgt[d.suptgt]=e.target.value;save(true);}});
 $("fac").addEventListener("input",e=>{if(e.target.dataset&&e.target.dataset.npck)npcDebugInput(e.target);}); // ?npcdebug=1 number boxes
 $("fac").addEventListener("click",e=>{
   const b=e.target.closest("button");if(!b||b.disabled)return;const d=b.dataset;
+  if(OPEN==="home"){
+    if(d.homeView){homeView=d.homeView==="home"?"":d.homeView;dirty=true;}
+    if(d.achClaim)claimAch(d.achClaim);
+    if(d.achAll)claimAllAch();
+    if(d.galleryTab){galleryTab=d.galleryTab;dirty=true;}
+    if(d.galleryOpen)viewGalleryImage(d.galleryOpen);
+  }
   if(d.key)issueKey(+d.key);
   if(d.nrush)startNrush(+d.nrush);
   if(d.krush)startKrush(+d.krush);
@@ -4390,9 +4778,10 @@ $("fac").addEventListener("click",e=>{
   if(d.buy){const p=PRODUCERS.find(p=>p.id===d.buy),k=S.own[p.id]||0,c=cost(p.base,k);if(S.n>=c){S.n-=c;S.own[p.id]=k+1;markDirty();}}
   if(d.start){enterDive(+d.start);}
 });
-function viewSwitch(id){const el=$(id);el.innerHTML=CIDS.map(c=>`<button data-view="${c}" aria-pressed="${c===VIEW}">${CHARS[c].name} Lv${S.ch[c].lv}${spFree(c)>0?` ・SP${spFree(c)}`:""}</button>`).join("");}
+function viewSwitch(id){const el=$(id);el.innerHTML=CIDS.map(c=>`<button data-view="${c}" aria-pressed="${c===VIEW}">${achCharName(c)} Lv${S.ch[c].lv}${spFree(c)>0?` ・SP${spFree(c)}`:""}</button>`).join("");}
 document.addEventListener("click",e=>{const b=e.target.closest("[data-view]");if(b){clearSale();VIEW=b.dataset.view;selItem=null;markDirty();}});
 function renderPanels(){
+  if(MODE==="town")scanAchievements();
   dirty=false;renderFac();viewSwitch("vsw1");viewSwitch("vsw2");renderOfTog();
   const c=S.ch[VIEW];
   if(TV.cid!==VIEW){TV.sel=null;}
@@ -4413,7 +4802,7 @@ function renderPanels(){
     const ow=ownerOf(it.id),b=document.createElement("button");b.className=`gi rc-${it.rar}${ow?" eq":""}${selItem===it.id?" sel":""}`;
     const sk=it.sockets&&it.sockets.length?" "+it.sockets.map(x=>x.effectId?"◆":"◇").join(""):"";
     if(SELL_MODE){b.disabled=!canSell(it);b.setAttribute("aria-pressed",SELL_IDS.has(it.id));if(b.disabled)b.style.opacity="0.5";}
-    b.innerHTML=`<div class="t">${SELL_MODE?(SELL_IDS.has(it.id)?"☑ ":"☐ "):""}${it.lock?"🔒 ":""}${it.sp?"★":""}${esc(it.name)}${it.plus?" +"+it.plus:""}${sk}</div><div class="s">${SLOTS[it.slot].nm} ・ Lv${it.lvl}${ow?" ・ "+CHARS[ow].name+"が装備中":""}</div>`;
+    b.innerHTML=`<div class="t">${SELL_MODE?(SELL_IDS.has(it.id)?"☑ ":"☐ "):""}${it.lock?"🔒 ":""}${it.sp?"★":""}${esc(it.name)}${it.plus?" +"+it.plus:""}${sk}</div><div class="s">${SLOTS[it.slot].nm} ・ Lv${it.lvl}${ow?" ・ "+achCharName(ow)+"が装備中":""}</div>`;
     b.onclick=()=>{if(SELL_MODE){if(!canSell(it))return;if(SELL_IDS.has(it.id))SELL_IDS.delete(it.id);else SELL_IDS.add(it.id);SELL_CONFIRM=null;}else selItem=it.id;markDirty();};inv.appendChild(b);});
   if(!document.activeElement||!document.activeElement.closest||!document.activeElement.closest("#allyset"))
     $("allyset").innerHTML=CIDS.map(c=>{const cfg=allyCfg(c),me=c===S.char;return `<div class="ally-row${me?" me":""}"><b>${CHARS[c].name}</b>${me?'<span class="note">いま主人公（サポートのときに使う設定）</span>':""}
@@ -4573,7 +4962,8 @@ function renderStatSum(){
 /* ================= save ================= */
 function save(silent){
   S.last=Date.now();
-  try{localStorage.setItem(KEY,JSON.stringify(S));$("saved").textContent="最終保存 "+new Date().toLocaleTimeString("ja-JP",{hour:"2-digit",minute:"2-digit",second:"2-digit"});if(!silent)toast("保存しました");}
+  const announce=scanAchievements();
+  try{localStorage.setItem(KEY,JSON.stringify(S));$("saved").textContent="最終保存 "+new Date().toLocaleTimeString("ja-JP",{hour:"2-digit",minute:"2-digit",second:"2-digit"});if(!silent&&!announce)toast("保存しました");}
   catch(e){$("saved").textContent="この環境では保存できません";if(!silent)toast("保存できませんでした（シークレットモードなど）");}
 }
 function sanCh(o,cid){const c=freshCh();if(!o||typeof o!=="object")return c;
@@ -4591,6 +4981,7 @@ function finishLoad(){LEGACY_NOTE="";
   for(const cid of CIDS){const c=S.ch[cid];const keep=connected(cid,c.nodes);for(const k in c.nodes)if(!keep.has(k))delete c.nodes[k];
     if(spSpent(cid)>spEarned(cid))c.nodes={};
     if(c._legacy){const n=migrateLegacy(cid,c._legacy);delete c._legacy;if(n)LEGACY_NOTE+=`${CHARS[cid].name}の旧スキル${n}件を新しいツリーに移しました。`;}}
+  scanAchievements(true);applyAchCosmetics();
   S.ver=2;bumpStats();if(LEGACY_NOTE)setTimeout(()=>toast(LEGACY_NOTE),1500);}
 const MISTYPES=["kill","reach","collect","boss","special","deliver"];
 function sanMis(m){if(!m||!MISTYPES.includes(m.type))return null;return{id:+m.id||0,type:m.type,prog:Math.max(0,+m.prog||0),need:Math.max(1,+m.need||1),free:!!m.free,cl:String(m.cl||"").slice(0,20),
@@ -4628,6 +5019,7 @@ function sanitize(o){
   for(const c of CIDS)for(const k in s.ch[c].eq){const id=s.ch[c].eq[k];const it=s.inv.find(i=>i.id===id);s.ch[c].eq[k]=(it&&it.slot===k&&!used.has(id))?id:null;if(s.ch[c].eq[k])used.add(id);}
   for(const k in MATS){const b=(o.bag||{})[k];if(b&&+b.n>0)s.bag[k]={n:Math.floor(+b.n),v:Math.max(0,+b.v||0)};const m=(o.mats||{})[k];if(m&&+m.n>0)s.mats[k]={n:Math.floor(+m.n),v:Math.max(0,+m.v||0)};}
   s.board=(o.board||[]).map(sanMis).filter(Boolean).slice(0,3);s.active=(o.active||[]).map(sanMis).filter(Boolean).slice(0,2);
+  sanitizeAchievements(s,o);
   s.uid=Math.max(s.uid,...s.inv.map(i=>i.id+1),1);s.mid=Math.max(s.mid,...[...s.board,...s.active].map(m=>m.id+1),1);
   return s;
 }
@@ -4705,7 +5097,7 @@ $("bDoImport").onclick=()=>{try{S=sanitize(decode($("importText").value));finish
   catch(e){toast("コードが読み取れません。全部コピーできているか確認してください");}};
 $("bReset").onclick=()=>{hideBoxes();$("resetBox").hidden=false;};
 $("bCancelReset").onclick=hideBoxes;
-$("bDoReset").onclick=()=>{S=fresh();fillBoard();save(true);VIEW=S.char;OPEN=null;enterTown(false);hideBoxes();toast("はじめからになりました");};
+$("bDoReset").onclick=()=>{S=fresh();applyAchCosmetics();fillBoard();save(true);VIEW=S.char;OPEN=null;enterTown(false);hideBoxes();toast("はじめからになりました");};
 
 /* ================= loop ================= */
 function start(data){
