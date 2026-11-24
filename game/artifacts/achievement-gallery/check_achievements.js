@@ -110,8 +110,8 @@ async function run() {
     await page.locator('[data-home-view="album"]').getByText(/NEW/).waitFor();
 
     await page.click('[data-home-view="album"]');
-    await page.waitForFunction(() => document.querySelector('[data-gallery-state="pending"]') && document.querySelector('[data-gallery-state="locked"]'), null, { timeout: 15000 });
-    assert.ok(await page.locator('[data-gallery-state="pending"]').count());
+    await page.waitForFunction(() => document.querySelector('[data-gallery-state="viewable"]') && document.querySelector('[data-gallery-state="locked"]'), null, { timeout: 15000 });
+    assert.ok(await page.locator('[data-gallery-state="viewable"]').count());
     assert.ok(await page.locator('[data-gallery-state="locked"]').count());
     await page.click('[data-gallery-tab="special"]');
     const secret=page.locator('[data-gallery-state="secret"]');
